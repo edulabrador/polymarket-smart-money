@@ -29,8 +29,8 @@ Ver [PLAN.md](PLAN.md).
 - ✅ Fase 0 — endpoints verificados ([NOTES.md](NOTES.md)) y fixtures reales en `tests/fixtures/`
 - ✅ Fase 1 — `scanner.py` + tests (`python tests/test_scanner.py` o `pytest`, sin red)
 - ✅ Fase 2 — notificaciones Telegram (secrets `TELEGRAM_TOKEN` y `TELEGRAM_CHAT_ID`)
-- ⬜ Fase 3 — interfaz (GitHub Pages)
-- ⬜ Fase 4 — cron automático (el workflow `scan` ya existe, falta el schedule)
+- ✅ Fase 3 — interfaz en `docs/index.html` (falta activar Pages: requiere repo público)
+- ✅ Fase 4 — cron cada 10 min en el workflow `scan`
 - ⬜ Fase 5 — refinamiento y tasa de acierto
 
 ## Avisos
