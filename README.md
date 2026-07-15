@@ -24,7 +24,14 @@ Página estática en GitHub Pages que muestra, por señal:
 
 ## Estado
 
-📋 En planificación — ver [PLAN.md](PLAN.md).
+Ver [PLAN.md](PLAN.md).
+
+- ✅ Fase 0 — endpoints verificados ([NOTES.md](NOTES.md)) y fixtures reales en `tests/fixtures/`
+- ✅ Fase 1 — `scanner.py` + tests (`python tests/test_scanner.py` o `pytest`, sin red)
+- ⬜ Fase 2 — notificaciones Telegram
+- ⬜ Fase 3 — interfaz (GitHub Pages)
+- ⬜ Fase 4 — cron automático (el workflow `scan` ya existe, falta el schedule)
+- ⬜ Fase 5 — refinamiento y tasa de acierto
 
 ## Avisos
 
