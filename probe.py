@@ -10,11 +10,10 @@ import urllib.request
 FIXTURES = pathlib.Path("tests/fixtures")
 
 LEADERBOARD_CANDIDATES = [
-    "https://data-api.polymarket.com/profit?window=all&limit=50",
-    "https://data-api.polymarket.com/profit?window=30d&limit=50",
-    "https://data-api.polymarket.com/leaderboard?window=30d&limit=50&rankType=pnl",
-    "https://data-api.polymarket.com/leaderboard?window=30d&limit=50&rankType=profit",
-    "https://lb-api.polymarket.com/leaderboard?window=1m&limit=50&rankType=profit",
+    "https://data-api.polymarket.com/v1/leaderboard?timePeriod=MONTH&orderBy=PNL&limit=50",
+    "https://data-api.polymarket.com/v1/leaderboard?timePeriod=ALL&orderBy=PNL&limit=50",
+    "https://data-api.polymarket.com/v1/leaderboard?window=30d&rankType=pnl&limit=50",
+    "https://data-api.polymarket.com/v1/leaderboard",
 ]
 
 
