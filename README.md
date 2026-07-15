@@ -14,6 +14,9 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
 3. Agrupa por `(conditionId, outcome)` y filtra: posición mínima en USD, mercado no resuelto.
 4. Si ≥ `MIN_USERS` traders top coinciden → **señal**: se notifica por Telegram y se
    publica en la interfaz web (GitHub Pages).
+5. Si el precio actual ya supera la entrada media en más de `MAX_PRICE_DRIFT`
+   (defecto 0.15), la señal se marca **descartada**: los top ya capturaron ese
+   tramo y llegamos tarde. Se muestra atenuada en la web y no se notifica.
 
 ## Interfaz
 
@@ -33,7 +36,7 @@ Ver [PLAN.md](PLAN.md).
 - ✅ Fase 2 — notificaciones Telegram (secrets `TELEGRAM_TOKEN` y `TELEGRAM_CHAT_ID`)
 - ✅ Fase 3 — interfaz publicada en GitHub Pages
 - ✅ Fase 4 — cron cada 10 min en el workflow `scan`
-- ⬜ Fase 5 — refinamiento y tasa de acierto
+- 🔶 Fase 5 — descarte por deriva de precio y filtros en la web hechos; tasa de acierto pendiente (necesita acumular histórico, que ya queda en el log de git de `signals.json`)
 
 ## Avisos
 

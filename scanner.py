@@ -15,6 +15,10 @@ from datetime import datetime, timezone
 TOP_N = int(os.getenv("TOP_N", "50"))
 MIN_USERS = int(os.getenv("MIN_USERS", "5"))
 MIN_POSITION_USD = float(os.getenv("MIN_POSITION_USD", "500"))
+# si el precio actual supera la entrada media en mas de esto, la senal se
+# marca "stale": los top ya ganaron ese tramo, llegamos tarde
+MAX_PRICE_DRIFT = float(os.getenv("MAX_PRICE_DRIFT", "0.15"))
+SCAN_EVERY_MIN = 10  # cadencia del cron en .github/workflows/scan.yml
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 SIGNALS_PATH = pathlib.Path(__file__).parent / "docs" / "signals.json"
@@ -40,11 +44,14 @@ def get_json(url, retries=3):
             time.sleep(2 ** attempt)
 
 
-def detect_signals(positions_by_trader, min_users=MIN_USERS, min_usd=MIN_POSITION_USD):
+def detect_signals(positions_by_trader, min_users=MIN_USERS, min_usd=MIN_POSITION_USD,
+                   max_drift=MAX_PRICE_DRIFT):
     """positions_by_trader: {wallet: {"name": str, "positions": [dicts de la API]}}.
 
     Senal = grupo (conditionId, outcomeIndex) con >= min_users traders
     distintos, cada uno con posicion viva de >= min_usd USD actuales.
+    Si el precio ya subio mas de max_drift sobre la entrada media, la senal
+    se marca stale=True (se muestra descartada y no se notifica).
     """
     groups = {}
     for wallet, info in positions_by_trader.items():
@@ -67,6 +74,7 @@ def detect_signals(positions_by_trader, min_users=MIN_USERS, min_usd=MIN_POSITIO
         traders = sorted(g["traders"].values(), key=lambda t: -t["usd"])
         total = sum(t["usd"] for t in traders)
         m = g["meta"]
+        avg_entry = round(sum(t["avgPrice"] * t["usd"] for t in traders) / total, 4)
         signals.append({
             "id": key,
             "title": m["title"],
@@ -77,10 +85,11 @@ def detect_signals(positions_by_trader, min_users=MIN_USERS, min_usd=MIN_POSITIO
             "curPrice": m["curPrice"],
             "numTraders": len(traders),
             "totalUsd": round(total, 2),
-            "avgEntryPrice": round(sum(t["avgPrice"] * t["usd"] for t in traders) / total, 4),
+            "avgEntryPrice": avg_entry,
+            "stale": m["curPrice"] - avg_entry > max_drift,
             "traders": traders,
         })
-    signals.sort(key=lambda s: (-s["numTraders"], -s["totalUsd"]))
+    signals.sort(key=lambda s: (s["stale"], -s["numTraders"], -s["totalUsd"]))
     return signals
 
 
@@ -146,14 +155,18 @@ def main():
     SIGNALS_PATH.parent.mkdir(exist_ok=True)
     SIGNALS_PATH.write_text(json.dumps({
         "updatedAt": now,
-        "params": {"topN": TOP_N, "minUsers": MIN_USERS, "minPositionUsd": MIN_POSITION_USD},
+        "params": {"topN": TOP_N, "minUsers": MIN_USERS, "minPositionUsd": MIN_POSITION_USD,
+                   "maxPriceDrift": MAX_PRICE_DRIFT, "scanEveryMin": SCAN_EVERY_MIN},
         "signals": signals,
     }, indent=1), encoding="utf-8")
 
-    notify_telegram(new)
-    print(f"{len(signals)} senales activas, {len(new)} nuevas")
+    fresh_new = [s for s in new if not s["stale"]]
+    notify_telegram(fresh_new)
+    stale_count = sum(1 for s in signals if s["stale"])
+    print(f"{len(signals)} senales ({stale_count} stale), {len(new)} nuevas, {len(fresh_new)} notificadas")
     for s in new:
-        print(f"  NUEVA: {s['numTraders']} traders -> {s['title']} [{s['outcome']}] @ {s['curPrice']}")
+        tag = "STALE" if s["stale"] else "NUEVA"
+        print(f"  {tag}: {s['numTraders']} traders -> {s['title']} [{s['outcome']}] @ {s['curPrice']}")
 
 
 if __name__ == "__main__":

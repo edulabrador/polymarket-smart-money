@@ -80,6 +80,27 @@ def test_parses_real_api_fixture():
     assert all(s["title"] and s["slug"] for s in signals)
 
 
+def test_price_drift_marks_stale():
+    # entrada media 0.4, precio 0.7 -> deriva 0.3 > 0.15: descartada
+    data = traders(5, curPrice=0.7)
+    signals = detect_signals(data, min_users=5, min_usd=500, max_drift=0.15)
+    assert len(signals) == 1 and signals[0]["stale"] is True
+    # entrada 0.4, precio 0.5 -> deriva 0.1: fresca
+    signals = detect_signals(traders(5), min_users=5, min_usd=500, max_drift=0.15)
+    assert signals[0]["stale"] is False
+    # precio POR DEBAJO de la entrada (traders en perdidas) no es stale
+    signals = detect_signals(traders(5, curPrice=0.2), min_users=5, min_usd=500, max_drift=0.15)
+    assert signals[0]["stale"] is False
+
+
+def test_stale_signals_sort_last():
+    data = {**traders(7, cond="0xviejo", curPrice=0.9),
+            **traders(5, prefix="b", cond="0xnuevo")}
+    signals = detect_signals(data, min_users=5, min_usd=500, max_drift=0.15)
+    assert [s["id"].split(":")[0] for s in signals] == ["0xnuevo", "0xviejo"]
+    assert [s["stale"] for s in signals] == [False, True]
+
+
 def test_format_message():
     signals = detect_signals(traders(5), min_users=5, min_usd=500)
     msg = format_message(signals)
