@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polymarket Smart Money</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 2rem auto; max-width: 1000px; padding: 0 1rem;
+         font-family: system-ui, sans-serif; }
+  h1 { font-size: 1.4rem; }
+  .meta { color: gray; font-size: .85rem; margin-bottom: 1rem; }
+  .tabla-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { padding: .5rem .7rem; text-align: left; border-bottom: 1px solid #8884; }
+  th { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+  td.num, th.num { text-align: right; }
+  .badge { font-weight: 700; font-size: 1.1rem; }
+  .outcome { padding: .15rem .5rem; border-radius: .5rem; background: #8883;
+             white-space: nowrap; }
+  details summary { cursor: pointer; color: gray; font-size: .85rem; }
+  details li { font-size: .85rem; }
+  a { color: inherit; }
+  #estado { color: gray; }
+</style>
+</head>
+<body>
+<h1>📡 Polymarket Smart Money</h1>
+<div class="meta" id="meta"></div>
+<p id="estado">Cargando…</p>
+<div class="tabla-wrap">
+<table id="tabla" hidden>
+  <thead><tr>
+    <th class="num">Traders top</th><th>Mercado</th><th>Apuesta</th>
+    <th class="num">Precio</th><th class="num">Entrada media</th>
+    <th class="num">Capital</th><th>Detectada</th><th></th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
+</div>
+<script>
+const usd = n => '$' + n.toLocaleString('es-ES', {maximumFractionDigits: 0});
+const esc = s => String(s).replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const estado = document.getElementById('estado');
+
+fetch('signals.json').then(r => r.json()).then(d => {
+  document.getElementById('meta').textContent =
+    `Actualizado ${new Date(d.updatedAt).toLocaleString('es-ES')} · ` +
+    `top ${d.params.topN} por PnL (30 días) · umbral ${d.params.minUsers} traders · ` +
+    `posición mínima ${usd(d.params.minPositionUsd)}`;
+  const tbody = document.querySelector('#tabla tbody');
+  for (const s of d.signals) {
+    const traders = s.traders.map(t =>
+      `<li>${esc(t.name || t.wallet.slice(0, 10) + '…')} — ${usd(t.usd)} (entrada ${t.avgPrice})</li>`).join('');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="num badge">${s.numTraders}</td>
+      <td><a href="https://polymarket.com/event/${encodeURIComponent(s.eventSlug)}"
+             target="_blank" rel="noopener">${esc(s.title)}</a></td>
+      <td><span class="outcome">${esc(s.outcome)}</span></td>
+      <td class="num">${s.curPrice.toFixed(2)}</td>
+      <td class="num">${s.avgEntryPrice.toFixed(2)}</td>
+      <td class="num">${usd(s.totalUsd)}</td>
+      <td>${new Date(s.firstSeen).toLocaleDateString('es-ES')}</td>
+      <td><details><summary>traders</summary><ul>${traders}</ul></details></td>`;
+    tbody.appendChild(tr);
+  }
+  estado.hidden = true;
+  document.getElementById('tabla').hidden = false;
+  if (!d.signals.length) {
+    estado.hidden = false;
+    estado.textContent = 'Sin señales activas ahora mismo.';
+  }
+}).catch(e => estado.textContent = 'Error cargando signals.json: ' + e.message);
+</script>
+</body>
+</html>
