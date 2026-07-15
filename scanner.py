@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 TOP_N = int(os.getenv("TOP_N", "50"))
 MIN_USERS = int(os.getenv("MIN_USERS", "5"))
 MIN_POSITION_USD = float(os.getenv("MIN_POSITION_USD", "500"))
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 SIGNALS_PATH = pathlib.Path(__file__).parent / "docs" / "signals.json"
 
 LEADERBOARD_URL = ("https://data-api.polymarket.com/v1/leaderboard"
@@ -95,6 +97,33 @@ def merge_previous(signals, previous, now):
     return signals, new
 
 
+def format_message(new_signals, cap=10):
+    lines = ["\U0001F6A8 Nuevas coincidencias de top traders en Polymarket:"]
+    for s in new_signals[:cap]:
+        lines.append(
+            f"\n• {s['numTraders']} traders → {s['title']} [{s['outcome']}]"
+            f"\n  precio {s['curPrice']} | entrada media {s['avgEntryPrice']}"
+            f" | ${s['totalUsd']:,.0f}"
+            f"\n  https://polymarket.com/event/{s['eventSlug']}")
+    if len(new_signals) > cap:
+        lines.append(f"\n…y {len(new_signals) - cap} mas")
+    return "\n".join(lines)
+
+
+def notify_telegram(new_signals):
+    if not (TELEGRAM_TOKEN and TELEGRAM_CHAT_ID and new_signals):
+        return  # sin secrets (p. ej. en local) se omite sin fallar
+    body = json.dumps({
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": format_message(new_signals),
+        "disable_web_page_preview": True,
+    }).encode()
+    req = urllib.request.Request(
+        f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+        data=body, headers={"Content-Type": "application/json"})
+    urllib.request.urlopen(req, timeout=30)
+
+
 def main():
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     leaderboard = get_json(LEADERBOARD_URL.format(n=TOP_N))
@@ -121,8 +150,9 @@ def main():
         "signals": signals,
     }, indent=1), encoding="utf-8")
 
+    notify_telegram(new)
     print(f"{len(signals)} senales activas, {len(new)} nuevas")
-    for s in new:  # ponytail: la notificacion Telegram llega en Fase 2; de momento, log
+    for s in new:
         print(f"  NUEVA: {s['numTraders']} traders -> {s['title']} [{s['outcome']}] @ {s['curPrice']}")
 
 

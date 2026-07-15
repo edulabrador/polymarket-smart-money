@@ -5,7 +5,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
-from scanner import detect_signals, merge_previous
+from scanner import detect_signals, format_message, merge_previous
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -78,6 +78,16 @@ def test_parses_real_api_fixture():
     assert len(signals) == expected
     assert all(s["numTraders"] == 5 for s in signals)
     assert all(s["title"] and s["slug"] for s in signals)
+
+
+def test_format_message():
+    signals = detect_signals(traders(5), min_users=5, min_usd=500)
+    msg = format_message(signals)
+    assert "5 traders" in msg
+    assert "Mercado de prueba" in msg
+    assert "[Yes]" in msg
+    assert "https://polymarket.com/event/evento" in msg
+    assert len(format_message(signals * 30)) < 4096  # limite de Telegram
 
 
 if __name__ == "__main__":
