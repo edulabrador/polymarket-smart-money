@@ -1,9 +1,11 @@
 {
- "updatedAt": "2026-07-15T23:02:21+00:00",
+ "updatedAt": "2026-07-15T23:42:57+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
-  "minPositionUsd": 500.0
+  "minPositionUsd": 500.0,
+  "maxPriceDrift": 0.15,
+  "scanEveryMin": 10
  },
  "signals": [
   {
@@ -15,8 +17,9 @@
    "endDate": "2026-07-20",
    "curPrice": 0.5795,
    "numTraders": 13,
-   "totalUsd": 8667795.77,
-   "avgEntryPrice": 0.1727,
+   "totalUsd": 8639721.07,
+   "avgEntryPrice": 0.1731,
+   "stale": true,
    "traders": [
     {
      "wallet": "0x476e1322d1a412fa0325527b8c3bc5e707b1396d",
@@ -93,12 +96,12 @@
     {
      "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
      "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
-     "usd": 46002.34,
+     "usd": 17927.64,
      "avgPrice": 0.0375
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-15T23:02:21+00:00"
+   "lastSeen": "2026-07-15T23:42:57+00:00"
   },
   {
    "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f:0",
@@ -111,6 +114,7 @@
    "numTraders": 7,
    "totalUsd": 9450792.95,
    "avgEntryPrice": 0.1292,
+   "stale": true,
    "traders": [
     {
      "wallet": "0xa7b7505abe2fdcc497c00074534f7fbd7e07962e",
@@ -156,7 +160,7 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-15T23:02:21+00:00"
+   "lastSeen": "2026-07-15T23:42:57+00:00"
   }
  ]
 }
