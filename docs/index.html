@@ -84,6 +84,8 @@
   .whale-usd { color: var(--acento); font-weight: 800; margin-right: .4rem; }
   .top-badge { background: var(--ok); color: var(--card); border-radius: 999px;
     padding: .05rem .5rem; font-size: .72rem; font-weight: 700; }
+  .longshot-badge { background: #b45309; color: #fff; border-radius: 999px;
+    padding: .05rem .5rem; font-size: .72rem; font-weight: 700; }
   #historial { margin-top: 2rem; border-top: 1px solid var(--borde); padding-top: 1rem; }
   .acierto { color: var(--ok); font-weight: 700; }
   .fallo { color: var(--aviso); font-weight: 700; }
@@ -218,7 +220,7 @@ function renderWhales() {
          target="_blank" rel="noopener">${esc(w.title)}</a>
       <span class="pastilla">${esc(w.outcome)}</span> @ ${pct(w.price)} ·
       <a href="https://polymarket.com/profile/${encodeURIComponent(w.wallet)}"
-         target="_blank" rel="noopener">${quien}</a>${w.isTop ? ' <span class="top-badge">TOP 50</span>' : ''}
+         target="_blank" rel="noopener">${quien}</a>${w.isTop ? ' <span class="top-badge">TOP 50</span>' : ''}${w.longshot ? ' <span class="longshot-badge" title="Compra grande a cuota improbable: posible información privilegiada">🕵 LONGSHOT</span>' : ''}
       · ${hace}</div>`;
   }).join('');
 }

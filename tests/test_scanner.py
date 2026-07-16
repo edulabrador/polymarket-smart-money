@@ -145,6 +145,8 @@ def test_detect_whales_from_real_fixture():
     # isTop refleja pertenencia al leaderboard
     assert any(w["isTop"] for w in whales if w["wallet"] in top) or not any(
         w["wallet"] in top for w in whales)
+    # longshot = compra a cuota improbable (precio <= 0.3)
+    assert all(w["longshot"] == (w["price"] <= 0.3) for w in whales)
 
 
 def test_format_whales():
@@ -154,6 +156,8 @@ def test_format_whales():
     msg = format_whales([w])
     assert "$75,000" in msg and "Mercado X" in msg and "bigfish" in msg
     assert "(TOP 50)" in msg and "evento-x" in msg
+    assert "LONGSHOT" not in msg
+    assert "LONGSHOT" in format_whales([dict(w, longshot=True)])
     assert len(format_whales([w] * 50)) < 4096
 
 

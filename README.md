@@ -21,6 +21,9 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
 6. **Segunda fuente de oportunidades**: el feed global de trades. Cualquier
    compra individual ≥ `WHALE_MIN_USD` (defecto $50k) se notifica y se lista
    en la web, marcando si el comprador está además en el top 50 vigilado.
+   Si la compra es a cuota improbable (precio ≤ `LONGSHOT_MAX_PRICE`, defecto
+   0.30) se etiqueta **🕵 LONGSHOT**: dinero grande apostando a algo que el
+   mercado cree improbable es la señal más informativa (posible insider).
 
 ## Interfaz
 
@@ -51,6 +54,7 @@ Repos similares consultados como inspiración:
 - [GottaTrackEmAll](https://github.com/thelastbodhisattva/GottaTrackEmAll) — tracker de whales/insiders con scoring de 11 factores; de aquí la idea de registrar los resultados resueltos para medir la tasa de acierto.
 - [darrnhard/polymarket-smart-money](https://github.com/darrnhard/polymarket-smart-money) — análisis de 6,8M eventos de los mejores wallets: los top son bots que entran en 200-2.000 mercados/día; de aquí el filtro anti-bots.
 - [al1enjesus/polymarket-whales](https://github.com/al1enjesus/polymarket-whales) — tracker de trades grandes por polling + Telegram, misma filosofía sin infraestructura.
+- [Awesome-Prediction-Market-Tools](https://github.com/aarora4/Awesome-Prediction-Market-Tools) — catálogo del ecosistema; de las herramientas de detección de insiders (PolyInsider, PolyTrack) viene la etiqueta LONGSHOT.
 
 ## Avisos
 

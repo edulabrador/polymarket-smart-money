@@ -24,6 +24,8 @@ MAX_PRICE_DRIFT = float(os.getenv("MAX_PRICE_DRIFT", "0.15"))
 MAX_POSITIONS_PER_TRADER = int(os.getenv("MAX_POSITIONS_PER_TRADER", "200"))
 # segunda fuente de oportunidades: compras individuales por encima de esto
 WHALE_MIN_USD = float(os.getenv("WHALE_MIN_USD", "50000"))
+# whale comprando a cuota improbable = la mas informativa (posible insider)
+LONGSHOT_MAX_PRICE = float(os.getenv("LONGSHOT_MAX_PRICE", "0.3"))
 WHALES_KEEP = 30  # movimientos whale que guarda el JSON para la web
 SCAN_EVERY_MIN = 10  # cadencia real del bucle en .github/workflows/scan.yml
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
@@ -159,6 +161,7 @@ def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD):
             "eventSlug": t["eventSlug"],
             "timestamp": t["timestamp"],
             "isTop": t["proxyWallet"] in top_wallets,
+            "longshot": t["price"] <= LONGSHOT_MAX_PRICE,
         })
     whales.sort(key=lambda w: -w["timestamp"])
     return whales
@@ -168,9 +171,10 @@ def format_whales(whales, cap=10):
     lines = ["\U0001F40B Compras grandes en Polymarket:"]
     for w in whales[:cap]:
         top = " (TOP 50)" if w["isTop"] else ""
+        insider = " \U0001F575 LONGSHOT" if w.get("longshot") else ""
         quien = w["name"] or w["wallet"][:10]
         lines.append(
-            f"\n• ${w['usd']:,.0f} → {w['title']} [{w['outcome']}] @ {w['price']}"
+            f"\n• ${w['usd']:,.0f} → {w['title']} [{w['outcome']}] @ {w['price']}{insider}"
             f"\n  por {quien}{top}"
             f"\n  https://polymarket.com/event/{w['eventSlug']}")
     if len(whales) > cap:
