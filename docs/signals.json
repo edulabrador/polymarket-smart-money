@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-07-16T22:31:19+00:00",
+ "updatedAt": "2026-07-16T22:41:52+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
@@ -19,7 +19,7 @@
    "endDate": "2026-07-20",
    "curPrice": 0.5835,
    "numTraders": 12,
-   "totalUsd": 8754220.76,
+   "totalUsd": 8754443.33,
    "avgEntryPrice": 0.1768,
    "stale": true,
    "traders": [
@@ -68,7 +68,7 @@
     {
      "wallet": "0x7c1ee865a785de4c00ee90ed86a38489fb8bbab3",
      "name": "CandleHammerDrums",
-     "usd": 189615.37,
+     "usd": 189837.94,
      "avgPrice": 0.5817
     },
     {
@@ -97,7 +97,7 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-16T22:31:19+00:00"
+   "lastSeen": "2026-07-16T22:41:52+00:00"
   },
   {
    "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f:0",
@@ -156,10 +156,23 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-16T22:31:19+00:00"
+   "lastSeen": "2026-07-16T22:41:52+00:00"
   }
  ],
  "whales": [
+  {
+   "tx": "0x3efd8162a60cd0f06542b29b7253739089ac58575a52237ba3aabeaea7f42f19",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 55091.32,
+   "price": 0.466,
+   "title": "New York Mets vs. Philadelphia Phillies",
+   "outcome": "New York Mets",
+   "eventSlug": "mlb-nym-phi-2026-07-16",
+   "timestamp": 1784241005,
+   "isTop": true,
+   "longshot": false
+  },
   {
    "tx": "0x947d6cddcd11db69ca549cdbd4c6ad2bfaf7b272b5b0a11fe16c3f72d0b3b9e6",
    "wallet": "0x84cfffc3f16dcc353094de30d4a45226eccd2f63",
@@ -507,20 +520,8 @@
    "eventSlug": "lol-g2-agal-2026-07-16",
    "timestamp": 1784195762,
    "isTop": false
-  },
-  {
-   "tx": "0x92e6698fcc483b3bdf4ab7ba16fe16bb8650eec32b515687b1188b77ac5eaabb",
-   "wallet": "0x52ecea7b3159f09db589e4f4ee64872fd0bba6f3",
-   "name": "fkgggg2mouzfuria",
-   "usd": 76973.99,
-   "price": 0.9725625942,
-   "title": "LoL: Bilibili Gaming vs T1 (BO1) - Esports World Cup Group C",
-   "outcome": "Bilibili Gaming",
-   "eventSlug": "lol-blg-t1-2026-07-16",
-   "timestamp": 1784195299,
-   "isTop": false
   }
  ],
- "lastWhaleTs": 1784240423,
+ "lastWhaleTs": 1784241005,
  "history": []
 }
