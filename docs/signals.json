@@ -1,60 +1,14 @@
 {
- "updatedAt": "2026-07-16T16:56:38+00:00",
+ "updatedAt": "2026-07-16T17:09:12+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
   "minPositionUsd": 500.0,
   "maxPriceDrift": 0.15,
-  "scanEveryMin": 10
+  "scanEveryMin": 10,
+  "maxPositionsPerTrader": 200
  },
  "signals": [
-  {
-   "id": "0x1d88092b2e151927cc5fc6a02ae3f84fb0551d2b44c6c5c961bd530d53638f9a:1",
-   "title": "Iasi Open: Alevtina Ibragimova vs Paula Badosa",
-   "outcome": "Paula Badosa",
-   "slug": "wta-ibragim-badosa-2026-07-16",
-   "eventSlug": "wta-ibragim-badosa-2026-07-16",
-   "endDate": "2026-07-23",
-   "curPrice": 0.155,
-   "numTraders": 5,
-   "totalUsd": 52973.19,
-   "avgEntryPrice": 0.6793,
-   "stale": false,
-   "traders": [
-    {
-     "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
-     "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
-     "usd": 26557.09,
-     "avgPrice": 0.7029
-    },
-    {
-     "wallet": "0x2005d16a84ceefa912d4e380cd32e7ff827875ea",
-     "name": "RN1",
-     "usd": 16189.47,
-     "avgPrice": 0.6676
-    },
-    {
-     "wallet": "0x204f72f35326db932158cba6adff0b9a1da95e14",
-     "name": "swisstony",
-     "usd": 4098.35,
-     "avgPrice": 0.5505
-    },
-    {
-     "wallet": "0x076daa87c4fe1a85402a9b6b8e0a866224388d4c",
-     "name": "",
-     "usd": 3821.75,
-     "avgPrice": 0.7677
-    },
-    {
-     "wallet": "0x4f29e103339919c4baaea2a60195cf1c8bb27a7e",
-     "name": "0x4f2",
-     "usd": 2306.53,
-     "avgPrice": 0.5718
-    }
-   ],
-   "firstSeen": "2026-07-16T15:49:14+00:00",
-   "lastSeen": "2026-07-16T16:56:38+00:00"
-  },
   {
    "id": "0x7976b8dbacf9077eb1453a62bcefd6ab2df199acd28aad276ff0d920d6992892:0",
    "title": "Will Spain win the 2026 FIFA World Cup?",
@@ -63,9 +17,9 @@
    "eventSlug": "world-cup-winner",
    "endDate": "2026-07-20",
    "curPrice": 0.5835,
-   "numTraders": 13,
-   "totalUsd": 8836792.63,
-   "avgEntryPrice": 0.1795,
+   "numTraders": 12,
+   "totalUsd": 8710246.09,
+   "avgEntryPrice": 0.1747,
    "stale": true,
    "traders": [
     {
@@ -119,14 +73,8 @@
     {
      "wallet": "0x7c1ee865a785de4c00ee90ed86a38489fb8bbab3",
      "name": "CandleHammerDrums",
-     "usd": 144226.2,
+     "usd": 145640.7,
      "avgPrice": 0.5813
-    },
-    {
-     "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
-     "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
-     "usd": 127961.04,
-     "avgPrice": 0.51
     },
     {
      "wallet": "0x3dfb153c197d4c19d3b31c1ecd2c7b6860eeabaf",
@@ -148,7 +96,7 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-16T16:56:38+00:00"
+   "lastSeen": "2026-07-16T17:09:12+00:00"
   },
   {
    "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f:0",
@@ -207,7 +155,8 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-16T16:56:38+00:00"
+   "lastSeen": "2026-07-16T17:09:12+00:00"
   }
- ]
+ ],
+ "history": []
 }
