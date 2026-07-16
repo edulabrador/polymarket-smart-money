@@ -36,7 +36,17 @@ Ver [PLAN.md](PLAN.md).
 - ✅ Fase 2 — notificaciones Telegram (secrets `TELEGRAM_TOKEN` y `TELEGRAM_CHAT_ID`)
 - ✅ Fase 3 — interfaz publicada en GitHub Pages
 - ✅ Fase 4 — cron cada 10 min en el workflow `scan`
-- 🔶 Fase 5 — descarte por deriva de precio y filtros en la web hechos; tasa de acierto pendiente (necesita acumular histórico, que ya queda en el log de git de `signals.json`)
+- ✅ Fase 5 — descarte por deriva de precio (absoluta, `MAX_PRICE_DRIFT`), filtro
+  anti-bots (`MAX_POSITIONS_PER_TRADER`), filtros en la web y tasa de acierto
+  histórica (las señales cuyo mercado resuelve pasan a `history` con acierto/fallo)
+
+## Referencias
+
+Repos similares consultados como inspiración:
+
+- [GottaTrackEmAll](https://github.com/thelastbodhisattva/GottaTrackEmAll) — tracker de whales/insiders con scoring de 11 factores; de aquí la idea de registrar los resultados resueltos para medir la tasa de acierto.
+- [darrnhard/polymarket-smart-money](https://github.com/darrnhard/polymarket-smart-money) — análisis de 6,8M eventos de los mejores wallets: los top son bots que entran en 200-2.000 mercados/día; de aquí el filtro anti-bots.
+- [al1enjesus/polymarket-whales](https://github.com/al1enjesus/polymarket-whales) — tracker de trades grandes por polling + Telegram, misma filosofía sin infraestructura.
 
 ## Avisos
 

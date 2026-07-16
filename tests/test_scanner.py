@@ -5,7 +5,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
-from scanner import detect_signals, format_message, merge_previous
+from scanner import detect_signals, format_message, merge_previous, resolve_history
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -81,16 +81,16 @@ def test_parses_real_api_fixture():
 
 
 def test_price_drift_marks_stale():
-    # entrada media 0.4, precio 0.7 -> deriva 0.3 > 0.15: descartada
+    # entrada media 0.4, precio 0.7 -> deriva +0.3 > 0.15: descartada
     data = traders(5, curPrice=0.7)
     signals = detect_signals(data, min_users=5, min_usd=500, max_drift=0.15)
     assert len(signals) == 1 and signals[0]["stale"] is True
     # entrada 0.4, precio 0.5 -> deriva 0.1: fresca
     signals = detect_signals(traders(5), min_users=5, min_usd=500, max_drift=0.15)
     assert signals[0]["stale"] is False
-    # precio POR DEBAJO de la entrada (traders en perdidas) no es stale
-    signals = detect_signals(traders(5, curPrice=0.2), min_users=5, min_usd=500, max_drift=0.15)
-    assert signals[0]["stale"] is False
+    # la deriva es ABSOLUTA: desplome muy por debajo de la entrada tambien descarta
+    signals = detect_signals(traders(5, curPrice=0.1), min_users=5, min_usd=500, max_drift=0.15)
+    assert signals[0]["stale"] is True
 
 
 def test_stale_signals_sort_last():
@@ -99,6 +99,23 @@ def test_stale_signals_sort_last():
     signals = detect_signals(data, min_users=5, min_usd=500, max_drift=0.15)
     assert [s["id"].split(":")[0] for s in signals] == ["0xnuevo", "0xviejo"]
     assert [s["stale"] for s in signals] == [False, True]
+
+
+def test_resolve_history_records_verdict():
+    signals = detect_signals(traders(5), min_users=5, min_usd=500)
+    merged, _ = merge_previous(signals, [], "T1")
+    sid = merged[0]["id"]
+    ganada = {sid: pos(redeemable=True, curPrice=1)}
+    perdida = {sid: pos(redeemable=True, curPrice=0)}
+    sin_veredicto = {}  # los traders salieron antes de resolver
+
+    h = resolve_history(merged, set(), ganada, "T2")
+    assert len(h) == 1 and h[0]["won"] is True and h[0]["resolvedAt"] == "T2"
+    h = resolve_history(merged, set(), perdida, "T2")
+    assert h[0]["won"] is False
+    assert resolve_history(merged, set(), sin_veredicto, "T2") == []
+    # si la senal sigue activa, no pasa al historico
+    assert resolve_history(merged, {sid}, ganada, "T2") == []
 
 
 def test_format_message():

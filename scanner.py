@@ -15,9 +15,13 @@ from datetime import datetime, timezone
 TOP_N = int(os.getenv("TOP_N", "50"))
 MIN_USERS = int(os.getenv("MIN_USERS", "5"))
 MIN_POSITION_USD = float(os.getenv("MIN_POSITION_USD", "500"))
-# si el precio actual supera la entrada media en mas de esto, la senal se
-# marca "stale": los top ya ganaron ese tramo, llegamos tarde
+# si el precio actual difiere de la entrada media en mas de esto (en cualquier
+# direccion), la senal se marca "stale": al alza los top ya ganaron ese tramo;
+# a la baja la tesis de entrada ya no es la actual (p. ej. partido en vivo)
 MAX_PRICE_DRIFT = float(os.getenv("MAX_PRICE_DRIFT", "0.15"))
+# wallets con mas posiciones abiertas que esto son bots/market makers que
+# apuestan a todo: su "coincidencia" no aporta senal
+MAX_POSITIONS_PER_TRADER = int(os.getenv("MAX_POSITIONS_PER_TRADER", "200"))
 SCAN_EVERY_MIN = 10  # cadencia del cron en .github/workflows/scan.yml
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
@@ -86,7 +90,7 @@ def detect_signals(positions_by_trader, min_users=MIN_USERS, min_usd=MIN_POSITIO
             "numTraders": len(traders),
             "totalUsd": round(total, 2),
             "avgEntryPrice": avg_entry,
-            "stale": m["curPrice"] - avg_entry > max_drift,
+            "stale": abs(m["curPrice"] - avg_entry) > max_drift,
             "traders": traders,
         })
     signals.sort(key=lambda s: (s["stale"], -s["numTraders"], -s["totalUsd"]))
@@ -104,6 +108,28 @@ def merge_previous(signals, previous, now):
         if not old:
             new.append(s)
     return signals, new
+
+
+def resolve_history(previous, active_ids, position_index, now):
+    """Senales que desaparecieron porque su mercado resolvio -> historico con
+    acierto/fallo. position_index: {id: posicion}, incluyendo redeemable.
+    Si los traders salieron antes de resolver (no hay posicion redeemable),
+    no hay veredicto y no se registra."""
+    resolved = []
+    for s in previous:
+        if s["id"] in active_ids:
+            continue
+        p = position_index.get(s["id"])
+        if p is None or not p.get("redeemable"):
+            continue
+        resolved.append({
+            "id": s["id"], "title": s["title"], "outcome": s["outcome"],
+            "eventSlug": s.get("eventSlug", ""),
+            "numTraders": s["numTraders"], "avgEntryPrice": s["avgEntryPrice"],
+            "stale": s.get("stale", False), "firstSeen": s.get("firstSeen", ""),
+            "resolvedAt": now, "won": p["curPrice"] > 0.5,
+        })
+    return resolved
 
 
 def format_message(new_signals, cap=10):
@@ -146,24 +172,45 @@ def main():
         }
         time.sleep(0.3)  # ~50 requests por escaneo: sin prisa, evita rate limits
 
-    signals = detect_signals(positions_by_trader)
-    previous = []
+    # los bots/market makers (cientos de posiciones) no aportan senal
+    scannable = {w: info for w, info in positions_by_trader.items()
+                 if len(info["positions"]) <= MAX_POSITIONS_PER_TRADER}
+    signals = detect_signals(scannable)
+
+    previous, history = [], []
     if SIGNALS_PATH.exists():
-        previous = json.loads(SIGNALS_PATH.read_text(encoding="utf-8")).get("signals", [])
+        doc = json.loads(SIGNALS_PATH.read_text(encoding="utf-8"))
+        previous, history = doc.get("signals", []), doc.get("history", [])
     signals, new = merge_previous(signals, previous, now)
+
+    # indice de TODAS las posiciones (incluidas redeemable) para dar veredicto
+    # a las senales cuyo mercado ya resolvio
+    position_index = {}
+    for info in positions_by_trader.values():
+        for p in info["positions"]:
+            key = f'{p["conditionId"]}:{p["outcomeIndex"]}'
+            if key not in position_index or p.get("redeemable"):
+                position_index[key] = p
+    history += resolve_history(previous, {s["id"] for s in signals}, position_index, now)
 
     SIGNALS_PATH.parent.mkdir(exist_ok=True)
     SIGNALS_PATH.write_text(json.dumps({
         "updatedAt": now,
         "params": {"topN": TOP_N, "minUsers": MIN_USERS, "minPositionUsd": MIN_POSITION_USD,
-                   "maxPriceDrift": MAX_PRICE_DRIFT, "scanEveryMin": SCAN_EVERY_MIN},
+                   "maxPriceDrift": MAX_PRICE_DRIFT, "scanEveryMin": SCAN_EVERY_MIN,
+                   "maxPositionsPerTrader": MAX_POSITIONS_PER_TRADER},
         "signals": signals,
+        "history": history,
     }, indent=1), encoding="utf-8")
 
     fresh_new = [s for s in new if not s["stale"]]
     notify_telegram(fresh_new)
     stale_count = sum(1 for s in signals if s["stale"])
-    print(f"{len(signals)} senales ({stale_count} stale), {len(new)} nuevas, {len(fresh_new)} notificadas")
+    bots = len(positions_by_trader) - len(scannable)
+    aciertos = sum(1 for h in history if h["won"])
+    print(f"{len(signals)} senales ({stale_count} stale), {len(new)} nuevas, "
+          f"{len(fresh_new)} notificadas | {bots} wallets excluidos por bot | "
+          f"historico {aciertos}/{len(history)} aciertos")
     for s in new:
         tag = "STALE" if s["stale"] else "NUEVA"
         print(f"  {tag}: {s['numTraders']} traders -> {s['title']} [{s['outcome']}] @ {s['curPrice']}")
