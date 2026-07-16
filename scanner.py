@@ -22,7 +22,10 @@ MAX_PRICE_DRIFT = float(os.getenv("MAX_PRICE_DRIFT", "0.15"))
 # wallets con mas posiciones abiertas que esto son bots/market makers que
 # apuestan a todo: su "coincidencia" no aporta senal
 MAX_POSITIONS_PER_TRADER = int(os.getenv("MAX_POSITIONS_PER_TRADER", "200"))
-SCAN_EVERY_MIN = 10  # cadencia del cron en .github/workflows/scan.yml
+# segunda fuente de oportunidades: compras individuales por encima de esto
+WHALE_MIN_USD = float(os.getenv("WHALE_MIN_USD", "50000"))
+WHALES_KEEP = 30  # movimientos whale que guarda el JSON para la web
+SCAN_EVERY_MIN = 10  # cadencia real del bucle en .github/workflows/scan.yml
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 SIGNALS_PATH = pathlib.Path(__file__).parent / "docs" / "signals.json"
@@ -33,6 +36,8 @@ LEADERBOARD_URL = ("https://data-api.polymarket.com/v1/leaderboard"
 # tiene al menos X tokens (precio <= 1), asi que sirve de prefiltro seguro.
 POSITIONS_URL = ("https://data-api.polymarket.com/positions"
                  "?user={wallet}&sizeThreshold={threshold}&limit=500")
+TRADES_URL = ("https://data-api.polymarket.com/trades"
+              "?takerOnly=true&filterType=CASH&filterAmount={amount}&limit=100")
 
 
 def get_json(url, retries=3):
@@ -132,6 +137,47 @@ def resolve_history(previous, active_ids, position_index, now):
     return resolved
 
 
+def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD):
+    """Compras nuevas (timestamp > last_ts) por encima de min_usd USD.
+    Los SELL no son oportunidad de entrada y se ignoran. isTop marca si el
+    comprador esta ademas en el leaderboard vigilado."""
+    whales, seen = [], set()
+    for t in trades:
+        usd = t["size"] * t["price"]
+        if (t["side"] != "BUY" or t["timestamp"] <= last_ts
+                or usd < min_usd or t["transactionHash"] in seen):
+            continue
+        seen.add(t["transactionHash"])
+        whales.append({
+            "tx": t["transactionHash"],
+            "wallet": t["proxyWallet"],
+            "name": t.get("name") or t.get("pseudonym") or "",
+            "usd": round(usd, 2),
+            "price": t["price"],
+            "title": t["title"],
+            "outcome": t["outcome"],
+            "eventSlug": t["eventSlug"],
+            "timestamp": t["timestamp"],
+            "isTop": t["proxyWallet"] in top_wallets,
+        })
+    whales.sort(key=lambda w: -w["timestamp"])
+    return whales
+
+
+def format_whales(whales, cap=10):
+    lines = ["\U0001F40B Compras grandes en Polymarket:"]
+    for w in whales[:cap]:
+        top = " (TOP 50)" if w["isTop"] else ""
+        quien = w["name"] or w["wallet"][:10]
+        lines.append(
+            f"\n• ${w['usd']:,.0f} → {w['title']} [{w['outcome']}] @ {w['price']}"
+            f"\n  por {quien}{top}"
+            f"\n  https://polymarket.com/event/{w['eventSlug']}")
+    if len(whales) > cap:
+        lines.append(f"\n…y {len(whales) - cap} mas")
+    return "\n".join(lines)
+
+
 def format_message(new_signals, cap=10):
     lines = ["\U0001F6A8 Nuevas coincidencias de top traders en Polymarket:"]
     for s in new_signals[:cap]:
@@ -145,12 +191,12 @@ def format_message(new_signals, cap=10):
     return "\n".join(lines)
 
 
-def notify_telegram(new_signals):
-    if not (TELEGRAM_TOKEN and TELEGRAM_CHAT_ID and new_signals):
+def send_telegram(text):
+    if not (TELEGRAM_TOKEN and TELEGRAM_CHAT_ID and text):
         return  # sin secrets (p. ej. en local) se omite sin fallar
     body = json.dumps({
         "chat_id": TELEGRAM_CHAT_ID,
-        "text": format_message(new_signals),
+        "text": text,
         "disable_web_page_preview": True,
     }).encode()
     req = urllib.request.Request(
@@ -177,11 +223,19 @@ def main():
                  if len(info["positions"]) <= MAX_POSITIONS_PER_TRADER}
     signals = detect_signals(scannable)
 
-    previous, history = [], []
+    doc = {}
     if SIGNALS_PATH.exists():
         doc = json.loads(SIGNALS_PATH.read_text(encoding="utf-8"))
-        previous, history = doc.get("signals", []), doc.get("history", [])
+    previous, history = doc.get("signals", []), doc.get("history", [])
     signals, new = merge_previous(signals, previous, now)
+
+    # segunda fuente: compras individuales gigantes (feed global de trades)
+    trades = get_json(TRADES_URL.format(amount=int(WHALE_MIN_USD)))
+    last_whale_ts = doc.get("lastWhaleTs", 0)
+    new_whales = detect_whales(trades, last_whale_ts, set(positions_by_trader))
+    first_run = "lastWhaleTs" not in doc  # primera vez: fijar marca sin avisar
+    whales = (new_whales + doc.get("whales", []))[:WHALES_KEEP]
+    last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
 
     # indice de TODAS las posiciones (incluidas redeemable) para dar veredicto
     # a las senales cuyo mercado ya resolvio
@@ -198,18 +252,25 @@ def main():
         "updatedAt": now,
         "params": {"topN": TOP_N, "minUsers": MIN_USERS, "minPositionUsd": MIN_POSITION_USD,
                    "maxPriceDrift": MAX_PRICE_DRIFT, "scanEveryMin": SCAN_EVERY_MIN,
-                   "maxPositionsPerTrader": MAX_POSITIONS_PER_TRADER},
+                   "maxPositionsPerTrader": MAX_POSITIONS_PER_TRADER,
+                   "whaleMinUsd": WHALE_MIN_USD},
         "signals": signals,
+        "whales": whales,
+        "lastWhaleTs": last_whale_ts,
         "history": history,
     }, indent=1), encoding="utf-8")
 
     fresh_new = [s for s in new if not s["stale"]]
-    notify_telegram(fresh_new)
+    if fresh_new:
+        send_telegram(format_message(fresh_new))
+    if new_whales and not first_run:
+        send_telegram(format_whales(new_whales))
     stale_count = sum(1 for s in signals if s["stale"])
     bots = len(positions_by_trader) - len(scannable)
     aciertos = sum(1 for h in history if h["won"])
     print(f"{len(signals)} senales ({stale_count} stale), {len(new)} nuevas, "
-          f"{len(fresh_new)} notificadas | {bots} wallets excluidos por bot | "
+          f"{len(fresh_new)} notificadas | {len(new_whales)} whales nuevas | "
+          f"{bots} wallets excluidos por bot | "
           f"historico {aciertos}/{len(history)} aciertos")
     for s in new:
         tag = "STALE" if s["stale"] else "NUEVA"

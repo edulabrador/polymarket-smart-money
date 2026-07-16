@@ -9,14 +9,18 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
 
 ## Cómo funciona
 
-1. Cada ~10 min, un cron de GitHub Actions descarga el leaderboard de PnL (top 50).
+1. Cada 10 min (bucle en un job de Actions que el cron relanza cada ~3 h;
+   en repos públicos los minutos son gratis), descarga el leaderboard de PnL (top 50).
 2. Para cada trader, descarga sus posiciones abiertas (`data-api.polymarket.com/positions`).
 3. Agrupa por `(conditionId, outcome)` y filtra: posición mínima en USD, mercado no resuelto.
 4. Si ≥ `MIN_USERS` traders top coinciden → **señal**: se notifica por Telegram y se
    publica en la interfaz web (GitHub Pages).
-5. Si el precio actual ya supera la entrada media en más de `MAX_PRICE_DRIFT`
-   (defecto 0.15), la señal se marca **descartada**: los top ya capturaron ese
-   tramo y llegamos tarde. Se muestra atenuada en la web y no se notifica.
+5. Si el precio actual difiere de la entrada media en más de `MAX_PRICE_DRIFT`
+   (defecto ±0.15), la señal se marca **descartada**: la tesis de entrada ya no
+   es la actual. Se muestra atenuada en la web y no se notifica.
+6. **Segunda fuente de oportunidades**: el feed global de trades. Cualquier
+   compra individual ≥ `WHALE_MIN_USD` (defecto $50k) se notifica y se lista
+   en la web, marcando si el comprador está además en el top 50 vigilado.
 
 ## Interfaz
 

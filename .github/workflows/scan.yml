@@ -2,22 +2,39 @@ name: scan
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"
+    # el cron solo relanza el bucle (GitHub lo estrangula sin problema);
+    # la cadencia real de escaneo la marca el sleep de dentro del job
+    - cron: "17 */3 * * *"
+concurrency:
+  group: scan
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
   scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
     steps:
       - uses: actions/checkout@v4
-      - run: python scanner.py
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      - run: |
+      - name: bucle de escaneo cada 10 min (~5h30; el cron lo relanza)
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/signals.json
-          git commit -m "scan: actualiza signals.json" || echo "sin cambios"
-          git pull --rebase
-          git push
+          fails=0
+          for i in $(seq 1 30); do
+            if python scanner.py; then
+              fails=0
+            else
+              fails=$((fails+1))
+              echo "fallo $fails/3"
+              if [ $fails -ge 3 ]; then exit 1; fi
+            fi
+            git add docs/signals.json
+            git commit -m "scan: actualiza signals.json" || true
+            git pull --rebase || true
+            git push || true
+            sleep 600
+          done

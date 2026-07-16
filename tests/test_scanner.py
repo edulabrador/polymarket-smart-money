@@ -5,7 +5,8 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
-from scanner import detect_signals, format_message, merge_previous, resolve_history
+from scanner import (detect_signals, detect_whales, format_message,
+                     format_whales, merge_previous, resolve_history)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -126,6 +127,34 @@ def test_format_message():
     assert "[Yes]" in msg
     assert "https://polymarket.com/event/evento" in msg
     assert len(format_message(signals * 30)) < 4096  # limite de Telegram
+
+
+def test_detect_whales_from_real_fixture():
+    trades = json.loads((FIXTURES / "trades.json").read_text(encoding="utf-8"))
+    top = {trades[0]["proxyWallet"]}
+    whales = detect_whales(trades, last_ts=0, top_wallets=top, min_usd=10000)
+    assert whales, "el fixture tiene compras > $10k"
+    assert all(w["usd"] >= 10000 for w in whales)
+    assert all(w["timestamp"] >= whales[-1]["timestamp"] for w in whales)  # desc
+    # los SELL nunca pasan
+    sells = [t for t in trades if t["side"] == "SELL"]
+    assert all(w["tx"] not in {s["transactionHash"] for s in sells} for w in whales)
+    # marca de agua: nada anterior o igual a last_ts
+    newest = whales[0]["timestamp"]
+    assert detect_whales(trades, last_ts=newest, top_wallets=set(), min_usd=10000) == []
+    # isTop refleja pertenencia al leaderboard
+    assert any(w["isTop"] for w in whales if w["wallet"] in top) or not any(
+        w["wallet"] in top for w in whales)
+
+
+def test_format_whales():
+    w = {"tx": "0x1", "wallet": "0xabcdef1234", "name": "bigfish", "usd": 75000.0,
+         "price": 0.45, "title": "Mercado X", "outcome": "Yes",
+         "eventSlug": "evento-x", "timestamp": 1, "isTop": True}
+    msg = format_whales([w])
+    assert "$75,000" in msg and "Mercado X" in msg and "bigfish" in msg
+    assert "(TOP 50)" in msg and "evento-x" in msg
+    assert len(format_whales([w] * 50)) < 4096
 
 
 if __name__ == "__main__":

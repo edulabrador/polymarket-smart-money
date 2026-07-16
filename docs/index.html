@@ -69,6 +69,16 @@
   #historial { margin-top: 2rem; border-top: 1px solid var(--borde); padding-top: 1rem; }
   .acierto { color: var(--ok); font-weight: 700; }
   .fallo { color: var(--aviso); font-weight: 700; }
+  #whales-titulo { font-size: 1.05rem; margin: 2rem 0 .6rem;
+    border-top: 1px solid var(--borde); padding-top: 1.2rem; }
+  .whale { background: var(--card); border: 1px solid var(--borde);
+    border-radius: .7rem; padding: .55rem .9rem; margin-bottom: .45rem;
+    font-size: .88rem; color: var(--sutil); }
+  .whale a { color: var(--texto); text-decoration: none; }
+  .whale a:hover { text-decoration: underline; }
+  .whale-usd { color: var(--acento); font-weight: 800; margin-right: .4rem; }
+  .top-badge { background: var(--ok); color: var(--card); border-radius: 999px;
+    padding: .05rem .5rem; font-size: .72rem; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -87,6 +97,8 @@
   </div>
   <div id="lista"></div>
   <p id="vacio" hidden></p>
+  <h2 id="whales-titulo" hidden>🐋 Compras grandes recientes</h2>
+  <div id="whales"></div>
   <details id="historial" hidden>
     <summary></summary>
     <ul id="historial-lista"></ul>
@@ -156,6 +168,24 @@ fetch('signals.json').then(r => r.json()).then(d => {
     `vigila el top <b>${d.params.topN}</b> por PnL (30 días) · ` +
     `señal a partir de <b>${d.params.minUsers} traders</b> con posición ≥ <b>${usd(d.params.minPositionUsd)}</b>` +
     (hist.length ? ` · histórico <b>${aciertos}/${hist.length} aciertos (${Math.round(100 * aciertos / hist.length)}%)</b>` : '');
+
+  const whales = d.whales ?? [];
+  if (whales.length) {
+    document.getElementById('whales-titulo').hidden = false;
+    document.getElementById('whales').innerHTML = whales.map(w => {
+      const horas = Math.floor((Date.now() / 1000 - w.timestamp) / 3600);
+      const hace = horas < 1 ? 'hace &lt;1 h' : `hace ${horas} h`;
+      const quien = esc(w.name || w.wallet.slice(0, 10) + '…');
+      return `<div class="whale">
+        <span class="whale-usd">${usd(w.usd)}</span>
+        <a href="https://polymarket.com/event/${encodeURIComponent(w.eventSlug)}"
+           target="_blank" rel="noopener">${esc(w.title)}</a>
+        <span class="pastilla">${esc(w.outcome)}</span> @ ${w.price} ·
+        <a href="https://polymarket.com/profile/${encodeURIComponent(w.wallet)}"
+           target="_blank" rel="noopener">${quien}</a>${w.isTop ? ' <span class="top-badge">TOP 50</span>' : ''}
+        · ${hace}</div>`;
+    }).join('');
+  }
 
   if (hist.length) {
     const histEl = document.getElementById('historial');
