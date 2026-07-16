@@ -1,12 +1,13 @@
 {
- "updatedAt": "2026-07-16T17:09:12+00:00",
+ "updatedAt": "2026-07-16T17:29:41+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
   "minPositionUsd": 500.0,
   "maxPriceDrift": 0.15,
   "scanEveryMin": 10,
-  "maxPositionsPerTrader": 200
+  "maxPositionsPerTrader": 200,
+  "whaleMinUsd": 50000.0
  },
  "signals": [
   {
@@ -18,8 +19,8 @@
    "endDate": "2026-07-20",
    "curPrice": 0.5835,
    "numTraders": 12,
-   "totalUsd": 8710246.09,
-   "avgEntryPrice": 0.1747,
+   "totalUsd": 8711696.7,
+   "avgEntryPrice": 0.1748,
    "stale": true,
    "traders": [
     {
@@ -65,16 +66,16 @@
      "avgPrice": 0.3028
     },
     {
+     "wallet": "0x7c1ee865a785de4c00ee90ed86a38489fb8bbab3",
+     "name": "CandleHammerDrums",
+     "usd": 147091.31,
+     "avgPrice": 0.5813
+    },
+    {
      "wallet": "0xb61b2079b95f6b7476fd3203e0274ffb93308a06",
      "name": "hot2trot",
      "usd": 145874.98,
      "avgPrice": 0.581
-    },
-    {
-     "wallet": "0x7c1ee865a785de4c00ee90ed86a38489fb8bbab3",
-     "name": "CandleHammerDrums",
-     "usd": 145640.7,
-     "avgPrice": 0.5813
     },
     {
      "wallet": "0x3dfb153c197d4c19d3b31c1ecd2c7b6860eeabaf",
@@ -96,7 +97,7 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-16T17:09:12+00:00"
+   "lastSeen": "2026-07-16T17:29:41+00:00"
   },
   {
    "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f:0",
@@ -155,8 +156,371 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-16T17:09:12+00:00"
+   "lastSeen": "2026-07-16T17:29:41+00:00"
   }
  ],
+ "whales": [
+  {
+   "tx": "0x807882154a2d2378138cbbf5d5c6329ef46dab0e21c84f62fb79edceacdb65b7",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 51518.33,
+   "price": 0.69,
+   "title": "Iasi Open: Alevtina Ibragimova vs Paula Badosa",
+   "outcome": "Paula Badosa",
+   "eventSlug": "wta-ibragim-badosa-2026-07-16",
+   "timestamp": 1784218616,
+   "isTop": true
+  },
+  {
+   "tx": "0x27044f117324371de1325b80e974d036ede629ab2471444c535e96fdb278b34b",
+   "wallet": "0x547f2917d51f2e63ab382dcf641d4e0240162937",
+   "name": "0x547f2917D51F2e63ab382DCF641d4E0240162937-1782667852436",
+   "usd": 142777.58,
+   "price": 0.869985239,
+   "title": "ODI Series England vs India: England vs India",
+   "outcome": "England",
+   "eventSlug": "crint-gbr2-ind4-2026-07-16",
+   "timestamp": 1784217541,
+   "isTop": false
+  },
+  {
+   "tx": "0x3221b3e0aaa1f77aa4ab719345f512043ad29dd59057a81d70722567d3912b1d",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 57241.22,
+   "price": 0.75,
+   "title": "Dota 2: PARIVISION vs Rune Eaters - Game 2 Winner",
+   "outcome": "PARIVISION",
+   "eventSlug": "dota2-pari-re-2026-07-17",
+   "timestamp": 1784217397,
+   "isTop": true
+  },
+  {
+   "tx": "0x1af203de65564eb841b86864d6c3a92f675118beb79f83fff822127151138ea6",
+   "wallet": "0x2e25b222e2080c377fc1fb2b9f926315f0f4d49e",
+   "name": "Sparkling8899",
+   "usd": 150037.0,
+   "price": 0.59,
+   "title": "Spain vs. Argentina: Team to Advance",
+   "outcome": "Spain",
+   "eventSlug": "fifwc-esp-arg-2026-07-19-more-markets",
+   "timestamp": 1784216312,
+   "isTop": true
+  },
+  {
+   "tx": "0x7b7895afacfadea57fd97db5620a613eaa3e0ada4b242fc9ca64c75254ede796",
+   "wallet": "0x52ecea7b3159f09db589e4f4ee64872fd0bba6f3",
+   "name": "fkgggg2mouzfuria",
+   "usd": 74953.25,
+   "price": 0.999,
+   "title": "LoL: G2 Esports vs Dplus KIA - Game 1 Winner",
+   "outcome": "Dplus KIA",
+   "eventSlug": "lol-g2-dk-2026-07-16",
+   "timestamp": 1784211275,
+   "isTop": false
+  },
+  {
+   "tx": "0xa6de9342da42279b5cb216e57935eeec01bdd4c3ff58f29b5e525adceb6f8c59",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 72239.31,
+   "price": 0.58,
+   "title": "Will Spain win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "eventSlug": "world-cup-winner",
+   "timestamp": 1784209654,
+   "isTop": true
+  },
+  {
+   "tx": "0xe4367a4452f328fd96adacc577013c5495afbbfb1f97fcacf4666ca118ec93a6",
+   "wallet": "0x7ec87edb28f85a9a7a981ffe527ef87e611d3a77",
+   "name": "chovyyyyy",
+   "usd": 77790.4,
+   "price": 0.999,
+   "title": "LoL: GAM Esports vs T1 - Game 2 Winner",
+   "outcome": "T1",
+   "eventSlug": "lol-gam-t1-2026-07-16",
+   "timestamp": 1784207381,
+   "isTop": false
+  },
+  {
+   "tx": "0x9a2fb61d22472a46c1ffc824ec537ef557fa3942b7a9157936743e58d353707b",
+   "wallet": "0x7d6d24d5d9393cc2dd566a95a1cccbe0aa882654",
+   "name": "0xe11Ff8cd2718F51a4d9403D166c20eaAAbE253F4-1777047101622",
+   "usd": 57627.59,
+   "price": 0.5566866014,
+   "title": "Istanbul 2: Vera Zvonareva vs Viktoria Hruncakova",
+   "outcome": "Viktoria Hruncakova",
+   "eventSlug": "wta-zvonare-hruncak-2026-07-16",
+   "timestamp": 1784206493,
+   "isTop": false
+  },
+  {
+   "tx": "0x4aa4ea221c31ffdad82c4d65816133700168628bb7a8f638d4b756e6d6aa104e",
+   "wallet": "0xd7acb3a203ade83e04cf47f3b11c60ed2f3bf764",
+   "name": "pandasifu",
+   "usd": 150329.77,
+   "price": 0.5,
+   "title": "Will France win on 2026-07-18?",
+   "outcome": "Yes",
+   "eventSlug": "fifwc-fra-eng-2026-07-18",
+   "timestamp": 1784202959,
+   "isTop": false
+  },
+  {
+   "tx": "0xbcdc62cd903656184654dd53e0561712230b685f92671085e0f2e322e9492137",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 69833.62,
+   "price": 0.87,
+   "title": "LoL: JD Gaming vs MIBR.LOS (BO3) - Esports World Cup Group D",
+   "outcome": "JD Gaming",
+   "eventSlug": "lol-jdg-milo-2026-07-16",
+   "timestamp": 1784202394,
+   "isTop": true
+  },
+  {
+   "tx": "0x473b0b8e8558b46e414b69a3aec49cd1b2c67e5645ba176f323d5dec39bcf4c3",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 76708.17,
+   "price": 0.77,
+   "title": "Game Handicap: T1 (-1.5) vs GAM Esports (+1.5)",
+   "outcome": "T1",
+   "eventSlug": "lol-gam-t1-2026-07-16",
+   "timestamp": 1784201329,
+   "isTop": true
+  },
+  {
+   "tx": "0xd0a23e50eddfbcde7bebf57f4b6bda67a856c40cb5c71d7c8db58a41a5d225dd",
+   "wallet": "0xcd30f4698c6f5f3829893e68e183a8e5ea18f316",
+   "name": "111111111115",
+   "usd": 105000.0,
+   "price": 0.35,
+   "title": "LoL: Hanwha Life Esports vs JD Gaming (BO1) - Esports World Cup Group D",
+   "outcome": "JD Gaming",
+   "eventSlug": "lol-hle1-jdg-2026-07-16",
+   "timestamp": 1784196644,
+   "isTop": false
+  },
+  {
+   "tx": "0x3770785c7c3bed7463bf615f2f011a849b170b4dfa716ce82ee824ffffcc08a2",
+   "wallet": "0x0e5bd76779e74304d08e759072abf126d87da593",
+   "name": "JAHODA",
+   "usd": 299100.0,
+   "price": 0.997,
+   "title": "Will the Fed increase interest rates by 50+ bps after the July 2026 meeting?",
+   "outcome": "No",
+   "eventSlug": "fed-decision-in-july-181",
+   "timestamp": 1784196424,
+   "isTop": false
+  },
+  {
+   "tx": "0xb999ad4cae525bfa81347a0d69a989991c2194810ac058da4cc83414f9fedf27",
+   "wallet": "0x4be1fa92e6ceaf886aac0bbec3be6c527133aa70",
+   "name": "Eztennis",
+   "usd": 75900.0,
+   "price": 0.33,
+   "title": "LoL: Hanwha Life Esports vs JD Gaming (BO1) - Esports World Cup Group D",
+   "outcome": "JD Gaming",
+   "eventSlug": "lol-hle1-jdg-2026-07-16",
+   "timestamp": 1784196383,
+   "isTop": false
+  },
+  {
+   "tx": "0xdc223007ef670426e11fa4e4771931ae3fbaea1cec89091be6a037a0397aa6bf",
+   "wallet": "0x7583d5f8a1031ff4afcdc6db4e2143bfd41b4df2",
+   "name": "0x7583d5f8A1031fF4AfCDc6db4e2143bFd41b4dF2-1783673385090",
+   "usd": 86257.68,
+   "price": 0.4273646483,
+   "title": "LoL: G2 Esports vs AG.AL (BO1) - Esports World Cup Group A",
+   "outcome": "G2 Esports",
+   "eventSlug": "lol-g2-agal-2026-07-16",
+   "timestamp": 1784195762,
+   "isTop": false
+  },
+  {
+   "tx": "0x92e6698fcc483b3bdf4ab7ba16fe16bb8650eec32b515687b1188b77ac5eaabb",
+   "wallet": "0x52ecea7b3159f09db589e4f4ee64872fd0bba6f3",
+   "name": "fkgggg2mouzfuria",
+   "usd": 76973.99,
+   "price": 0.9725625942,
+   "title": "LoL: Bilibili Gaming vs T1 (BO1) - Esports World Cup Group C",
+   "outcome": "Bilibili Gaming",
+   "eventSlug": "lol-blg-t1-2026-07-16",
+   "timestamp": 1784195299,
+   "isTop": false
+  },
+  {
+   "tx": "0x09239a6f89b8b95cde22c568c3747e7174ffff553a188304faea43e32b4e0466",
+   "wallet": "0xee00ba338c59557141789b127927a55f5cc5cea1",
+   "name": "S-Works",
+   "usd": 162791.74,
+   "price": 0.9,
+   "title": "LoL: Bilibili Gaming vs T1 (BO1) - Esports World Cup Group C",
+   "outcome": "Bilibili Gaming",
+   "eventSlug": "lol-blg-t1-2026-07-16",
+   "timestamp": 1784195278,
+   "isTop": false
+  },
+  {
+   "tx": "0x4bca978442df3528e387a3b1f48988e850e62c69a51527af094e12533ce6d9db",
+   "wallet": "0xc97b0b2a2547bb3ed57167092ef8a6e816c347e5",
+   "name": "0xC97b0b2A2547bB3eD57167092EF8a6e816C347E5-1770003388001",
+   "usd": 54322.74,
+   "price": 0.985,
+   "title": "Will WTI Crude Oil (WTI) hit (LOW) $60 in July?",
+   "outcome": "No",
+   "eventSlug": "what-price-will-wti-hit-in-july-2026",
+   "timestamp": 1784193488,
+   "isTop": false
+  },
+  {
+   "tx": "0xc686e01cfc123174054f26ea0094a107686ca5c90f920fed64719c10ff129418",
+   "wallet": "0xcd30f4698c6f5f3829893e68e183a8e5ea18f316",
+   "name": "111111111115",
+   "usd": 118000.0,
+   "price": 0.59,
+   "title": "LoL: Bilibili Gaming vs T1 (BO1) - Esports World Cup Group C",
+   "outcome": "T1",
+   "eventSlug": "lol-blg-t1-2026-07-16",
+   "timestamp": 1784193473,
+   "isTop": false
+  },
+  {
+   "tx": "0x926c916131488057449539986caaf3b75d4aa7fc2e1e0f8c3948c50048665cca",
+   "wallet": "0x701187150980c2421bc3c87a74dbdef31d75c6da",
+   "name": "Electricy",
+   "usd": 91327.01,
+   "price": 0.581,
+   "title": "Will Argentina win the 2026 FIFA World Cup?",
+   "outcome": "No",
+   "eventSlug": "world-cup-winner",
+   "timestamp": 1784173529,
+   "isTop": false
+  },
+  {
+   "tx": "0x90c6490979d806d049f8aa91d0b88f3439b51f238c2c76ca0211faec771e312d",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 58902.46,
+   "price": 0.579,
+   "title": "Will Argentina win the 2026 FIFA World Cup?",
+   "outcome": "No",
+   "eventSlug": "world-cup-winner",
+   "timestamp": 1784167748,
+   "isTop": true
+  },
+  {
+   "tx": "0xde0713ceb086c8763f8d146bb947a2b2519fc88bcee43dfd03089e2a1ad3495f",
+   "wallet": "0xd49f5853b265bb1c30f25d60d891f7f1749a4507",
+   "name": "juliannagelsmann",
+   "usd": 240000.0,
+   "price": 0.422,
+   "title": "Will Argentina win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "eventSlug": "world-cup-winner",
+   "timestamp": 1784155732,
+   "isTop": false
+  },
+  {
+   "tx": "0x84cfdc54ca0270c0a9c19fbf2ddd2ddb7ced44a52a224f843e6138dafeea36a7",
+   "wallet": "0x547f2917d51f2e63ab382dcf641d4e0240162937",
+   "name": "0x547f2917D51F2e63ab382DCF641d4E0240162937-1782667852436",
+   "usd": 94379.98,
+   "price": 0.6,
+   "title": "Golden State Valkyries vs. Indiana Fever",
+   "outcome": "Indiana Fever",
+   "eventSlug": "wnba-gsv-ind-2026-07-15",
+   "timestamp": 1784155348,
+   "isTop": false
+  },
+  {
+   "tx": "0x5ab2fc50d8639c3882e16775b74b521843e093e7717790b5eb54efcce0449c71",
+   "wallet": "0xf28e42d20e4826f2b10a24bc952001697947cab2",
+   "name": "ethanaz",
+   "usd": 54538.63,
+   "price": 0.57,
+   "title": "NBA Summer League: Cleveland Cavaliers vs. New Orleans Pelicans",
+   "outcome": "New Orleans Pelicans",
+   "eventSlug": "nbasl-cle-nop-2026-07-15",
+   "timestamp": 1784154722,
+   "isTop": false
+  },
+  {
+   "tx": "0x23dcb1e83dab719dcf752bcbce96e6864f237b665616eab73299c5b1b3d4ef6b",
+   "wallet": "0xfe787d2da716d60e8acff57fb87eb13cd4d10319",
+   "name": "ferrariChampions2026",
+   "usd": 63737.16,
+   "price": 0.67,
+   "title": "NBA Summer League: Cleveland Cavaliers vs. New Orleans Pelicans",
+   "outcome": "New Orleans Pelicans",
+   "eventSlug": "nbasl-cle-nop-2026-07-15",
+   "timestamp": 1784153603,
+   "isTop": false
+  },
+  {
+   "tx": "0x2067439c45107eb4a9f70f65a1cd6bb23087c9aab4670b9b3e9603eae610fadb",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 68000.0,
+   "price": 0.68,
+   "title": "NBA Summer League: Cleveland Cavaliers vs. New Orleans Pelicans",
+   "outcome": "New Orleans Pelicans",
+   "eventSlug": "nbasl-cle-nop-2026-07-15",
+   "timestamp": 1784153515,
+   "isTop": true
+  },
+  {
+   "tx": "0x8cb56c0129e628dfe965ae4fd8dcefd6760bf923ebdce928dc903dd15495c1f8",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 154535.96,
+   "price": 0.42,
+   "title": "Will Spain win the 2026 FIFA World Cup?",
+   "outcome": "No",
+   "eventSlug": "world-cup-winner",
+   "timestamp": 1784153305,
+   "isTop": true
+  },
+  {
+   "tx": "0xf2848c4657a9928387553058961d45a3a8ade2e78911b724c474a0c00b0410e7",
+   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
+   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
+   "usd": 367846.08,
+   "price": 0.42,
+   "title": "Will Argentina win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "eventSlug": "world-cup-winner",
+   "timestamp": 1784153296,
+   "isTop": true
+  },
+  {
+   "tx": "0x6e1af2cd64b9e225d786869be34536127d227e18773defe9d291e325fde4d2c6",
+   "wallet": "0x28aa2a306ac9b8478e35a748032f4762f35828f5",
+   "name": "Whitelied91",
+   "usd": 83361.07,
+   "price": 0.933,
+   "title": "China x Taiwan military clash before 2027?",
+   "outcome": "No",
+   "eventSlug": "china-x-taiwan-military-clash-before-2027",
+   "timestamp": 1784152103,
+   "isTop": false
+  },
+  {
+   "tx": "0x2641467d7c6e8a6e4419b1e079882ad46c7d2f43342c8e6c7800dbdabfba3245",
+   "wallet": "0xd9670ea74384c1e1b9dc1e4267ffadaf4cdd1409",
+   "name": "crypto-ericwu2",
+   "usd": 59301.84,
+   "price": 0.42,
+   "title": "Will Argentina win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "eventSlug": "world-cup-winner",
+   "timestamp": 1784150714,
+   "isTop": false
+  }
+ ],
+ "lastWhaleTs": 1784218616,
  "history": []
 }
