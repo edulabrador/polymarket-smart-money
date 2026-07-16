@@ -65,6 +65,28 @@ def main():
     assert positions, "No se pudieron obtener posiciones:\n" + "\n".join(report)
     (FIXTURES / "positions.json").write_text(json.dumps(positions, indent=1), encoding="utf-8")
 
+    report.append("")
+    trades = None
+    for url in [
+        "https://data-api.polymarket.com/trades?limit=5&takerOnly=true&filterType=CASH&filterAmount=10000",
+        "https://data-api.polymarket.com/trades?limit=5",
+        "https://clob.polymarket.com/trades?limit=5",
+    ]:
+        try:
+            data = get(url)
+        except Exception as e:
+            report.append(f"- FALLO `{url}` -> {e}")
+            continue
+        entries = data if isinstance(data, list) else data.get("data")
+        if entries:
+            report.append(f"- OK `{url}` -> {len(entries)} trades, campos: {sorted(entries[0].keys())}")
+            if trades is None:
+                trades = entries
+        else:
+            report.append(f"- VACIO `{url}` -> {str(data)[:200]}")
+    if trades:
+        (FIXTURES / "trades.json").write_text(json.dumps(trades, indent=1), encoding="utf-8")
+
     pathlib.Path("NOTES.md").write_text("\n".join(report) + "\n", encoding="utf-8")
     print("\n".join(report))
 
