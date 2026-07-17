@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-07-17T05:51:21+00:00",
+ "updatedAt": "2026-07-17T06:01:52+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
@@ -19,7 +19,7 @@
    "endDate": "2026-07-20",
    "curPrice": 0.5835,
    "numTraders": 12,
-   "totalUsd": 8874567.29,
+   "totalUsd": 8874935.25,
    "avgEntryPrice": 0.1823,
    "stale": true,
    "traders": [
@@ -68,7 +68,7 @@
     {
      "wallet": "0x7c1ee865a785de4c00ee90ed86a38489fb8bbab3",
      "name": "CandleHammerDrums",
-     "usd": 309961.9,
+     "usd": 310329.86,
      "avgPrice": 0.5821
     },
     {
@@ -97,7 +97,7 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-17T05:51:21+00:00"
+   "lastSeen": "2026-07-17T06:01:52+00:00"
   },
   {
    "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f:0",
@@ -156,10 +156,23 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-17T05:51:21+00:00"
+   "lastSeen": "2026-07-17T06:01:52+00:00"
   }
  ],
  "whales": [
+  {
+   "tx": "0x9d40368d319b0c28c1de7fd499ae1a8d0d1550d11384365b0fd0e2b576f72679",
+   "wallet": "0xed107a85a4585a381e48c7f7ca4144909e7dd2e5",
+   "name": "elmcap2",
+   "usd": 173158.57,
+   "price": 0.999,
+   "title": "World Cup: Unbeaten Champion?",
+   "outcome": "Yes",
+   "eventSlug": "world-cup-unbeaten-champion",
+   "timestamp": 1784267767,
+   "isTop": false,
+   "longshot": false
+  },
   {
    "tx": "0x81eb335b85975a6e40b6e1bca7c37ad15d78cad186b7176bd840e5205f54af07",
    "wallet": "0xfffadf38a520cd5a0035ff52d7fceb436a08864b",
@@ -511,20 +524,8 @@
    "eventSlug": "lol-gam-t1-2026-07-16",
    "timestamp": 1784201329,
    "isTop": true
-  },
-  {
-   "tx": "0xd0a23e50eddfbcde7bebf57f4b6bda67a856c40cb5c71d7c8db58a41a5d225dd",
-   "wallet": "0xcd30f4698c6f5f3829893e68e183a8e5ea18f316",
-   "name": "111111111115",
-   "usd": 105000.0,
-   "price": 0.35,
-   "title": "LoL: Hanwha Life Esports vs JD Gaming (BO1) - Esports World Cup Group D",
-   "outcome": "JD Gaming",
-   "eventSlug": "lol-hle1-jdg-2026-07-16",
-   "timestamp": 1784196644,
-   "isTop": false
   }
  ],
- "lastWhaleTs": 1784266999,
+ "lastWhaleTs": 1784267767,
  "history": []
 }
