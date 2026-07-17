@@ -1,13 +1,71 @@
 {
- "ranAt": "2026-07-17T11:36:32+00:00",
+ "ranAt": "2026-07-17T11:42:25+00:00",
+ "method": "redeem+positions",
+ "windowDays": 30,
  "params": {
   "topN": 50,
   "minUsers": 5,
   "minPositionUsd": 500.0
  },
- "won": 0,
- "total": 55,
+ "won": 36,
+ "total": 91,
  "signals": [
+  {
+   "id": "0xecba7b1db1c698ab73b3572abfcde327a02b5112676144e049edcc1e1e0f5b0b:win",
+   "title": "France vs. Spain: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 14,
+   "won": true
+  },
+  {
+   "id": "0x83d646ac5646bf847f2dc0ce9c18c4d8909bbb7b050b31075afb9b67d3802b33:win",
+   "title": "United States vs. Belgium: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 12,
+   "won": true
+  },
+  {
+   "id": "0xccc07a8317079457585bc88e387b58d2bb94576ee2c9cea63b2f2adb7ed1a836:win",
+   "title": "Norway vs. England: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 10,
+   "won": true
+  },
+  {
+   "id": "0x95f726bbb693b945f94473908298b2389989550b08a7bfd90f97ce7ba62cb719:win",
+   "title": "Will Argentina win on 2026-07-11?",
+   "outcome": "(ganadora)",
+   "numTraders": 10,
+   "won": true
+  },
+  {
+   "id": "0x2c37e07b722442c2381fac76f8564d580660aa028066e08bad1b32bd11813e9d:win",
+   "title": "Will Spain win on 2026-07-10?",
+   "outcome": "(ganadora)",
+   "numTraders": 10,
+   "won": true
+  },
+  {
+   "id": "0x94e50623d3cfdc1256e16ff372062d42c282bec8af620bb732a19fb4b0dce580:win",
+   "title": "Mexico vs. England: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 9,
+   "won": true
+  },
+  {
+   "id": "0x2037b257e602784d35e800c8c7880f56331791e03aaacae5864d8a78db303948:win",
+   "title": "France vs. Morocco: O/U 2.5",
+   "outcome": "(ganadora)",
+   "numTraders": 9,
+   "won": true
+  },
+  {
+   "id": "0xc851fc5ae688d3d67bccb7c8f0ca475f61ebda796cfcddca7230042de6b48cfd:win",
+   "title": "UFC 329: Max Holloway vs. Conor McGregor (Welterweight, Main Card)",
+   "outcome": "(ganadora)",
+   "numTraders": 9,
+   "won": true
+  },
   {
    "id": "0x3a26ca6425e2d98f14935670bc22cdb0744defc6f6d83c65f8c413a921c5c70c:0",
    "title": "Will Switzerland win the 2026 FIFA World Cup?",
@@ -30,6 +88,13 @@
    "won": false
   },
   {
+   "id": "0x3c995fa852613961df5b34fc1b2d14eb6850145f5d28d349d1622f4ed8cd84ca:win",
+   "title": "Portugal vs. Spain: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 8,
+   "won": true
+  },
+  {
    "id": "0x37a6de1b21803e5f3fb1965116218215d79963af4f7e51659696366267a63a03:0",
    "title": "Will Morocco win the 2026 FIFA World Cup?",
    "outcome": "Yes",
@@ -49,6 +114,34 @@
    "outcome": "Yes",
    "numTraders": 8,
    "won": false
+  },
+  {
+   "id": "0xfb2314dcad9273745bd3de0db31a2036cda3eae847039a58e41a3c2dcc233657:win",
+   "title": "France vs. Spain: O/U 2.5",
+   "outcome": "(ganadora)",
+   "numTraders": 7,
+   "won": true
+  },
+  {
+   "id": "0x180bce419c2b5ea2178514571c50c9d5ada7b85fd409e7088ff5d0d42e7fe867:win",
+   "title": "Norway vs. England: O/U 2.5",
+   "outcome": "(ganadora)",
+   "numTraders": 7,
+   "won": true
+  },
+  {
+   "id": "0x0f5e01cf1cabb6c49e424f230ca77a2ccd3e1ac63b31ae03ef749ac2bde7fa0e:win",
+   "title": "Will England win on 2026-07-11?",
+   "outcome": "(ganadora)",
+   "numTraders": 7,
+   "won": true
+  },
+  {
+   "id": "0xbbb20aee74d8d120db212bc10c1fc915a412a758117a64ed6ff6f3948c2f7d66:win",
+   "title": "Will England win on 2026-07-15?",
+   "outcome": "(ganadora)",
+   "numTraders": 7,
+   "won": true
   },
   {
    "id": "0x375409bc5eeeff961e82b479caeccc20f33d15738e5bce1186d628aa3d9dfb1f:0",
@@ -91,6 +184,76 @@
    "outcome": "Yes",
    "numTraders": 7,
    "won": false
+  },
+  {
+   "id": "0x6d621f9a6690d234786025521c650f3f65738e0f877ff776c8f50275a2b3aee7:win",
+   "title": "Switzerland vs. Colombia: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
+  },
+  {
+   "id": "0x17b566faa4c085b49020ab355d4b81f01037634c6b17b15f455861f3cfb0ab55:win",
+   "title": "Spread: France (-1.5)",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
+  },
+  {
+   "id": "0x8ec1344d38fb55aa4adf043a3d81899bda2762b89bebec5769a81a50c3b9c25f:win",
+   "title": "Will Netherlands win on 2026-06-29?",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
+  },
+  {
+   "id": "0x7e6a99d23ee6beff337091fc92ecac6f2d8810aa899eb70b7488b72d5abbb052:win",
+   "title": "Spain vs. Belgium: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
+  },
+  {
+   "id": "0x776956c5185fb6e9115e4a52fb0a8386172cae91d6812b447795fb171f478a69:win",
+   "title": "England vs. Argentina: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
+  },
+  {
+   "id": "0x597e0e209cef883bb95c6905f07d8066c3ef35652087d3611c43b93f0ed237c2:win",
+   "title": "Will Portugal win on 2026-06-27?",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
+  },
+  {
+   "id": "0x7f481c96a3bf0d8292a2515e3dd0e709e5bdd240189b81fc98f8003480b4eb14:win",
+   "title": "Argentina vs. Egypt: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
+  },
+  {
+   "id": "0xc09537a0976d0927901432859fbb6dfe5d23d1d69bb4e8355253e7b142a44e83:win",
+   "title": "Will France win on 2026-07-09?",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
+  },
+  {
+   "id": "0x0891e4792a016a079765dd25029639cd731f7dc0bde3d65d6002b2b19dae2777:win",
+   "title": "Argentina vs. Switzerland: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
+  },
+  {
+   "id": "0x1d57ae7d429a50e47843a712d7caf62e76b724310707faa892c1146c8e6a6742:win",
+   "title": "Netherlands vs. Morocco: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true
   },
   {
    "id": "0x6972edb1b3f8cd8192651a665fc424dff846efe1c4a2376f628d4b20c704144c:0",
@@ -168,6 +331,97 @@
    "outcome": "Yes",
    "numTraders": 6,
    "won": false
+  },
+  {
+   "id": "0x744df2cb98d5dd869623f254c6bdfb167c9caf1e5dd16732106cb61b2d4bc577:win",
+   "title": "Spread: Spain (-1.5)",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0xe43caeeefb9438d44e3c73a10dddc88f3dd355daf89d0586f8e9c2369bbf762f:win",
+   "title": "Will Switzerland vs. Colombia end in a draw?",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0xadf4acda3ae836e6c4f6646eaa940c7934d1b97de2a8f7a51ff585139e8f693a:win",
+   "title": "Will Argentina win on 2026-07-15?",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0xfb22501ffce04e5a029bcc79ebb9e6a534cc676677c1354e29d29e3adfd08f46:win",
+   "title": "England vs. Argentina: O/U 2.5",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0x43bde2aa4a2067139451beb84649e5acaff989a3a0817fb1c592046c993d4168:win",
+   "title": "Will Portugal win on 2026-07-02?",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0xe690620297dfea974d20df84b4cf90460e46a26ec864353482717b90509a3c0b:win",
+   "title": "Will Germany win on 2026-06-25?",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0xf0164e968314bae58a0440248e2abd20ee9e4704df2b24c98c50072006b26315:win",
+   "title": "Spread: Morocco (-1.5)",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0xe1953a0f479de0ff3efabb7dff6116ff6cb9d7fe2d7ee6526c5d68da9cf09767:win",
+   "title": "Will Switzerland win on 2026-06-24?",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0xd1b44514a10d1041ecfeff34c4f96400a84a171e3c09944956fa936ec8049a58:win",
+   "title": "Spread: Spain (-1.5)",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0x688954ad8e279cc5febef6739d4f87acd3e42ca768ac6a8b621386a8578532ed:win",
+   "title": "Will Canada win on 2026-06-28?",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0xed731efabe978ae565a11181e2d785df1d0629a9614df9e372e40a8fac35af2d:win",
+   "title": "Spread: Argentina (-1.5)",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0x2f204628fdab76ab18a96c8b05ae7a13a3ff74b0047e63c22668c3ed28e7822b:win",
+   "title": "Argentina vs. Switzerland: O/U 2.5",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
+  },
+  {
+   "id": "0xa7b5b123f9fd38f83fbe19773a5d04e38208b370ca66be27b9688155e7b5c60a:win",
+   "title": "Will Argentina win on 2026-07-07?",
+   "outcome": "(ganadora)",
+   "numTraders": 5,
+   "won": true
   },
   {
    "id": "0x2c37e07b722442c2381fac76f8564d580660aa028066e08bad1b32bd11813e9d:1",
