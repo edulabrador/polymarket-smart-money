@@ -81,6 +81,11 @@
     font-size: .88rem; color: var(--sutil); }
   .whale a { color: var(--texto); text-decoration: none; }
   .whale a:hover { text-decoration: underline; }
+  .whale b { color: var(--texto); font-weight: 600; }
+  #verMasWhales { display: block; margin: .3rem auto 0; padding: .45rem 1rem;
+    border: 1px solid var(--borde); border-radius: .6rem; background: var(--card);
+    color: var(--sutil); cursor: pointer; font-size: .85rem; }
+  #verMasWhales:hover { color: var(--texto); }
   .whale-usd { color: var(--acento); font-weight: 800; margin-right: .4rem; }
   .top-badge { background: var(--ok); color: var(--card); border-radius: 999px;
     padding: .05rem .5rem; font-size: .72rem; font-weight: 700; }
@@ -102,6 +107,9 @@
     <div class="tile"><b id="t-stale">–</b><span>descartadas</span></div>
     <div class="tile"><b id="t-whales">–</b><span>whales últimas 24 h</span></div>
     <div class="tile"><b id="t-aciertos">–</b><span>tasa de acierto</span></div>
+    <div class="tile" id="tile-backtest" hidden
+         title="Coincidencias del top 50 en mercados ya resueltos (posiciones sin canjear): estimación inicial, no un backtest completo">
+      <b id="t-backtest">–</b><span>backtest histórico</span></div>
   </div>
   <div class="filtros" id="filtros" hidden>
     <input type="search" id="busqueda" placeholder="Buscar mercado…">
@@ -110,6 +118,13 @@
       <option value="7">7+ traders</option>
       <option value="10">10+ traders</option>
       <option value="15">15+ traders</option>
+    </select>
+    <select id="categoria">
+      <option value="">Todas las categorías</option>
+      <option value="deportes">Deportes</option>
+      <option value="politica">Política</option>
+      <option value="cripto">Cripto</option>
+      <option value="otras">Otras</option>
     </select>
     <label class="check"><input type="checkbox" id="verStale"> mostrar descartadas</label>
   </div>
@@ -135,6 +150,17 @@ const nombre = (n, wallet) =>
   !n || /^0x[0-9a-fA-F]{6,}/.test(n) ? wallet.slice(0, 8) + '…' : n;
 const el = id => document.getElementById(id);
 let datos = null;
+let verTodasWhales = false;
+
+// ponytail: la API no expone categoria del mercado; heuristica por palabras
+// clave del titulo — suficiente para filtrar, no para clasificar perfecto
+function categoria(t) {
+  t = t.toLowerCase();
+  if (/bitcoin|btc|ethereum|\beth\b|crypto|solana|xrp|doge/.test(t)) return 'cripto';
+  if (/ vs\.? |world cup|mundial|nba|nfl|mlb|nhl|ufc|f1|grand prix|premier|la ?liga|champions|europa league|bundesliga|serie a|\bopen\b|masters|atp|wta|dota|league of legends|lol:|cs2|valorant|olympic|golden (ball|boot)|to advance/.test(t)) return 'deportes';
+  if (/election|president|senate|congress|governor|mayor|minister|parliament|trump|nominee|impeach|ceasefire|\bwar\b|tariff|fed |rate (cut|hike)|supreme court|shutdown/.test(t)) return 'politica';
+  return 'otras';
+}
 
 function renderMeta() {
   const d = datos;
@@ -163,9 +189,11 @@ function renderSignals() {
   const d = datos;
   const q = el('busqueda').value.toLowerCase();
   const minT = +el('minTraders').value;
+  const cat = el('categoria').value;
   const verStale = el('verStale').checked;
   const visibles = d.signals.filter(s =>
     (!s.stale || verStale) && s.numTraders >= minT &&
+    (!cat || categoria(s.title) === cat) &&
     (!q || s.title.toLowerCase().includes(q)));
 
   el('lista').innerHTML = '';
@@ -208,21 +236,43 @@ function renderSignals() {
 function renderWhales() {
   const whales = datos.whales ?? [];
   const q = el('busqueda').value.toLowerCase();
-  const visibles = whales.filter(w => !q || w.title.toLowerCase().includes(q));
+  const cat = el('categoria').value;
+  const visibles = whales.filter(w =>
+    (!cat || categoria(w.title) === cat) &&
+    (!q || w.title.toLowerCase().includes(q)));
   el('whales-titulo').hidden = !visibles.length;
-  el('whales').innerHTML = visibles.map(w => {
+  const mostradas = verTodasWhales ? visibles : visibles.slice(0, 30);
+  el('whales').innerHTML = mostradas.map(w => {
     const horas = Math.floor((Date.now() / 1000 - w.timestamp) / 3600);
     const hace = horas < 1 ? 'hace &lt;1 h' : `hace ${horas} h`;
     const quien = esc(nombre(w.name, w.wallet));
+    const cartera = w.walletUsd ? ` · cartera <b>${usd(w.walletUsd)}</b>` : '';
+    const racha = (w.repeatBuys ?? 0) > 1
+      ? ` <span class="pastilla" title="compras grandes recientes de este wallet">×${w.repeatBuys}</span>` : '';
     return `<div class="whale">
       <span class="whale-usd">${usd(w.usd)}</span>
       <a href="https://polymarket.com/event/${encodeURIComponent(w.eventSlug)}"
          target="_blank" rel="noopener">${esc(w.title)}</a>
       <span class="pastilla">${esc(w.outcome)}</span> @ ${pct(w.price)} ·
       <a href="https://polymarket.com/profile/${encodeURIComponent(w.wallet)}"
-         target="_blank" rel="noopener">${quien}</a>${w.isTop ? ' <span class="top-badge">TOP 50</span>' : ''}${w.longshot ? ' <span class="longshot-badge" title="Compra grande a cuota improbable: posible información privilegiada">🕵 LONGSHOT</span>' : ''}
+         target="_blank" rel="noopener">${quien}</a>${w.isTop ? ' <span class="top-badge">TOP 50</span>' : ''}${w.longshot ? ' <span class="longshot-badge" title="Compra grande a cuota improbable: posible información privilegiada">🕵 LONGSHOT</span>' : ''}${racha}${cartera}
       · ${hace}</div>`;
-  }).join('');
+  }).join('') + (visibles.length > mostradas.length
+    ? `<button id="verMasWhales">ver las ${visibles.length} compras</button>` : '');
+  const btn = el('verMasWhales');
+  if (btn) btn.onclick = () => { verTodasWhales = true; renderWhales(); };
+}
+
+async function cargarBacktest() {
+  try {
+    const r = await fetch('backtest.json', {cache: 'no-store'});
+    if (!r.ok) return;  // aun sin backtest: el tile queda oculto
+    const b = await r.json();
+    if (!b.total) return;
+    el('t-backtest').textContent =
+      `${b.won}/${b.total} (${Math.round(100 * b.won / b.total)}%)`;
+    el('tile-backtest').hidden = false;
+  } catch (e) {}
 }
 
 function renderHistory() {
@@ -260,9 +310,10 @@ async function cargar() {
   }
 }
 
-['busqueda', 'minTraders', 'verStale'].forEach(id =>
+['busqueda', 'minTraders', 'categoria', 'verStale'].forEach(id =>
   el(id).addEventListener('input', () => { renderSignals(); renderWhales(); }));
 cargar();
+cargarBacktest();
 setInterval(cargar, 60000);
 </script>
 </body>

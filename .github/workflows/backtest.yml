@@ -1,0 +1,20 @@
+name: backtest
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: backtest con mercados resueltos
+        run: |
+          python backtest.py
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/backtest.json
+          git commit -m "backtest: actualiza backtest.json" || true
+          git pull --rebase || true
+          git push

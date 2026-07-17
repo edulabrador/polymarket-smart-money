@@ -1,12 +1,15 @@
 """Tests del nucleo de deteccion. Corren sin red: `python tests/test_scanner.py`
 o `pytest`."""
 import json
+import os
 import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
-from scanner import (detect_signals, detect_whales, format_message,
-                     format_whales, merge_previous, resolve_history)
+from backtest import backtest_signals
+from scanner import (detect_signals, detect_whales, enrich_whales,
+                     format_message, format_whales, merge_previous,
+                     recipients, resolve_history)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -159,6 +162,42 @@ def test_format_whales():
     assert "LONGSHOT" not in msg
     assert "LONGSHOT" in format_whales([dict(w, longshot=True)])
     assert len(format_whales([w] * 50)) < 4096
+
+
+def test_enrich_whales_adds_wallet_context():
+    prev = [{"wallet": "0xw"}]
+    new = [{"wallet": "0xw"}, {"wallet": "0xnuevo"}]
+    fake = lambda url: [{"currentValue": 1000}, {"currentValue": 250.5}]
+    out = enrich_whales(new, prev, fetch=fake)
+    assert out[0]["repeatBuys"] == 2 and out[1]["repeatBuys"] == 1
+    assert out[0]["walletUsd"] == 1250.5
+    # un fallo de red en el enriquecimiento no tumba el escaneo
+    def boom(url):
+        raise RuntimeError("api caida")
+    assert enrich_whales([{"wallet": "0x"}], [], fetch=boom)[0]["walletUsd"] is None
+
+
+def test_recipients_env():
+    os.environ["TELEGRAM_CHAT_ID"] = "111, 222"
+    assert [r["chatId"] for r in recipients()] == ["111", "222"]
+    os.environ["TELEGRAM_RECIPIENTS"] = '[{"chatId": 333, "minUsers": 7}]'
+    r = recipients()[0]
+    assert r["chatId"] == "333" and r["minUsers"] == 7
+    assert r["whaleMinUsd"] == 50000.0  # umbral no definido cae al global
+    del os.environ["TELEGRAM_RECIPIENTS"], os.environ["TELEGRAM_CHAT_ID"]
+    assert recipients() == []
+
+
+def test_backtest_signals_use_initial_value():
+    ganada = dict(pos(redeemable=True, curPrice=1), currentValue=999, initialValue=800)
+    perdida = dict(pos(cond="0xl", redeemable=True, curPrice=0), currentValue=0, initialValue=800)
+    data = {f"0xw{i}": [ganada] for i in range(5)}
+    data.update({f"0xl{i}": [perdida] for i in range(5)})
+    # pequena (initialValue < min) y viva (no redeemable) no cuentan
+    data["0xmini"] = [dict(pos(cond="0xm", redeemable=True, curPrice=1), initialValue=100)]
+    data["0xviva"] = [dict(pos(cond="0xv"), initialValue=9999)]
+    out = backtest_signals(data, min_users=5, min_usd=500)
+    assert {s["id"].split(":")[0]: s["won"] for s in out} == {"0xabc": True, "0xl": False}
 
 
 if __name__ == "__main__":

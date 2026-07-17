@@ -26,10 +26,9 @@ MAX_POSITIONS_PER_TRADER = int(os.getenv("MAX_POSITIONS_PER_TRADER", "200"))
 WHALE_MIN_USD = float(os.getenv("WHALE_MIN_USD", "50000"))
 # whale comprando a cuota improbable = la mas informativa (posible insider)
 LONGSHOT_MAX_PRICE = float(os.getenv("LONGSHOT_MAX_PRICE", "0.3"))
-WHALES_KEEP = 30  # movimientos whale que guarda el JSON para la web
+WHALES_KEEP = 100  # movimientos whale que guarda el JSON para la web
 SCAN_EVERY_MIN = 10  # cadencia real del bucle en .github/workflows/scan.yml
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 SIGNALS_PATH = pathlib.Path(__file__).parent / "docs" / "signals.json"
 
 LEADERBOARD_URL = ("https://data-api.polymarket.com/v1/leaderboard"
@@ -167,15 +166,39 @@ def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD):
     return whales
 
 
+def enrich_whales(new_whales, prev_whales, fetch=get_json):
+    """Contexto por wallet: valor de su cartera abierta (whale de $5M no es
+    lo mismo que apostador puntual) y si es comprador recurrente dentro de
+    la ventana de whales guardadas."""
+    counts = {}
+    for w in prev_whales:
+        counts[w["wallet"]] = counts.get(w["wallet"], 0) + 1
+    for w in new_whales:
+        w["repeatBuys"] = counts.get(w["wallet"], 0) + 1
+        counts[w["wallet"]] = w["repeatBuys"]
+        try:
+            posiciones = fetch(POSITIONS_URL.format(wallet=w["wallet"], threshold=1000))
+            w["walletUsd"] = round(sum(p.get("currentValue", 0) for p in posiciones), 2)
+        except Exception:
+            w["walletUsd"] = None  # el enriquecimiento nunca tumba el escaneo
+        time.sleep(0.3)
+    return new_whales
+
+
 def format_whales(whales, cap=10):
     lines = ["\U0001F40B Compras grandes en Polymarket:"]
     for w in whales[:cap]:
         top = " (TOP 50)" if w["isTop"] else ""
         insider = " \U0001F575 LONGSHOT" if w.get("longshot") else ""
         quien = w["name"] or w["wallet"][:10]
+        extra = ""
+        if w.get("walletUsd"):
+            extra += f" | cartera ${w['walletUsd']:,.0f}"
+        if w.get("repeatBuys", 0) > 1:
+            extra += f" | {w['repeatBuys']}ª compra grande"
         lines.append(
             f"\n• ${w['usd']:,.0f} → {w['title']} [{w['outcome']}] @ {w['price']}{insider}"
-            f"\n  por {quien}{top}"
+            f"\n  por {quien}{top}{extra}"
             f"\n  https://polymarket.com/event/{w['eventSlug']}")
     if len(whales) > cap:
         lines.append(f"\n…y {len(whales) - cap} mas")
@@ -195,11 +218,27 @@ def format_message(new_signals, cap=10):
     return "\n".join(lines)
 
 
-def send_telegram(text):
-    if not (TELEGRAM_TOKEN and TELEGRAM_CHAT_ID and text):
+def recipients():
+    """Destinatarios de alertas, cada uno con sus umbrales. Formatos:
+    - TELEGRAM_RECIPIENTS (JSON): [{"chatId": "...", "minUsers": 7,
+      "whaleMinUsd": 100000}, ...] — umbrales opcionales, caen al global.
+    - TELEGRAM_CHAT_ID: uno o varios chat ids separados por comas.
+    """
+    raw = os.getenv("TELEGRAM_RECIPIENTS", "")
+    if raw:
+        return [{"chatId": str(r["chatId"]),
+                 "minUsers": r.get("minUsers", MIN_USERS),
+                 "whaleMinUsd": r.get("whaleMinUsd", WHALE_MIN_USD)}
+                for r in json.loads(raw)]
+    return [{"chatId": c.strip(), "minUsers": MIN_USERS, "whaleMinUsd": WHALE_MIN_USD}
+            for c in os.getenv("TELEGRAM_CHAT_ID", "").split(",") if c.strip()]
+
+
+def send_telegram(text, chat_id):
+    if not (TELEGRAM_TOKEN and chat_id and text):
         return  # sin secrets (p. ej. en local) se omite sin fallar
     body = json.dumps({
-        "chat_id": TELEGRAM_CHAT_ID,
+        "chat_id": chat_id,
         "text": text,
         "disable_web_page_preview": True,
     }).encode()
@@ -237,6 +276,7 @@ def main():
     trades = get_json(TRADES_URL.format(amount=int(WHALE_MIN_USD)))
     last_whale_ts = doc.get("lastWhaleTs", 0)
     new_whales = detect_whales(trades, last_whale_ts, set(positions_by_trader))
+    enrich_whales(new_whales, doc.get("whales", []))
     first_run = "lastWhaleTs" not in doc  # primera vez: fijar marca sin avisar
     whales = (new_whales + doc.get("whales", []))[:WHALES_KEEP]
     last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
@@ -265,10 +305,13 @@ def main():
     }, indent=1), encoding="utf-8")
 
     fresh_new = [s for s in new if not s["stale"]]
-    if fresh_new:
-        send_telegram(format_message(fresh_new))
-    if new_whales and not first_run:
-        send_telegram(format_whales(new_whales))
+    for r in recipients():
+        mias = [s for s in fresh_new if s["numTraders"] >= r["minUsers"]]
+        if mias:
+            send_telegram(format_message(mias), r["chatId"])
+        grandes = [w for w in new_whales if w["usd"] >= r["whaleMinUsd"]]
+        if grandes and not first_run:
+            send_telegram(format_whales(grandes), r["chatId"])
     stale_count = sum(1 for s in signals if s["stale"])
     bots = len(positions_by_trader) - len(scannable)
     aciertos = sum(1 for h in history if h["won"])

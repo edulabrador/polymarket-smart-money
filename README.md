@@ -24,6 +24,15 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
    Si la compra es a cuota improbable (precio ≤ `LONGSHOT_MAX_PRICE`, defecto
    0.30) se etiqueta **🕵 LONGSHOT**: dinero grande apostando a algo que el
    mercado cree improbable es la señal más informativa (posible insider).
+   Cada whale se enriquece con el valor de su cartera abierta y con cuántas
+   compras grandes lleva en la ventana reciente (×N en la web).
+7. **Backtest inicial** (workflow `backtest`, manual): agrupa las posiciones
+   ya resueltas del top 50 con la misma regla de coincidencia y mide cuántas
+   ganaron. Muestra parcial (solo posiciones sin canjear), pero da una
+   estimación de la tasa de acierto sin esperar semanas de histórico en vivo.
+8. **Varios destinatarios de Telegram**: `TELEGRAM_CHAT_ID` admite varios ids
+   separados por comas, o `TELEGRAM_RECIPIENTS` (JSON) con umbrales propios
+   por persona: `[{"chatId": "...", "minUsers": 7, "whaleMinUsd": 100000}]`.
 
 ## Interfaz
 
