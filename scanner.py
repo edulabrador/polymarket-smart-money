@@ -47,8 +47,10 @@ POSITIONS_URL = ("https://data-api.polymarket.com/positions"
                  "?user={wallet}&sizeThreshold={threshold}&limit=500")
 TRADES_URL = ("https://data-api.polymarket.com/trades"
               "?takerOnly=true&filterType=CASH&filterAmount={amount}&limit=100")
+# sin filtro de tipo: un solo fetch da los canjes (REDEEM = mercados ganados)
+# y el flujo de caja (compras/ventas) para el PnL neto real del wallet
 ACTIVITY_URL = ("https://data-api.polymarket.com/activity"
-                "?user={wallet}&type=REDEEM&limit=500")
+                "?user={wallet}&limit=500")
 
 
 def get_json(url, retries=3):
@@ -177,25 +179,58 @@ def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD):
 
 
 def track_record(wallet, posiciones, since_ts, fetch=get_json):
-    """(ganados, perdidos) del wallet en la ventana. Ganados = canjes REDEEM
-    del feed /activity (canjear implica tener el lado ganador); perdidos =
-    posiciones muertas (redeemable a ~0) que siguen en /positions. Mismo
-    metodo que backtest.py, aplicado a un solo wallet."""
+    """Rendimiento del wallet en la ventana. Devuelve (wins, losses, net):
+
+    - wins/losses (TASA de acierto): canjes REDEEM del feed /activity (canjear
+      implica tener el lado ganador) vs posiciones muertas (redeemable a ~0)
+      que siguen en /positions.
+    - net (PnL REAL en dolares): dinero que entra (ventas + canjes) menos el
+      que sale (compras) mas el valor de mercado de lo que sigue abierto. Asi
+      un wallet que gana 10 apuestas de $50 pero pierde una de $20k sale en
+      NEGATIVO — cosa que la tasa de acierto por si sola no distingue.
+
+    ponytail: /activity va limitado a 500 eventos; en wallets hiperactivos la
+    ventana efectiva se acorta. Suficiente como filtro de calidad; para PnL
+    exacto habria que paginar la actividad.
+    """
     since_date = datetime.fromtimestamp(since_ts, tz=timezone.utc).strftime("%Y-%m-%d")
-    redeems = fetch(ACTIVITY_URL.format(wallet=wallet))
-    wins = {e["conditionId"] for e in redeems
-            if e["timestamp"] >= since_ts and e.get("usdcSize", 0) >= TRACK_MIN_USD}
+    wins, cash_in, cash_out = set(), 0.0, 0.0
+    for e in fetch(ACTIVITY_URL.format(wallet=wallet)):
+        if e.get("timestamp", 0) < since_ts:
+            continue
+        usd = e.get("usdcSize", 0) or 0
+        if e.get("type") == "REDEEM":
+            cash_in += usd
+            if usd >= TRACK_MIN_USD:
+                wins.add(e["conditionId"])
+        elif e.get("side") == "BUY":
+            cash_out += usd
+        elif e.get("side") == "SELL":
+            cash_in += usd
     losses = {p["conditionId"] for p in posiciones
               if p.get("redeemable") and p.get("curPrice", 1) <= 0.5
               and p.get("initialValue", 0) >= TRACK_MIN_USD
               and (p.get("endDate") or "") >= since_date}
-    return len(wins), len(losses)
+    open_value = sum(p.get("currentValue", 0) for p in posiciones
+                     if not p.get("redeemable"))
+    net = round(cash_in - cash_out + open_value, 2)
+    return len(wins), len(losses), net
 
 
 def win_rate(t):
     """Tasa de acierto, o None si el historial es demasiado corto para fiarse."""
     n = t["wins"] + t["losses"]
     return round(t["wins"] / n, 2) if n >= WHALE_MIN_TRACK else None
+
+
+def is_loser(t):
+    """Perdedor conocido: neto negativo en dolares si se conoce el PnL, o mala
+    tasa de acierto cuando no. Un neto positivo basta para NO serlo aunque
+    acierte poco (cazador de longshots rentable)."""
+    if t.get("net") is not None:
+        return t["net"] <= 0
+    r = win_rate(t)
+    return r is not None and r < WHALE_MIN_WINRATE
 
 
 def update_track_records(cache, wallets, positions_by_trader, now_ts, fetch=get_json):
@@ -217,11 +252,11 @@ def update_track_records(cache, wallets, positions_by_trader, now_ts, fetch=get_
                 posiciones = fetch(POSITIONS_URL.format(wallet=w, threshold=100))
                 positions_cache[w] = posiciones
                 time.sleep(0.3)
-            wins, losses = track_record(w, posiciones, since_ts, fetch=fetch)
-            tracks[w] = {"wins": wins, "losses": losses, "at": now_ts}
+            wins, losses, net = track_record(w, posiciones, since_ts, fetch=fetch)
+            tracks[w] = {"wins": wins, "losses": losses, "net": net, "at": now_ts}
             time.sleep(0.3)
         except Exception:
-            tracks[w] = old or {"wins": 0, "losses": 0, "at": 0}
+            tracks[w] = old or {"wins": 0, "losses": 0, "net": None, "at": 0}
     return tracks, positions_cache
 
 
@@ -253,6 +288,7 @@ def enrich_whales(new_whales, prev_whales, tracks, positions_cache, positions_by
                           if posiciones is not None else None)
         t = tracks.get(w["wallet"])
         w["winRate"] = win_rate(t) if t else None
+        w["netPnl"] = t.get("net") if t else None
         # solo se guardan wins/losses cuando hay veredicto (winRate no None):
         # el conteo crudo de una whale sin historial suficiente ya se leeria
         # como "va perdiendo" aunque no este confirmado
@@ -262,10 +298,14 @@ def enrich_whales(new_whales, prev_whales, tracks, positions_cache, positions_by
 
 
 def whale_notifiable(w):
-    """Nunca se guarda ni se avisa de una whale con historial perdedor
-    conocido (winRate < umbral), sea o no del top 50 -- estar en el top 50
-    no borra que vaya perdiendo. El top 50 solo actua de comodin cuando NO
-    hay historial suficiente (winRate None): ahi se asume por prestigio."""
+    """Nunca se guarda ni se avisa de una whale perdedora, sea o no del top 50
+    -- estar en el top 50 no borra que vaya perdiendo. Con PnL real conocido
+    manda el dinero: neto positivo pasa, negativo fuera (un buen acierto en
+    numero de apuestas no salva perder $300k). Sin PnL suficiente cae a la
+    tasa de acierto, o al top 50 de comodin."""
+    net = w.get("netPnl")
+    if net is not None:
+        return net > 0
     r = w.get("winRate")
     return r >= WHALE_MIN_WINRATE if r is not None else w["isTop"]
 
@@ -277,6 +317,8 @@ def format_whales(whales, cap=10):
         insider = " \U0001F575 LONGSHOT" if w.get("longshot") else ""
         quien = w["name"] or w["wallet"][:10]
         extra = ""
+        if w.get("netPnl") is not None:
+            extra += f" | PnL 30d ${w['netPnl']:,.0f}"
         if w.get("winRate") is not None:
             extra += (f" | acierto 30d {round(w['winRate'] * 100)}%"
                       f" ({w['wins30d']}✓ {w['losses30d']}✗)")
@@ -382,7 +424,7 @@ def main():
     last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
     # el track record de un wallet perdedor tampoco se persiste: se
     # recalcula (y se descarta otra vez) en cada escaneo si hace falta
-    tracks = {w: t for w, t in tracks.items() if win_rate(t) is None or win_rate(t) >= WHALE_MIN_WINRATE}
+    tracks = {w: t for w, t in tracks.items() if not is_loser(t)}
 
     # indice de TODAS las posiciones (incluidas redeemable) para dar veredicto
     # a las senales cuyo mercado ya resolvio

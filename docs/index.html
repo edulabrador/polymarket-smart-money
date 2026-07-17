@@ -247,10 +247,12 @@ function renderWhales() {
     const horas = Math.floor((Date.now() / 1000 - w.timestamp) / 3600);
     const hace = horas < 1 ? 'hace &lt;1 h' : `hace ${horas} h`;
     const quien = esc(nombre(w.name, w.wallet));
-    // solo se guardan whales con historial ganador o sin veredicto (top 50);
-    // una perdedora nunca llega aqui, asi que winRate nunca es "malo"
+    // solo se guardan whales rentables o sin veredicto (top 50); una
+    // perdedora nunca llega aqui, asi que el PnL nunca es negativo
+    const pnl = w.netPnl != null
+      ? ` · PnL 30d <b class="deriva-ok">${usd(w.netPnl)}</b>` : '';
     const acierto = w.winRate != null
-      ? ` · acierto 30d <b class="deriva-ok">${pct(w.winRate)}</b> (${w.wins30d}✓ ${w.losses30d}✗)`
+      ? ` · acierto 30d <b>${pct(w.winRate)}</b> (${w.wins30d}✓ ${w.losses30d}✗)`
       : '';
     const cartera = w.walletUsd ? ` · cartera <b>${usd(w.walletUsd)}</b>` : '';
     const racha = (w.repeatBuys ?? 0) > 1
@@ -261,7 +263,7 @@ function renderWhales() {
          target="_blank" rel="noopener">${esc(w.title)}</a>
       <span class="pastilla">${esc(w.outcome)}</span> @ ${pct(w.price)} ·
       <a href="https://polymarket.com/profile/${encodeURIComponent(w.wallet)}"
-         target="_blank" rel="noopener">${quien}</a>${w.isTop ? ' <span class="top-badge">TOP 50</span>' : ''}${w.longshot ? ' <span class="longshot-badge" title="Compra grande a cuota improbable: posible información privilegiada">🕵 LONGSHOT</span>' : ''}${racha}${acierto}${cartera}
+         target="_blank" rel="noopener">${quien}</a>${w.isTop ? ' <span class="top-badge">TOP 50</span>' : ''}${w.longshot ? ' <span class="longshot-badge" title="Compra grande a cuota improbable: posible información privilegiada">🕵 LONGSHOT</span>' : ''}${racha}${pnl}${acierto}${cartera}
       · ${hace}</div>`;
   }).join('') + (visibles.length > mostradas.length
     ? `<button id="verMasWhales">ver las ${visibles.length} compras</button>` : '');

@@ -26,19 +26,21 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
    mercado cree improbable es la señal más informativa (posible insider).
    Cada whale se enriquece con el valor de su cartera abierta y con cuántas
    compras grandes lleva en la ventana reciente (×N en la web).
-   **Filtro de calidad**: se calcula la tasa de acierto de 30 días del wallet
-   (canjes REDEEM = ganadas, posiciones muertas = perdidas, cache de 6 h). Una
-   whale con historial perdedor confirmado (`WHALE_MIN_WINRATE`, defecto 55%
-   con al menos `WHALE_MIN_TRACK` mercados resueltos) **nunca se guarda ni se
-   muestra en ningún sitio** — ni notificación, ni web, ni el propio track
-   record en `signals.json` — esté o no en el top 50: una compra de $300k de
-   alguien que va perdiendo no es dinero inteligente, y estar en el top 50 no
-   lo cambia. El top 50 solo actúa de comodín cuando no hay historial
-   suficiente para tener veredicto. Las señales de coincidencia muestran
-   además el acierto medio 30d de sus traders.
+   **Filtro de calidad (por dinero, no por número de apuestas)**: se calcula
+   el **PnL neto de 30 días** del wallet desde su feed `/activity` — flujo de
+   caja real: entra (ventas + canjes) menos sale (compras) más el valor de
+   mercado de lo que sigue abierto. Una whale con **PnL neto negativo nunca se
+   guarda ni se muestra en ningún sitio** (ni notificación, ni web, ni track
+   record en `signals.json`), esté o no en el top 50: alguien que ganó muchas
+   apuestas de $50 pero perdió una de $20k va en negativo, y la tasa de acierto
+   por sí sola no lo veía. Cuando no hay PnL suficiente se cae a la tasa de
+   acierto (`WHALE_MIN_WINRATE`, defecto 55% con `WHALE_MIN_TRACK` mercados
+   resueltos), y el top 50 solo hace de comodín cuando tampoco hay eso. Los
+   subsidios (rewards/rebates de market making) se ignoran: mide habilidad
+   apostando, no minería de liquidez. Cache de 6 h por wallet.
 7. **Backtest inicial** (workflow `backtest`, manual): mide la tasa de acierto
    de las coincidencias del top 50 en mercados ya resueltos (30 días). Las
-   ganadas se detectan por los canjes (`/activity?type=REDEEM`: canjear con
+   ganadas se detectan por los canjes REDEEM del feed `/activity` (canjear con
    payout implica tener el lado ganador) y las perdidas por las posiciones
    muertas que siguen en `/positions`. Usar solo posiciones daba 0% falso:
    sesgo de supervivencia (las ganadoras se canjean y desaparecen).

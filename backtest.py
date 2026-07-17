@@ -38,7 +38,8 @@ def backtest_signals(redeems_by_trader, positions_by_trader,
     groups = {}
     for wallet, eventos in redeems_by_trader.items():
         for e in eventos:
-            if e["timestamp"] < since_ts or e.get("usdcSize", 0) < min_usd:
+            if (e.get("type") != "REDEEM" or e["timestamp"] < since_ts
+                    or e.get("usdcSize", 0) < min_usd):
                 continue
             key = e["conditionId"] + ":win"
             g = groups.setdefault(key, {"title": e["title"],

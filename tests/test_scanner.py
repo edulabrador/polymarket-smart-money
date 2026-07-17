@@ -168,24 +168,29 @@ def test_format_whales():
 def test_enrich_whales_adds_wallet_context():
     prev = [{"wallet": "0xw"}]
     new = [{"wallet": "0xw"}, {"wallet": "0xnuevo"}]
-    tracks = {"0xw": {"wins": 6, "losses": 2}}
+    tracks = {"0xw": {"wins": 6, "losses": 2, "net": 12500.0}}
     poscache = {"0xw": [{"currentValue": 1000}, {"currentValue": 250.5}]}
     out = enrich_whales(new, prev, tracks, poscache, {})
     assert out[0]["repeatBuys"] == 2 and out[1]["repeatBuys"] == 1
     assert out[0]["walletUsd"] == 1250.5
     assert out[0]["winRate"] == 0.75 and out[0]["wins30d"] == 6
+    assert out[0]["netPnl"] == 12500.0
     # sin datos: campos a None, nunca revienta
     assert out[1]["walletUsd"] is None and out[1]["winRate"] is None
     assert out[1]["wins30d"] is None and out[1]["losses30d"] is None
+    assert out[1]["netPnl"] is None
 
 
 def test_track_record_wins_and_losses():
     since = 1_700_000_000  # ventana desde 2023-11-14
-    redeems = [
-        {"conditionId": "0xg", "timestamp": since + 10, "usdcSize": 5000},
-        {"conditionId": "0xg", "timestamp": since + 20, "usdcSize": 5000},  # duplicado
-        {"conditionId": "0xviejo", "timestamp": 10, "usdcSize": 5000},      # fuera de ventana
-        {"conditionId": "0xpolvo", "timestamp": since + 10, "usdcSize": 1}, # ruido
+    actividad = [
+        {"type": "REDEEM", "conditionId": "0xg", "timestamp": since + 10, "usdcSize": 5000},
+        {"type": "REDEEM", "conditionId": "0xg", "timestamp": since + 20, "usdcSize": 5000},  # duplicado
+        {"type": "REDEEM", "conditionId": "0xviejo", "timestamp": 10, "usdcSize": 5000},      # fuera de ventana
+        {"type": "REDEEM", "conditionId": "0xpolvo", "timestamp": since + 10, "usdcSize": 1}, # ruido (cuenta caja, no win)
+        {"side": "BUY", "timestamp": since + 5, "usdcSize": 3000},   # compra: sale caja
+        {"side": "SELL", "timestamp": since + 6, "usdcSize": 500},   # venta: entra caja
+        {"side": "BUY", "timestamp": 5, "usdcSize": 9999},           # compra fuera de ventana: ignorada
     ]
     posiciones = [
         dict(pos(cond="0xl", redeemable=True, curPrice=0), initialValue=800, endDate="2099-01-01"),
@@ -193,9 +198,13 @@ def test_track_record_wins_and_losses():
         dict(pos(cond="0xgana", redeemable=True, curPrice=1), initialValue=800, endDate="2099-01-01"),
         # perdida fuera de la ventana
         dict(pos(cond="0xantigua", redeemable=True, curPrice=0), initialValue=800, endDate="2001-01-01"),
+        # posicion viva: su valor de mercado cuenta como caja abierta
+        dict(pos(cond="0xviva", redeemable=False), currentValue=1200),
     ]
-    wins, losses = track_record("0x", posiciones, since, fetch=lambda url: redeems)
+    wins, losses, net = track_record("0x", posiciones, since, fetch=lambda url: actividad)
     assert (wins, losses) == (1, 1)
+    # net = canjes(5000+5000+1) + venta(500) - compra(3000) + abierto(1200) = 8701
+    assert net == 8701.0
 
 
 def test_update_track_records_respects_ttl():
@@ -212,12 +221,17 @@ def test_update_track_records_respects_ttl():
 
 
 def test_whale_notifiable_filters_losers():
+    # sin PnL conocido: cae a la tasa de acierto (o al top 50 de comodin)
     assert whale_notifiable({"isTop": True, "winRate": None})
     assert whale_notifiable({"isTop": False, "winRate": 0.6})
     assert not whale_notifiable({"isTop": False, "winRate": 0.3})   # perdedor
     assert not whale_notifiable({"isTop": False, "winRate": None})  # sin historial
     # el top 50 NO borra un historial perdedor confirmado
     assert not whale_notifiable({"isTop": True, "winRate": 0.2})
+    # con PnL real conocido manda el dinero, por encima de todo lo demas
+    assert whale_notifiable({"isTop": False, "winRate": 0.3, "netPnl": 5000})   # net+ salva
+    assert not whale_notifiable({"isTop": True, "winRate": 0.9, "netPnl": -1000})  # net- hunde
+    assert not whale_notifiable({"isTop": True, "winRate": None, "netPnl": 0})
 
 
 def test_annotate_win_rates():
@@ -244,8 +258,8 @@ def test_recipients_env():
 
 def test_backtest_mixes_redeems_and_dead_positions():
     # ganadas = canjes REDEEM; perdidas = posiciones muertas que nadie canjea
-    canje = {"conditionId": "0xwin", "timestamp": 100, "usdcSize": 900.0,
-             "title": "Ganado", "outcome": ""}
+    canje = {"type": "REDEEM", "conditionId": "0xwin", "timestamp": 100,
+             "usdcSize": 900.0, "title": "Ganado", "outcome": ""}
     redeems = {f"0xw{i}": [canje] for i in range(5)}
     perdida = dict(pos(cond="0xl", redeemable=True, curPrice=0),
                    currentValue=0, initialValue=800)
