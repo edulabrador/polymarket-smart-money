@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-07-17T16:44:53+00:00",
+ "updatedAt": "2026-07-17T16:55:21+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
@@ -19,8 +19,8 @@
    "endDate": "2026-07-20",
    "curPrice": 0.5885,
    "numTraders": 12,
-   "totalUsd": 8982439.44,
-   "avgEntryPrice": 0.1837,
+   "totalUsd": 8983122.6,
+   "avgEntryPrice": 0.1838,
    "stale": true,
    "traders": [
     {
@@ -56,8 +56,8 @@
     {
      "wallet": "0xc31d0a0d63d760d72a1236d16beaa6a71c854ebe",
      "name": "FootballFan98",
-     "usd": 819587.46,
-     "avgPrice": 0.1975
+     "usd": 820270.62,
+     "avgPrice": 0.1978
     },
     {
      "wallet": "0xfea31bc088000ff909be1dfd8d0e3f2c7ef2d227",
@@ -97,7 +97,7 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-17T16:44:53+00:00"
+   "lastSeen": "2026-07-17T16:55:21+00:00"
   },
   {
    "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f:0",
@@ -156,10 +156,25 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-17T16:44:53+00:00"
+   "lastSeen": "2026-07-17T16:55:21+00:00"
   }
  ],
  "whales": [
+  {
+   "tx": "0xd643c8b3f09b08758dd1f987e90c4792cdac07396733912aae302721667aae44",
+   "wallet": "0x204f72f35326db932158cba6adff0b9a1da95e14",
+   "name": "swisstony",
+   "usd": 166264.36,
+   "price": 0.972,
+   "title": "Exact Score: Spain 2 - 3 Argentina?",
+   "outcome": "No",
+   "eventSlug": "fifwc-esp-arg-2026-07-19-exact-score",
+   "timestamp": 1784307025,
+   "isTop": true,
+   "longshot": false,
+   "repeatBuys": 2,
+   "walletUsd": 2929569.92
+  },
   {
    "tx": "0x24798f61c842c605571d2e121a1f595318ca6edff402c79684be1f093fc91c22",
    "wallet": "0xc8ec6d4cef5c5fe8409ef69303c37f05b678e8f1",
@@ -834,6 +849,6 @@
    "isTop": true
   }
  ],
- "lastWhaleTs": 1784306391,
+ "lastWhaleTs": 1784307025,
  "history": []
 }
