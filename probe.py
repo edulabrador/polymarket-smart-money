@@ -110,6 +110,30 @@ def main():
     if activity:
         (FIXTURES / "activity.json").write_text(json.dumps(activity, indent=1), encoding="utf-8")
 
+    # actividad SIN filtro de tipo: necesito ver como se marcan compras/ventas
+    # (type? side?) para calcular el flujo de caja neto = PnL real del wallet
+    report.append("")
+    for entry in leaderboard[:5]:
+        wallet = entry[wallet_key]
+        url = f"https://data-api.polymarket.com/activity?user={wallet}&limit=50"
+        try:
+            data = get(url)
+        except Exception as e:
+            report.append(f"- FALLO activity-all de `{wallet}`: {e}")
+            continue
+        entries = data if isinstance(data, list) else data.get("data")
+        if entries:
+            tipos = {}
+            for e in entries:
+                k = (e.get("type"), e.get("side"))
+                tipos[k] = tipos.get(k, 0) + 1
+            report.append(f"- OK activity-all de `{wallet}` -> {len(entries)} eventos; (type,side): {tipos}")
+            for e in entries[:3]:
+                report.append(f"  ej: {json.dumps({k: e.get(k) for k in ('type','side','usdcSize','size','price','title')})}")
+            (FIXTURES / "activity_all.json").write_text(json.dumps(entries, indent=1), encoding="utf-8")
+            break
+        report.append(f"- VACIO activity-all de `{wallet}`")
+
     pathlib.Path("NOTES.md").write_text("\n".join(report) + "\n", encoding="utf-8")
     print("\n".join(report))
 
