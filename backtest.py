@@ -17,12 +17,10 @@ import json
 import time
 from datetime import datetime, timezone
 
-from scanner import (LEADERBOARD_URL, MIN_POSITION_USD, MIN_USERS,
-                     POSITIONS_URL, SIGNALS_PATH, TOP_N, get_json)
+from scanner import (ACTIVITY_URL, LEADERBOARD_URL, MIN_POSITION_USD,
+                     MIN_USERS, POSITIONS_URL, SIGNALS_PATH, TOP_N, get_json)
 
 OUT = SIGNALS_PATH.parent / "backtest.json"
-ACTIVITY_URL = ("https://data-api.polymarket.com/activity"
-                "?user={wallet}&type=REDEEM&limit=500")
 WINDOW_DAYS = 30
 
 

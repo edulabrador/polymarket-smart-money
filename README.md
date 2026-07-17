@@ -26,6 +26,12 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
    mercado cree improbable es la señal más informativa (posible insider).
    Cada whale se enriquece con el valor de su cartera abierta y con cuántas
    compras grandes lleva en la ventana reciente (×N en la web).
+   **Filtro de calidad**: se calcula la tasa de acierto de 30 días del wallet
+   (canjes REDEEM = ganadas, posiciones muertas = perdidas, cache de 6 h) y
+   solo se notifica si es ganador (`WHALE_MIN_WINRATE`, defecto 55% con al
+   menos `WHALE_MIN_TRACK` mercados resueltos) o está en el top 50 — una
+   compra de $300k de un gran perdedor no es dinero inteligente. Las señales
+   de coincidencia muestran además el acierto medio 30d de sus traders.
 7. **Backtest inicial** (workflow `backtest`, manual): mide la tasa de acierto
    de las coincidencias del top 50 en mercados ya resueltos (30 días). Las
    ganadas se detectan por los canjes (`/activity?type=REDEEM`: canjear con

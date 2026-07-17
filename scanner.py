@@ -26,6 +26,14 @@ MAX_POSITIONS_PER_TRADER = int(os.getenv("MAX_POSITIONS_PER_TRADER", "200"))
 WHALE_MIN_USD = float(os.getenv("WHALE_MIN_USD", "50000"))
 # whale comprando a cuota improbable = la mas informativa (posible insider)
 LONGSHOT_MAX_PRICE = float(os.getenv("LONGSHOT_MAX_PRICE", "0.3"))
+# una compra grande de un gran perdedor no es senal: solo se notifica la
+# whale con historial ganador (o del top 50). Sin historial suficiente
+# (menos de WHALE_MIN_TRACK mercados resueltos en 30 dias) tampoco se avisa.
+WHALE_MIN_WINRATE = float(os.getenv("WHALE_MIN_WINRATE", "0.55"))
+WHALE_MIN_TRACK = int(os.getenv("WHALE_MIN_TRACK", "5"))
+TRACK_WINDOW_DAYS = 30
+TRACK_TTL_S = 6 * 3600  # el track record por wallet se recalcula cada 6 h
+TRACK_MIN_USD = 100.0   # canjes/perdidas menores son ruido
 WHALES_KEEP = 100  # movimientos whale que guarda el JSON para la web
 SCAN_EVERY_MIN = 10  # cadencia real del bucle en .github/workflows/scan.yml
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
@@ -39,6 +47,8 @@ POSITIONS_URL = ("https://data-api.polymarket.com/positions"
                  "?user={wallet}&sizeThreshold={threshold}&limit=500")
 TRADES_URL = ("https://data-api.polymarket.com/trades"
               "?takerOnly=true&filterType=CASH&filterAmount={amount}&limit=100")
+ACTIVITY_URL = ("https://data-api.polymarket.com/activity"
+                "?user={wallet}&type=REDEEM&limit=500")
 
 
 def get_json(url, retries=3):
@@ -166,23 +176,93 @@ def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD):
     return whales
 
 
-def enrich_whales(new_whales, prev_whales, fetch=get_json):
-    """Contexto por wallet: valor de su cartera abierta (whale de $5M no es
-    lo mismo que apostador puntual) y si es comprador recurrente dentro de
-    la ventana de whales guardadas."""
+def track_record(wallet, posiciones, since_ts, fetch=get_json):
+    """(ganados, perdidos) del wallet en la ventana. Ganados = canjes REDEEM
+    del feed /activity (canjear implica tener el lado ganador); perdidos =
+    posiciones muertas (redeemable a ~0) que siguen en /positions. Mismo
+    metodo que backtest.py, aplicado a un solo wallet."""
+    since_date = datetime.fromtimestamp(since_ts, tz=timezone.utc).strftime("%Y-%m-%d")
+    redeems = fetch(ACTIVITY_URL.format(wallet=wallet))
+    wins = {e["conditionId"] for e in redeems
+            if e["timestamp"] >= since_ts and e.get("usdcSize", 0) >= TRACK_MIN_USD}
+    losses = {p["conditionId"] for p in posiciones
+              if p.get("redeemable") and p.get("curPrice", 1) <= 0.5
+              and p.get("initialValue", 0) >= TRACK_MIN_USD
+              and (p.get("endDate") or "") >= since_date}
+    return len(wins), len(losses)
+
+
+def win_rate(t):
+    """Tasa de acierto, o None si el historial es demasiado corto para fiarse."""
+    n = t["wins"] + t["losses"]
+    return round(t["wins"] / n, 2) if n >= WHALE_MIN_TRACK else None
+
+
+def update_track_records(cache, wallets, positions_by_trader, now_ts, fetch=get_json):
+    """Refresca el track record solo de los wallets con cache caducada (TTL
+    6 h); reutiliza las posiciones ya descargadas del top 50. Devuelve
+    (tracks, positions_cache) — el segundo evita re-descargar posiciones de
+    wallets whale para calcular su cartera."""
+    since_ts = max(now_ts - TRACK_WINDOW_DAYS * 86400, 0)
+    tracks, positions_cache = {}, {}
+    for w in wallets:
+        old = cache.get(w)
+        if old and now_ts - old.get("at", 0) < TRACK_TTL_S:
+            tracks[w] = old
+            continue
+        try:
+            if w in positions_by_trader:
+                posiciones = positions_by_trader[w]["positions"]
+            else:
+                posiciones = fetch(POSITIONS_URL.format(wallet=w, threshold=100))
+                positions_cache[w] = posiciones
+                time.sleep(0.3)
+            wins, losses = track_record(w, posiciones, since_ts, fetch=fetch)
+            tracks[w] = {"wins": wins, "losses": losses, "at": now_ts}
+            time.sleep(0.3)
+        except Exception:
+            tracks[w] = old or {"wins": 0, "losses": 0, "at": 0}
+    return tracks, positions_cache
+
+
+def annotate_win_rates(signals, tracks):
+    """Acierto 30d por trader y media por senal: mismo numero de traders
+    coincidentes no vale lo mismo si su historial reciente es malo."""
+    for s in signals:
+        rates = []
+        for t in s["traders"]:
+            r = win_rate(tracks.get(t["wallet"], {"wins": 0, "losses": 0}))
+            t["winRate"] = r
+            if r is not None:
+                rates.append(r)
+        s["avgWinRate"] = round(sum(rates) / len(rates), 2) if rates else None
+    return signals
+
+
+def enrich_whales(new_whales, prev_whales, tracks, positions_cache, positions_by_trader):
+    """Contexto por wallet: cartera abierta, recurrencia y acierto 30d."""
     counts = {}
     for w in prev_whales:
         counts[w["wallet"]] = counts.get(w["wallet"], 0) + 1
     for w in new_whales:
         w["repeatBuys"] = counts.get(w["wallet"], 0) + 1
         counts[w["wallet"]] = w["repeatBuys"]
-        try:
-            posiciones = fetch(POSITIONS_URL.format(wallet=w["wallet"], threshold=1000))
-            w["walletUsd"] = round(sum(p.get("currentValue", 0) for p in posiciones), 2)
-        except Exception:
-            w["walletUsd"] = None  # el enriquecimiento nunca tumba el escaneo
-        time.sleep(0.3)
+        posiciones = (positions_cache.get(w["wallet"])
+                      or positions_by_trader.get(w["wallet"], {}).get("positions"))
+        w["walletUsd"] = (round(sum(p.get("currentValue", 0) for p in posiciones), 2)
+                          if posiciones is not None else None)
+        t = tracks.get(w["wallet"])
+        w["wins30d"] = t["wins"] if t else 0
+        w["losses30d"] = t["losses"] if t else 0
+        w["winRate"] = win_rate(t) if t else None
     return new_whales
+
+
+def whale_notifiable(w):
+    """Solo se avisa de whales con historial ganador (o del top 50): una
+    compra de $300k de alguien que va perdiendo no es dinero inteligente."""
+    return w["isTop"] or (w.get("winRate") is not None
+                          and w["winRate"] >= WHALE_MIN_WINRATE)
 
 
 def format_whales(whales, cap=10):
@@ -192,6 +272,9 @@ def format_whales(whales, cap=10):
         insider = " \U0001F575 LONGSHOT" if w.get("longshot") else ""
         quien = w["name"] or w["wallet"][:10]
         extra = ""
+        if w.get("winRate") is not None:
+            extra += (f" | acierto 30d {round(w['winRate'] * 100)}%"
+                      f" ({w['wins30d']}✓ {w['losses30d']}✗)")
         if w.get("walletUsd"):
             extra += f" | cartera ${w['walletUsd']:,.0f}"
         if w.get("repeatBuys", 0) > 1:
@@ -208,10 +291,12 @@ def format_whales(whales, cap=10):
 def format_message(new_signals, cap=10):
     lines = ["\U0001F6A8 Nuevas coincidencias de top traders en Polymarket:"]
     for s in new_signals[:cap]:
+        acierto = (f" | acierto medio 30d {round(s['avgWinRate'] * 100)}%"
+                   if s.get("avgWinRate") is not None else "")
         lines.append(
             f"\n• {s['numTraders']} traders → {s['title']} [{s['outcome']}]"
             f"\n  precio {s['curPrice']} | entrada media {s['avgEntryPrice']}"
-            f" | ${s['totalUsd']:,.0f}"
+            f" | ${s['totalUsd']:,.0f}{acierto}"
             f"\n  https://polymarket.com/event/{s['eventSlug']}")
     if len(new_signals) > cap:
         lines.append(f"\n…y {len(new_signals) - cap} mas")
@@ -276,7 +361,13 @@ def main():
     trades = get_json(TRADES_URL.format(amount=int(WHALE_MIN_USD)))
     last_whale_ts = doc.get("lastWhaleTs", 0)
     new_whales = detect_whales(trades, last_whale_ts, set(positions_by_trader))
-    enrich_whales(new_whales, doc.get("whales", []))
+    now_ts = int(time.time())
+    wallets_needed = set(positions_by_trader) | {w["wallet"] for w in new_whales}
+    tracks, positions_cache = update_track_records(
+        doc.get("trackRecords", {}), wallets_needed, positions_by_trader, now_ts)
+    enrich_whales(new_whales, doc.get("whales", []), tracks, positions_cache,
+                  positions_by_trader)
+    annotate_win_rates(signals, tracks)
     first_run = "lastWhaleTs" not in doc  # primera vez: fijar marca sin avisar
     whales = (new_whales + doc.get("whales", []))[:WHALES_KEEP]
     last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
@@ -301,6 +392,7 @@ def main():
         "signals": signals,
         "whales": whales,
         "lastWhaleTs": last_whale_ts,
+        "trackRecords": tracks,
         "history": history,
     }, indent=1), encoding="utf-8")
 
@@ -309,14 +401,17 @@ def main():
         mias = [s for s in fresh_new if s["numTraders"] >= r["minUsers"]]
         if mias:
             send_telegram(format_message(mias), r["chatId"])
-        grandes = [w for w in new_whales if w["usd"] >= r["whaleMinUsd"]]
+        grandes = [w for w in new_whales
+                   if w["usd"] >= r["whaleMinUsd"] and whale_notifiable(w)]
         if grandes and not first_run:
             send_telegram(format_whales(grandes), r["chatId"])
     stale_count = sum(1 for s in signals if s["stale"])
     bots = len(positions_by_trader) - len(scannable)
     aciertos = sum(1 for h in history if h["won"])
+    notificables = sum(1 for w in new_whales if whale_notifiable(w))
     print(f"{len(signals)} senales ({stale_count} stale), {len(new)} nuevas, "
-          f"{len(fresh_new)} notificadas | {len(new_whales)} whales nuevas | "
+          f"{len(fresh_new)} notificadas | {len(new_whales)} whales nuevas "
+          f"({notificables} con historial ganador) | "
           f"{bots} wallets excluidos por bot | "
           f"historico {aciertos}/{len(history)} aciertos")
     for s in new:

@@ -7,9 +7,10 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 from backtest import backtest_signals
-from scanner import (detect_signals, detect_whales, enrich_whales,
-                     format_message, format_whales, merge_previous,
-                     recipients, resolve_history)
+from scanner import (annotate_win_rates, detect_signals, detect_whales,
+                     enrich_whales, format_message, format_whales,
+                     merge_previous, recipients, resolve_history,
+                     track_record, update_track_records, whale_notifiable)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -167,14 +168,64 @@ def test_format_whales():
 def test_enrich_whales_adds_wallet_context():
     prev = [{"wallet": "0xw"}]
     new = [{"wallet": "0xw"}, {"wallet": "0xnuevo"}]
-    fake = lambda url: [{"currentValue": 1000}, {"currentValue": 250.5}]
-    out = enrich_whales(new, prev, fetch=fake)
+    tracks = {"0xw": {"wins": 6, "losses": 2}}
+    poscache = {"0xw": [{"currentValue": 1000}, {"currentValue": 250.5}]}
+    out = enrich_whales(new, prev, tracks, poscache, {})
     assert out[0]["repeatBuys"] == 2 and out[1]["repeatBuys"] == 1
     assert out[0]["walletUsd"] == 1250.5
-    # un fallo de red en el enriquecimiento no tumba el escaneo
-    def boom(url):
-        raise RuntimeError("api caida")
-    assert enrich_whales([{"wallet": "0x"}], [], fetch=boom)[0]["walletUsd"] is None
+    assert out[0]["winRate"] == 0.75 and out[0]["wins30d"] == 6
+    # sin datos: campos a None/0, nunca revienta
+    assert out[1]["walletUsd"] is None and out[1]["winRate"] is None
+
+
+def test_track_record_wins_and_losses():
+    since = 1_700_000_000  # ventana desde 2023-11-14
+    redeems = [
+        {"conditionId": "0xg", "timestamp": since + 10, "usdcSize": 5000},
+        {"conditionId": "0xg", "timestamp": since + 20, "usdcSize": 5000},  # duplicado
+        {"conditionId": "0xviejo", "timestamp": 10, "usdcSize": 5000},      # fuera de ventana
+        {"conditionId": "0xpolvo", "timestamp": since + 10, "usdcSize": 1}, # ruido
+    ]
+    posiciones = [
+        dict(pos(cond="0xl", redeemable=True, curPrice=0), initialValue=800, endDate="2099-01-01"),
+        # ganadora sin canjear: no es perdida
+        dict(pos(cond="0xgana", redeemable=True, curPrice=1), initialValue=800, endDate="2099-01-01"),
+        # perdida fuera de la ventana
+        dict(pos(cond="0xantigua", redeemable=True, curPrice=0), initialValue=800, endDate="2001-01-01"),
+    ]
+    wins, losses = track_record("0x", posiciones, since, fetch=lambda url: redeems)
+    assert (wins, losses) == (1, 1)
+
+
+def test_update_track_records_respects_ttl():
+    cache = {"0xa": {"wins": 3, "losses": 3, "at": 1000}}
+    calls = []
+    def fetch(url):
+        calls.append(url)
+        return []
+    datos = {"0xa": {"positions": []}}
+    tracks, _ = update_track_records(cache, {"0xa"}, datos, now_ts=2000, fetch=fetch)
+    assert tracks["0xa"]["wins"] == 3 and calls == []  # cache fresca: sin red
+    tracks, _ = update_track_records(cache, {"0xa"}, datos, now_ts=1000 + 7 * 3600, fetch=fetch)
+    assert tracks["0xa"]["at"] == 1000 + 7 * 3600  # caducada: recalculado
+
+
+def test_whale_notifiable_filters_losers():
+    assert whale_notifiable({"isTop": True, "winRate": None})
+    assert whale_notifiable({"isTop": False, "winRate": 0.6})
+    assert not whale_notifiable({"isTop": False, "winRate": 0.3})   # perdedor
+    assert not whale_notifiable({"isTop": False, "winRate": None})  # sin historial
+
+
+def test_annotate_win_rates():
+    signals = detect_signals(traders(5), min_users=5, min_usd=500)
+    tracks = {"0xa0": {"wins": 8, "losses": 2}, "0xa1": {"wins": 3, "losses": 3},
+              "0xa2": {"wins": 1, "losses": 0}}  # historial corto: no cuenta
+    annotate_win_rates(signals, tracks)
+    por_wallet = {t["wallet"]: t["winRate"] for t in signals[0]["traders"]}
+    assert por_wallet["0xa0"] == 0.8 and por_wallet["0xa1"] == 0.5
+    assert por_wallet["0xa2"] is None and por_wallet["0xa4"] is None
+    assert signals[0]["avgWinRate"] == 0.65  # media de los que tienen datos
 
 
 def test_recipients_env():
