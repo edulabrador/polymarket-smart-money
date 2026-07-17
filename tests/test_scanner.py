@@ -188,16 +188,32 @@ def test_recipients_env():
     assert recipients() == []
 
 
-def test_backtest_signals_use_initial_value():
-    ganada = dict(pos(redeemable=True, curPrice=1), currentValue=999, initialValue=800)
-    perdida = dict(pos(cond="0xl", redeemable=True, curPrice=0), currentValue=0, initialValue=800)
-    data = {f"0xw{i}": [ganada] for i in range(5)}
-    data.update({f"0xl{i}": [perdida] for i in range(5)})
-    # pequena (initialValue < min) y viva (no redeemable) no cuentan
-    data["0xmini"] = [dict(pos(cond="0xm", redeemable=True, curPrice=1), initialValue=100)]
-    data["0xviva"] = [dict(pos(cond="0xv"), initialValue=9999)]
-    out = backtest_signals(data, min_users=5, min_usd=500)
-    assert {s["id"].split(":")[0]: s["won"] for s in out} == {"0xabc": True, "0xl": False}
+def test_backtest_mixes_redeems_and_dead_positions():
+    # ganadas = canjes REDEEM; perdidas = posiciones muertas que nadie canjea
+    canje = {"conditionId": "0xwin", "timestamp": 100, "usdcSize": 900.0,
+             "title": "Ganado", "outcome": ""}
+    redeems = {f"0xw{i}": [canje] for i in range(5)}
+    perdida = dict(pos(cond="0xl", redeemable=True, curPrice=0),
+                   currentValue=0, initialValue=800)
+    positions = {f"0xl{i}": [perdida] for i in range(5)}
+    # ruido que no debe contar: canje pequeno, canje fuera de ventana,
+    # posicion viva, ganadora sin canjear (contara cuando se canjee)
+    redeems["0xmini"] = [dict(canje, usdcSize=10)]
+    redeems["0xviejo"] = [dict(canje, timestamp=1)]
+    positions["0xviva"] = [dict(pos(cond="0xv"), initialValue=9999)]
+    positions["0xsin"] = [dict(pos(cond="0xs", redeemable=True, curPrice=1),
+                               initialValue=9999)]
+    out = backtest_signals(redeems, positions, min_users=5, min_usd=500, since_ts=50)
+    assert {s["id"]: s["won"] for s in out} == {"0xwin:win": True, "0xl:0": False}
+
+
+def test_backtest_parses_real_activity_fixture():
+    activity = json.loads((FIXTURES / "activity.json").read_text(encoding="utf-8"))
+    redeems = {f"0xr{i}": activity for i in range(5)}
+    out = backtest_signals(redeems, {}, min_users=5, min_usd=500, since_ts=0)
+    grandes = {e["conditionId"] for e in activity if e["usdcSize"] >= 500}
+    assert len(out) == len(grandes)
+    assert all(s["won"] and s["numTraders"] == 5 for s in out)
 
 
 if __name__ == "__main__":

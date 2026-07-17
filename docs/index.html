@@ -108,8 +108,8 @@
     <div class="tile"><b id="t-whales">–</b><span>whales últimas 24 h</span></div>
     <div class="tile"><b id="t-aciertos">–</b><span>tasa de acierto</span></div>
     <div class="tile" id="tile-backtest" hidden
-         title="Coincidencias del top 50 en mercados ya resueltos (posiciones sin canjear): estimación inicial, no un backtest completo">
-      <b id="t-backtest">–</b><span>backtest histórico</span></div>
+         title="Coincidencias del top 50 en mercados ya resueltos: ganadas desde sus canjes (REDEEM), perdidas desde posiciones muertas. Estimación, no un backtest completo">
+      <b id="t-backtest">–</b><span>backtest 30 días</span></div>
   </div>
   <div class="filtros" id="filtros" hidden>
     <input type="search" id="busqueda" placeholder="Buscar mercado…">
@@ -268,7 +268,9 @@ async function cargarBacktest() {
     const r = await fetch('backtest.json', {cache: 'no-store'});
     if (!r.ok) return;  // aun sin backtest: el tile queda oculto
     const b = await r.json();
-    if (!b.total) return;
+    // solo el metodo redeem+positions es valido (el primero tenia sesgo
+    // de supervivencia: sin canjes solo se ven las perdedoras)
+    if (!b.total || b.method !== 'redeem+positions') return;
     el('t-backtest').textContent =
       `${b.won}/${b.total} (${Math.round(100 * b.won / b.total)}%)`;
     el('tile-backtest').hidden = false;

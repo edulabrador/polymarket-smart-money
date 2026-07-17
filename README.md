@@ -26,10 +26,12 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
    mercado cree improbable es la señal más informativa (posible insider).
    Cada whale se enriquece con el valor de su cartera abierta y con cuántas
    compras grandes lleva en la ventana reciente (×N en la web).
-7. **Backtest inicial** (workflow `backtest`, manual): agrupa las posiciones
-   ya resueltas del top 50 con la misma regla de coincidencia y mide cuántas
-   ganaron. Muestra parcial (solo posiciones sin canjear), pero da una
-   estimación de la tasa de acierto sin esperar semanas de histórico en vivo.
+7. **Backtest inicial** (workflow `backtest`, manual): mide la tasa de acierto
+   de las coincidencias del top 50 en mercados ya resueltos (30 días). Las
+   ganadas se detectan por los canjes (`/activity?type=REDEEM`: canjear con
+   payout implica tener el lado ganador) y las perdidas por las posiciones
+   muertas que siguen en `/positions`. Usar solo posiciones daba 0% falso:
+   sesgo de supervivencia (las ganadoras se canjean y desaparecen).
 8. **Varios destinatarios de Telegram**: `TELEGRAM_CHAT_ID` admite varios ids
    separados por comas, o `TELEGRAM_RECIPIENTS` (JSON) con umbrales propios
    por persona: `[{"chatId": "...", "minUsers": 7, "whaleMinUsd": 100000}]`.
