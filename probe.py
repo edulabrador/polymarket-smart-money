@@ -87,6 +87,29 @@ def main():
     if trades:
         (FIXTURES / "trades.json").write_text(json.dumps(trades, indent=1), encoding="utf-8")
 
+    # actividad REDEEM: canjear una posicion resuelta = la ganaste. Es la
+    # unica forma de ver los mercados ganados (las posiciones ganadoras
+    # desaparecen de /positions al canjearse)
+    report.append("")
+    activity = None
+    for entry in leaderboard[:5]:
+        wallet = entry[wallet_key]
+        url = f"https://data-api.polymarket.com/activity?user={wallet}&type=REDEEM&limit=100"
+        try:
+            data = get(url)
+        except Exception as e:
+            report.append(f"- FALLO activity de `{wallet}`: {e}")
+            continue
+        entries = data if isinstance(data, list) else data.get("data")
+        if entries:
+            activity = entries
+            report.append(f"- OK activity REDEEM de `{wallet}` -> {len(entries)} eventos, campos: {sorted(entries[0].keys())}")
+            report.append(f"  ejemplo: {json.dumps(entries[0])[:400]}")
+            break
+        report.append(f"- VACIO activity de `{wallet}`")
+    if activity:
+        (FIXTURES / "activity.json").write_text(json.dumps(activity, indent=1), encoding="utf-8")
+
     pathlib.Path("NOTES.md").write_text("\n".join(report) + "\n", encoding="utf-8")
     print("\n".join(report))
 
