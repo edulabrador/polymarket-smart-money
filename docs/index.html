@@ -107,6 +107,9 @@
     <div class="tile"><b id="t-stale">–</b><span>descartadas</span></div>
     <div class="tile"><b id="t-whales">–</b><span>whales últimas 24 h</span></div>
     <div class="tile"><b id="t-aciertos">–</b><span>tasa de acierto</span></div>
+    <div class="tile" id="tile-roi" hidden
+         title="Retorno medio si hubieras apostado lo mismo en cada señal a su precio de detección y esperado a que resuelva. Esto es lo que dice si la herramienta es RENTABLE, no solo si acierta.">
+      <b id="t-roi">–</b><span>ROI medio / señal</span></div>
     <div class="tile" id="tile-backtest" hidden
          title="Coincidencias del top 50 en mercados ya resueltos: ganadas desde sus canjes (REDEEM), perdidas desde posiciones muertas. Estimación, no un backtest completo">
       <b id="t-backtest">–</b><span>backtest 30 días</span></div>
@@ -126,6 +129,12 @@
       <option value="cripto">Cripto</option>
       <option value="otras">Otras</option>
     </select>
+    <select id="orden">
+      <option value="traders">Ordenar: más traders</option>
+      <option value="upside">Ordenar: más potencial</option>
+      <option value="entrada">Ordenar: mejor entrada</option>
+    </select>
+    <label class="check"><input type="checkbox" id="ocultarFav"> ocultar favoritos</label>
     <label class="check"><input type="checkbox" id="verStale"> mostrar descartadas</label>
   </div>
   <div id="lista"></div>
@@ -182,6 +191,15 @@ function renderTiles() {
   const aciertos = hist.filter(h => h.won).length;
   el('t-aciertos').textContent = hist.length
     ? `${aciertos}/${hist.length} (${Math.round(100 * aciertos / hist.length)}%)` : '—';
+  // ROI real: media del retorno por señal resuelta (base del "¿es rentable?")
+  const conRoi = hist.filter(h => h.roi != null);
+  if (conRoi.length) {
+    const roi = conRoi.reduce((a, h) => a + h.roi, 0) / conRoi.length;
+    const t = el('t-roi');
+    t.textContent = (roi >= 0 ? '+' : '') + Math.round(roi * 100) + '%';
+    t.className = roi >= 0 ? 'deriva-ok' : 'deriva-mal';
+    el('tile-roi').hidden = false;
+  }
   el('tiles').hidden = false;
 }
 
@@ -191,10 +209,21 @@ function renderSignals() {
   const minT = +el('minTraders').value;
   const cat = el('categoria').value;
   const verStale = el('verStale').checked;
+  const ocultarFav = el('ocultarFav').checked;
+  const orden = el('orden').value;
   const visibles = d.signals.filter(s =>
     (!s.stale || verStale) && s.numTraders >= minT &&
     (!cat || categoria(s.title) === cat) &&
+    (!ocultarFav || s.curPrice <= 0.8) &&  // favoritos = poco margen
     (!q || s.title.toLowerCase().includes(q)));
+  // el potencial y la entrada solo ordenan entre frescas; las descartadas
+  // siempre al fondo (no son entrada viable)
+  const clave = {
+    upside: s => -(s.upside ?? 0),
+    entrada: s => Math.abs(s.entryGap ?? 9),   // más cerca de su entrada, mejor
+    traders: s => -s.numTraders,
+  }[orden];
+  visibles.sort((a, b) => (a.stale - b.stale) || (clave(a) - clave(b)) || (b.numTraders - a.numTraders));
 
   el('lista').innerHTML = '';
   for (const s of visibles) {
@@ -216,6 +245,7 @@ function renderSignals() {
       <div class="datos">
         <span>entrada <b>${pct(s.avgEntryPrice)}</b> → ahora <b>${pct(s.curPrice)}</b>
           <span class="${claseDeriva}">(${deriva >= 0 ? '+' : '−'}${Math.abs(Math.round(deriva * 100))} pp)</span></span>
+        ${s.upside != null ? `<span title="cuánto multiplicas si gana comprando ahora">potencial <b class="${s.curPrice > 0.8 ? '' : 'deriva-ok'}">×${s.upside}</b> si gana</span>` : ''}
         <span>capital <b>${usd(s.totalUsd)}</b></span>
         ${s.avgWinRate != null ? `<span>acierto medio 30d <b>${pct(s.avgWinRate)}</b></span>` : ''}
         <span>detectada <b>${new Date(s.firstSeen).toLocaleDateString('es-ES')}</b></span>
@@ -296,7 +326,7 @@ function renderHistory() {
   el('historial-lista').innerHTML = hist
     .slice().reverse().map(h =>
       `<li><span class="${h.won ? 'acierto' : 'fallo'}">${h.won ? '✓ acierto' : '✗ fallo'}</span>
-       — ${esc(h.title)} [${esc(h.outcome)}] · ${h.numTraders} traders · entrada ${pct(h.avgEntryPrice)}
+       — ${esc(h.title)} [${esc(h.outcome)}] · ${h.numTraders} traders${h.roi != null ? ` · <b class="${h.roi >= 0 ? 'acierto' : 'fallo'}">ROI ${h.roi >= 0 ? '+' : ''}${Math.round(h.roi * 100)}%</b>` : ''}
        · resuelta ${new Date(h.resolvedAt).toLocaleDateString('es-ES')}${h.stale ? ' · (estaba descartada)' : ''}</li>`)
     .join('');
 }
@@ -320,7 +350,7 @@ async function cargar() {
   }
 }
 
-['busqueda', 'minTraders', 'categoria', 'verStale'].forEach(id =>
+['busqueda', 'minTraders', 'categoria', 'orden', 'ocultarFav', 'verStale'].forEach(id =>
   el(id).addEventListener('input', () => { renderSignals(); renderWhales(); }));
 cargar();
 cargarBacktest();

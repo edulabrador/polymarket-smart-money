@@ -97,6 +97,7 @@ def detect_signals(positions_by_trader, min_users=MIN_USERS, min_usd=MIN_POSITIO
         total = sum(t["usd"] for t in traders)
         m = g["meta"]
         avg_entry = round(sum(t["avgPrice"] * t["usd"] for t in traders) / total, 4)
+        cur = m["curPrice"]
         signals.append({
             "id": key,
             "title": m["title"],
@@ -104,11 +105,17 @@ def detect_signals(positions_by_trader, min_users=MIN_USERS, min_usd=MIN_POSITIO
             "slug": m["slug"],
             "eventSlug": m["eventSlug"],
             "endDate": m.get("endDate", ""),
-            "curPrice": m["curPrice"],
+            "curPrice": cur,
             "numTraders": len(traders),
             "totalUsd": round(total, 2),
             "avgEntryPrice": avg_entry,
-            "stale": abs(m["curPrice"] - avg_entry) > max_drift,
+            "stale": abs(cur - avg_entry) > max_drift,
+            # cuanto multiplicas si gana comprando ahora: favorito a 0.9 -> x0.11
+            # (sin margen); longshot a 0.25 -> x3. Donde el dinero listo tiene edge.
+            "upside": round((1 - cur) / cur, 2) if cur > 0 else 0,
+            # +pp del precio actual sobre la entrada media: si es pequeno aun
+            # puedes entrar cerca de su precio; si es grande, llegas tarde.
+            "entryGap": round(cur - avg_entry, 3),
             "traders": traders,
         })
     signals.sort(key=lambda s: (s["stale"], -s["numTraders"], -s["totalUsd"]))
@@ -116,13 +123,16 @@ def detect_signals(positions_by_trader, min_users=MIN_USERS, min_usd=MIN_POSITIO
 
 
 def merge_previous(signals, previous, now):
-    """Conserva firstSeen de senales ya conocidas; devuelve (signals, nuevas)."""
+    """Conserva firstSeen y entryPrice de senales ya conocidas; devuelve
+    (signals, nuevas). entryPrice = precio de mercado la primera vez que
+    aparecio la senal: el precio al que un seguidor entraria, base del ROI."""
     prev = {s["id"]: s for s in previous}
     new = []
     for s in signals:
         old = prev.get(s["id"])
         s["firstSeen"] = old["firstSeen"] if old else now
         s["lastSeen"] = now
+        s["entryPrice"] = (old.get("entryPrice") if old else None) or s["curPrice"]
         if not old:
             new.append(s)
     return signals, new
@@ -140,12 +150,20 @@ def resolve_history(previous, active_ids, position_index, now):
         p = position_index.get(s["id"])
         if p is None or not p.get("redeemable"):
             continue
+        won = p["curPrice"] > 0.5
+        # ROI real de seguir la senal: comprar a entryPrice y cobrar $1 si gana
+        # (retorno (1-e)/e) o $0 si pierde (-100%). Es lo que dice si esto es
+        # RENTABLE, no solo si acierta: acertar un favorito a 0.95 da +5%.
+        entry = s.get("entryPrice") or s.get("avgEntryPrice") or 0.5
+        entry = entry if entry > 0 else 0.5
         resolved.append({
             "id": s["id"], "title": s["title"], "outcome": s["outcome"],
             "eventSlug": s.get("eventSlug", ""),
             "numTraders": s["numTraders"], "avgEntryPrice": s["avgEntryPrice"],
+            "entryPrice": round(entry, 4),
+            "roi": round((1 - entry) / entry, 3) if won else -1.0,
             "stale": s.get("stale", False), "firstSeen": s.get("firstSeen", ""),
-            "resolvedAt": now, "won": p["curPrice"] > 0.5,
+            "resolvedAt": now, "won": won,
         })
     return resolved
 

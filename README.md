@@ -47,6 +47,18 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
 8. **Varios destinatarios de Telegram**: `TELEGRAM_CHAT_ID` admite varios ids
    separados por comas, o `TELEGRAM_RECIPIENTS` (JSON) con umbrales propios
    por persona: `[{"chatId": "...", "minUsers": 7, "whaleMinUsd": 100000}]`.
+9. **ROI real, no solo aciertos** (lo que dice si esto es RENTABLE): al
+   aparecer una señal se fija su `entryPrice` (precio de mercado en ese
+   momento = al que entraría un seguidor). Cuando el mercado resuelve, se
+   calcula el retorno real: `+(1-e)/e` si gana, `-100%` si pierde. Acertar un
+   favorito a 0.95 solo da +5%; un longshot a 0.30 da +233%. La web muestra el
+   **ROI medio por señal** — la métrica honesta de rentabilidad, que la tasa de
+   acierto por sí sola oculta.
+10. **Foco en oportunidades con margen**: cada señal trae su `upside` (cuánto
+    multiplicas si gana comprando ahora) y su `entryGap` (cuánto se ha alejado
+    el precio de la entrada media). La web permite **ocultar favoritos** (precio
+    > 0.80, casi sin recorrido) y **ordenar por potencial** o por **mejor
+    entrada** (precio aún cerca del de los traders, no llegas tarde).
 
 ## Interfaz
 

@@ -40,6 +40,8 @@ def test_five_traders_same_outcome_is_signal():
     assert s["totalUsd"] == 5000.0
     assert s["outcome"] == "Yes"
     assert s["avgEntryPrice"] == 0.4
+    assert s["upside"] == 1.0        # comprar a 0.5, cobrar 1 -> x1 (+100%)
+    assert s["entryGap"] == 0.1      # precio 0.5 vs entrada media 0.4
 
 
 def test_four_traders_no_signal():
@@ -68,10 +70,14 @@ def test_merge_keeps_firstseen_and_flags_new():
     merged, new = merge_previous(signals, [], "T1")
     assert new == merged
     assert merged[0]["firstSeen"] == "T1"
-    merged2, new2 = merge_previous(signals, merged, "T2")
+    assert merged[0]["entryPrice"] == 0.5   # precio de mercado al aparecer
+    # el precio de mercado se mueve, pero entryPrice queda fijado en el 1er visto
+    signals2 = detect_signals(traders(5, curPrice=0.8), min_users=5, min_usd=500)
+    merged2, new2 = merge_previous(signals2, merged, "T2")
     assert new2 == []
     assert merged2[0]["firstSeen"] == "T1"
     assert merged2[0]["lastSeen"] == "T2"
+    assert merged2[0]["entryPrice"] == 0.5   # NO se re-captura al precio nuevo
 
 
 def test_parses_real_api_fixture():
@@ -116,8 +122,10 @@ def test_resolve_history_records_verdict():
 
     h = resolve_history(merged, set(), ganada, "T2")
     assert len(h) == 1 and h[0]["won"] is True and h[0]["resolvedAt"] == "T2"
+    # entrada 0.5, gana -> ROI (1-0.5)/0.5 = +1.0 (dobla)
+    assert h[0]["entryPrice"] == 0.5 and h[0]["roi"] == 1.0
     h = resolve_history(merged, set(), perdida, "T2")
-    assert h[0]["won"] is False
+    assert h[0]["won"] is False and h[0]["roi"] == -1.0   # pierde el 100%
     assert resolve_history(merged, set(), sin_veredicto, "T2") == []
     # si la senal sigue activa, no pasa al historico
     assert resolve_history(merged, {sid}, ganada, "T2") == []
