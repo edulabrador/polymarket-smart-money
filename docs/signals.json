@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-07-17T16:07:33+00:00",
+ "updatedAt": "2026-07-17T16:18:06+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
@@ -19,7 +19,7 @@
    "endDate": "2026-07-20",
    "curPrice": 0.5885,
    "numTraders": 12,
-   "totalUsd": 8968386.88,
+   "totalUsd": 8968781.46,
    "avgEntryPrice": 0.1831,
    "stale": true,
    "traders": [
@@ -56,8 +56,8 @@
     {
      "wallet": "0xc31d0a0d63d760d72a1236d16beaa6a71c854ebe",
      "name": "FootballFan98",
-     "usd": 805534.9,
-     "avgPrice": 0.1907
+     "usd": 805929.48,
+     "avgPrice": 0.1908
     },
     {
      "wallet": "0xfea31bc088000ff909be1dfd8d0e3f2c7ef2d227",
@@ -97,7 +97,7 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-17T16:07:33+00:00"
+   "lastSeen": "2026-07-17T16:18:06+00:00"
   },
   {
    "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f:0",
@@ -156,10 +156,25 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-17T16:07:33+00:00"
+   "lastSeen": "2026-07-17T16:18:06+00:00"
   }
  ],
  "whales": [
+  {
+   "tx": "0x300f113949bff9c865d5ab6fe158bd495e43a896f048c67146b720446ad963ae",
+   "wallet": "0x204f72f35326db932158cba6adff0b9a1da95e14",
+   "name": "swisstony",
+   "usd": 56324.56,
+   "price": 0.961,
+   "title": "France vs. England: O/U 0.5",
+   "outcome": "Over",
+   "eventSlug": "fifwc-fra-eng-2026-07-18-more-markets",
+   "timestamp": 1784304697,
+   "isTop": true,
+   "longshot": false,
+   "repeatBuys": 1,
+   "walletUsd": 2568109.39
+  },
   {
    "tx": "0x46eba581b7c744de81f7d8ce07433334617fe7c6c17de1de477bc3fc5331792e",
    "wallet": "0xc15b833b6991e5dbcaca029f7d0f951e5db238af",
@@ -804,6 +819,6 @@
    "isTop": true
   }
  ],
- "lastWhaleTs": 1784303493,
+ "lastWhaleTs": 1784304697,
  "history": []
 }
