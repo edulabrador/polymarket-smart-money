@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-07-17T15:14:51+00:00",
+ "updatedAt": "2026-07-17T15:25:23+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
@@ -97,7 +97,7 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-17T15:14:51+00:00"
+   "lastSeen": "2026-07-17T15:25:23+00:00"
   },
   {
    "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f:0",
@@ -156,10 +156,40 @@
     }
    ],
    "firstSeen": "2026-07-15T23:02:21+00:00",
-   "lastSeen": "2026-07-17T15:14:51+00:00"
+   "lastSeen": "2026-07-17T15:25:23+00:00"
   }
  ],
  "whales": [
+  {
+   "tx": "0x7fea685686380acad00779d608c082c8f6d2aef944e96ff1681eba2fa5d8dd00",
+   "wallet": "0x547f2917d51f2e63ab382dcf641d4e0240162937",
+   "name": "0x547f2917D51F2e63ab382DCF641d4E0240162937-1782667852436",
+   "usd": 77297.65,
+   "price": 0.7503532232,
+   "title": "Iasi Open: Oleksandra Oliynykova vs Clara Burel",
+   "outcome": "Oleksandra Oliynykova",
+   "eventSlug": "wta-oliynyk-burel-2026-07-17",
+   "timestamp": 1784301441,
+   "isTop": false,
+   "longshot": false,
+   "repeatBuys": 4,
+   "walletUsd": 28688.49
+  },
+  {
+   "tx": "0x55eb1ebf75d2d9eea343fa7694ef7a20419ebad980954320be4e5e1db972a513",
+   "wallet": "0x86d2d490bcac9fccea02a44c48272008e0c4731d",
+   "name": "umeax",
+   "usd": 285437.32,
+   "price": 0.75,
+   "title": "Will France vs. England end in a draw?",
+   "outcome": "No",
+   "eventSlug": "fifwc-fra-eng-2026-07-18",
+   "timestamp": 1784301270,
+   "isTop": true,
+   "longshot": false,
+   "repeatBuys": 1,
+   "walletUsd": 287598.93
+  },
   {
    "tx": "0x7d7e338d85cffc826b48ba6787a9b7697df47aa348643da2c14da67ed469347e",
    "wallet": "0x7ec87edb28f85a9a7a981ffe527ef87e611d3a77",
@@ -759,6 +789,6 @@
    "isTop": true
   }
  ],
- "lastWhaleTs": 1784300557,
+ "lastWhaleTs": 1784301441,
  "history": []
 }
