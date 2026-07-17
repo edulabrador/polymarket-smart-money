@@ -174,8 +174,9 @@ def test_enrich_whales_adds_wallet_context():
     assert out[0]["repeatBuys"] == 2 and out[1]["repeatBuys"] == 1
     assert out[0]["walletUsd"] == 1250.5
     assert out[0]["winRate"] == 0.75 and out[0]["wins30d"] == 6
-    # sin datos: campos a None/0, nunca revienta
+    # sin datos: campos a None, nunca revienta
     assert out[1]["walletUsd"] is None and out[1]["winRate"] is None
+    assert out[1]["wins30d"] is None and out[1]["losses30d"] is None
 
 
 def test_track_record_wins_and_losses():
@@ -215,6 +216,8 @@ def test_whale_notifiable_filters_losers():
     assert whale_notifiable({"isTop": False, "winRate": 0.6})
     assert not whale_notifiable({"isTop": False, "winRate": 0.3})   # perdedor
     assert not whale_notifiable({"isTop": False, "winRate": None})  # sin historial
+    # el top 50 NO borra un historial perdedor confirmado
+    assert not whale_notifiable({"isTop": True, "winRate": 0.2})
 
 
 def test_annotate_win_rates():

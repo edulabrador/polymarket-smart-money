@@ -247,10 +247,11 @@ function renderWhales() {
     const horas = Math.floor((Date.now() / 1000 - w.timestamp) / 3600);
     const hace = horas < 1 ? 'hace &lt;1 h' : `hace ${horas} h`;
     const quien = esc(nombre(w.name, w.wallet));
-    const clase = w.winRate >= .55 ? 'deriva-ok' : w.winRate < .45 ? 'deriva-mal' : '';
+    // solo se guardan whales con historial ganador o sin veredicto (top 50);
+    // una perdedora nunca llega aqui, asi que winRate nunca es "malo"
     const acierto = w.winRate != null
-      ? ` · acierto 30d <b class="${clase}">${pct(w.winRate)}</b> (${w.wins30d}✓ ${w.losses30d}✗)`
-      : (w.wins30d != null ? ' · sin historial 30d' : '');
+      ? ` · acierto 30d <b class="deriva-ok">${pct(w.winRate)}</b> (${w.wins30d}✓ ${w.losses30d}✗)`
+      : '';
     const cartera = w.walletUsd ? ` · cartera <b>${usd(w.walletUsd)}</b>` : '';
     const racha = (w.repeatBuys ?? 0) > 1
       ? ` <span class="pastilla" title="compras grandes recientes de este wallet">×${w.repeatBuys}</span>` : '';

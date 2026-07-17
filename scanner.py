@@ -252,17 +252,22 @@ def enrich_whales(new_whales, prev_whales, tracks, positions_cache, positions_by
         w["walletUsd"] = (round(sum(p.get("currentValue", 0) for p in posiciones), 2)
                           if posiciones is not None else None)
         t = tracks.get(w["wallet"])
-        w["wins30d"] = t["wins"] if t else 0
-        w["losses30d"] = t["losses"] if t else 0
         w["winRate"] = win_rate(t) if t else None
+        # solo se guardan wins/losses cuando hay veredicto (winRate no None):
+        # el conteo crudo de una whale sin historial suficiente ya se leeria
+        # como "va perdiendo" aunque no este confirmado
+        w["wins30d"] = t["wins"] if t and w["winRate"] is not None else None
+        w["losses30d"] = t["losses"] if t and w["winRate"] is not None else None
     return new_whales
 
 
 def whale_notifiable(w):
-    """Solo se avisa de whales con historial ganador (o del top 50): una
-    compra de $300k de alguien que va perdiendo no es dinero inteligente."""
-    return w["isTop"] or (w.get("winRate") is not None
-                          and w["winRate"] >= WHALE_MIN_WINRATE)
+    """Nunca se guarda ni se avisa de una whale con historial perdedor
+    conocido (winRate < umbral), sea o no del top 50 -- estar en el top 50
+    no borra que vaya perdiendo. El top 50 solo actua de comodin cuando NO
+    hay historial suficiente (winRate None): ahi se asume por prestigio."""
+    r = w.get("winRate")
+    return r >= WHALE_MIN_WINRATE if r is not None else w["isTop"]
 
 
 def format_whales(whales, cap=10):
@@ -369,8 +374,15 @@ def main():
                   positions_by_trader)
     annotate_win_rates(signals, tracks)
     first_run = "lastWhaleTs" not in doc  # primera vez: fijar marca sin avisar
-    whales = (new_whales + doc.get("whales", []))[:WHALES_KEEP]
+    detected = len(new_whales)
+    # una whale con historial perdedor no se guarda ni se muestra en ningun
+    # sitio (ni la nueva ni las que ya estuvieran guardadas de antes)
+    new_whales = [w for w in new_whales if whale_notifiable(w)]
+    whales = (new_whales + [w for w in doc.get("whales", []) if whale_notifiable(w)])[:WHALES_KEEP]
     last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
+    # el track record de un wallet perdedor tampoco se persiste: se
+    # recalcula (y se descarta otra vez) en cada escaneo si hace falta
+    tracks = {w: t for w, t in tracks.items() if win_rate(t) is None or win_rate(t) >= WHALE_MIN_WINRATE}
 
     # indice de TODAS las posiciones (incluidas redeemable) para dar veredicto
     # a las senales cuyo mercado ya resolvio
@@ -401,17 +413,15 @@ def main():
         mias = [s for s in fresh_new if s["numTraders"] >= r["minUsers"]]
         if mias:
             send_telegram(format_message(mias), r["chatId"])
-        grandes = [w for w in new_whales
-                   if w["usd"] >= r["whaleMinUsd"] and whale_notifiable(w)]
+        grandes = [w for w in new_whales if w["usd"] >= r["whaleMinUsd"]]
         if grandes and not first_run:
             send_telegram(format_whales(grandes), r["chatId"])
     stale_count = sum(1 for s in signals if s["stale"])
     bots = len(positions_by_trader) - len(scannable)
     aciertos = sum(1 for h in history if h["won"])
-    notificables = sum(1 for w in new_whales if whale_notifiable(w))
     print(f"{len(signals)} senales ({stale_count} stale), {len(new)} nuevas, "
-          f"{len(fresh_new)} notificadas | {len(new_whales)} whales nuevas "
-          f"({notificables} con historial ganador) | "
+          f"{len(fresh_new)} notificadas | {len(new_whales)}/{detected} whales "
+          f"con historial ganador (resto descartado) | "
           f"{bots} wallets excluidos por bot | "
           f"historico {aciertos}/{len(history)} aciertos")
     for s in new:

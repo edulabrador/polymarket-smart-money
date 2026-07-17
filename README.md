@@ -27,11 +27,15 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
    Cada whale se enriquece con el valor de su cartera abierta y con cuántas
    compras grandes lleva en la ventana reciente (×N en la web).
    **Filtro de calidad**: se calcula la tasa de acierto de 30 días del wallet
-   (canjes REDEEM = ganadas, posiciones muertas = perdidas, cache de 6 h) y
-   solo se notifica si es ganador (`WHALE_MIN_WINRATE`, defecto 55% con al
-   menos `WHALE_MIN_TRACK` mercados resueltos) o está en el top 50 — una
-   compra de $300k de un gran perdedor no es dinero inteligente. Las señales
-   de coincidencia muestran además el acierto medio 30d de sus traders.
+   (canjes REDEEM = ganadas, posiciones muertas = perdidas, cache de 6 h). Una
+   whale con historial perdedor confirmado (`WHALE_MIN_WINRATE`, defecto 55%
+   con al menos `WHALE_MIN_TRACK` mercados resueltos) **nunca se guarda ni se
+   muestra en ningún sitio** — ni notificación, ni web, ni el propio track
+   record en `signals.json` — esté o no en el top 50: una compra de $300k de
+   alguien que va perdiendo no es dinero inteligente, y estar en el top 50 no
+   lo cambia. El top 50 solo actúa de comodín cuando no hay historial
+   suficiente para tener veredicto. Las señales de coincidencia muestran
+   además el acierto medio 30d de sus traders.
 7. **Backtest inicial** (workflow `backtest`, manual): mide la tasa de acierto
    de las coincidencias del top 50 en mercados ya resueltos (30 días). Las
    ganadas se detectan por los canjes (`/activity?type=REDEEM`: canjear con
