@@ -7,11 +7,12 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 from backtest import backtest_signals
-from scanner import (annotate_win_rates, detect_signals, detect_whales,
-                     enrich_whales, format_message, format_resolved,
+from scanner import (annotate_win_rates, categoria, detect_first_moves,
+                     detect_signals, detect_whales, enrich_whales,
+                     format_first_moves, format_message, format_resolved,
                      format_whales, merge_previous, recipients,
-                     resolve_history, track_record, update_track_records,
-                     whale_notifiable)
+                     resolve_first_moves, resolve_history, track_record,
+                     update_track_records, whale_notifiable)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -221,10 +222,80 @@ def test_track_record_wins_and_losses():
         # posicion viva: su valor de mercado cuenta como caja abierta
         dict(pos(cond="0xviva", redeemable=False), currentValue=1200),
     ]
-    wins, losses, net = track_record("0x", posiciones, since, fetch=lambda url: actividad)
+    wins, losses, net, cats = track_record("0x", posiciones, since, fetch=lambda url: actividad)
     assert (wins, losses) == (1, 1)
     # net = canjes(5000+5000+1) + venta(500) - compra(3000) + abierto(1200) = 8701
     assert net == 8701.0
+    # sin titulo reconocible, win y loss caen en "otras" (1 y 1)
+    assert cats["otras"] == {"wins": 1, "losses": 1}
+
+
+def test_categoria_keywords():
+    assert categoria("France vs. Spain: Team to Advance") == "deportes"
+    assert categoria("Will Trump win the election?") == "politica"
+    assert categoria("Bitcoin above $100k?") == "cripto"
+    assert categoria("Will aliens be confirmed?") == "otras"
+
+
+def test_annotate_category_win_rates():
+    signals = detect_signals(traders(5, title="NBA Finals: Lakers vs Celtics"),
+                             min_users=5, min_usd=500)
+    tracks = {"0xa0": {"wins": 8, "losses": 2,
+                       "cats": {"deportes": {"wins": 9, "losses": 1}}},
+              "0xa1": {"wins": 6, "losses": 4,
+                       "cats": {"deportes": {"wins": 1, "losses": 1}}}}  # muestra corta
+    annotate_win_rates(signals, tracks)
+    s = signals[0]
+    assert s["cat"] == "deportes"
+    por_wallet = {t["wallet"]: t["catWinRate"] for t in s["traders"]}
+    assert por_wallet["0xa0"] == 0.9      # 9/10 en deportes
+    assert por_wallet["0xa1"] is None     # 2 mercados: muestra insuficiente
+    assert s["avgCatWinRate"] == 0.9      # media de los que tienen muestra
+
+
+def test_detect_first_moves():
+    data = {
+        "0xa": {"name": "ann", "positions": [
+            pos(cond="0xnuevo", currentValue=15000, curPrice=0.3),   # NUEVA y grande
+            pos(cond="0xviejo", currentValue=20000, curPrice=0.4),   # ya conocida
+            pos(cond="0xchica", currentValue=500, curPrice=0.3),     # pequena
+            pos(cond="0xfav", currentValue=30000, curPrice=0.95),    # favorito
+            pos(cond="0xcoinc", currentValue=15000, curPrice=0.3),   # ya es senal
+            pos(cond="0xmuerta", currentValue=15000, redeemable=True),
+        ]},
+    }
+    known = {"0xa|0xviejo:0"}
+    moves, idx = detect_first_moves(data, known, signal_ids={"0xcoinc:0"},
+                                    min_usd=10000, max_price=0.8)
+    assert [m["id"] for m in moves] == ["0xnuevo:0"]
+    m = moves[0]
+    assert m["wallet"] == "0xa" and m["usd"] == 15000
+    assert m["entryPrice"] == 0.3 and m["upside"] == 2.33
+    # el indice nuevo tiene las 4 posiciones vivas >= min (favorito y senal incluidos)
+    assert set(idx) == {"0xa|0xnuevo:0", "0xa|0xviejo:0", "0xa|0xfav:0", "0xa|0xcoinc:0"}
+
+
+def test_resolve_first_moves_roi():
+    m = {"id": "0xm:0", "wallet": "0xa", "title": "M", "outcome": "Yes",
+         "eventSlug": "e", "usd": 15000, "entryPrice": 0.25, "avgPrice": 0.2,
+         "upside": 3.0, "firstSeen": "T1"}
+    ganada = {"0xm:0": pos(cond="0xm", redeemable=True, curPrice=1)}
+    kept, res = resolve_first_moves([m], ganada, "T2")
+    assert kept == [] and len(res) == 1
+    assert res[0]["won"] is True and res[0]["roi"] == 3.0  # entrada 0.25 -> x3
+    assert res[0]["source"] == "primer movimiento" and res[0]["numTraders"] == 1
+    # sin resolver: sigue viva
+    kept, res = resolve_first_moves([m], {}, "T2")
+    assert kept == [m] and res == []
+
+
+def test_format_first_moves():
+    m = {"id": "0xm:0", "wallet": "0xabcdef12", "name": "ann", "title": "Mercado M",
+         "outcome": "Yes", "eventSlug": "ev", "usd": 15000.0,
+         "entryPrice": 0.25, "avgPrice": 0.2, "upside": 3.0}
+    msg = format_first_moves([m])
+    assert "ann" in msg and "$15,000" in msg and "x3.0" in msg and "ev" in msg
+    assert len(format_first_moves([m] * 50)) < 4096  # limite de Telegram
 
 
 def test_update_track_records_respects_ttl():

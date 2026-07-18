@@ -8,6 +8,7 @@ Solo stdlib: sin dependencias.
 import json
 import os
 import pathlib
+import re
 import time
 import urllib.request
 from datetime import datetime, timezone
@@ -35,6 +36,11 @@ TRACK_WINDOW_DAYS = 30
 TRACK_TTL_S = 6 * 3600  # el track record por wallet se recalcula cada 6 h
 TRACK_MIN_USD = 100.0   # canjes/perdidas menores son ruido
 WHALES_KEEP = 100  # movimientos whale que guarda el JSON para la web
+# primer movimiento: un top trader abre posicion grande y NUEVA en un mercado
+# donde no estaba — senal mas temprana que esperar a que N traders coincidan
+FIRSTMOVE_MIN_USD = float(os.getenv("FIRSTMOVE_MIN_USD", "10000"))
+FIRSTMOVE_MAX_PRICE = float(os.getenv("FIRSTMOVE_MAX_PRICE", "0.8"))  # favoritos: sin recorrido
+FIRSTMOVES_KEEP = 30
 SCAN_EVERY_MIN = 10  # cadencia real del bucle en .github/workflows/scan.yml
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 SIGNALS_PATH = pathlib.Path(__file__).parent / "docs" / "signals.json"
@@ -163,9 +169,77 @@ def resolve_history(previous, active_ids, position_index, now):
             "entryPrice": round(entry, 4),
             "roi": round((1 - entry) / entry, 3) if won else -1.0,
             "stale": s.get("stale", False), "firstSeen": s.get("firstSeen", ""),
-            "resolvedAt": now, "won": won,
+            "resolvedAt": now, "won": won, "source": "coincidencia",
         })
     return resolved
+
+
+def detect_first_moves(positions_by_trader, known, signal_ids,
+                       min_usd=FIRSTMOVE_MIN_USD, max_price=FIRSTMOVE_MAX_PRICE):
+    """Primer movimiento: un top trader abre una posicion grande y NUEVA
+    (par wallet|mercado nunca visto en escaneos previos). Llega antes que la
+    coincidencia, que por definicion espera a que N traders confluyan.
+    Se salta favoritos (> max_price: sin recorrido) y mercados que ya son
+    senal de coincidencia (seria un aviso duplicado y tardio).
+    Devuelve (moves, indice_actualizado). El indice solo guarda posiciones
+    >= min_usd para que quepa en el JSON publico."""
+    new_known, moves = set(), []
+    for wallet, info in positions_by_trader.items():
+        for p in info["positions"]:
+            if p.get("redeemable") or p.get("currentValue", 0) < min_usd:
+                continue
+            key = f'{p["conditionId"]}:{p["outcomeIndex"]}'
+            par = f"{wallet}|{key}"
+            new_known.add(par)
+            if par in known or key in signal_ids or p["curPrice"] > max_price:
+                continue
+            moves.append({
+                "id": key, "wallet": wallet, "name": info.get("name", ""),
+                "title": p["title"], "outcome": p["outcome"],
+                "eventSlug": p["eventSlug"],
+                "usd": round(p["currentValue"], 2),
+                "entryPrice": p["curPrice"], "avgPrice": p["avgPrice"],
+                "upside": round((1 - p["curPrice"]) / p["curPrice"], 2)
+                          if p["curPrice"] > 0 else 0,
+            })
+    moves.sort(key=lambda m: -m["usd"])
+    return moves, sorted(new_known)
+
+
+def resolve_first_moves(moves, position_index, now):
+    """Primeros movimientos cuyo mercado resolvio -> historico con su ROI,
+    etiquetados como fuente propia para medir si esta senal paga por si sola.
+    Devuelve (vivos, resueltos)."""
+    kept, resolved = [], []
+    for m in moves:
+        p = position_index.get(m["id"])
+        if p is None or not p.get("redeemable"):
+            kept.append(m)
+            continue
+        won = p["curPrice"] > 0.5
+        e = m.get("entryPrice") or 0.5
+        resolved.append({
+            "id": m["id"], "title": m["title"], "outcome": m["outcome"],
+            "eventSlug": m.get("eventSlug", ""), "numTraders": 1,
+            "avgEntryPrice": m.get("avgPrice"), "entryPrice": round(e, 4),
+            "roi": round((1 - e) / e, 3) if won else -1.0,
+            "stale": False, "firstSeen": m.get("firstSeen", ""),
+            "resolvedAt": now, "won": won, "source": "primer movimiento",
+        })
+    return kept, resolved
+
+
+def format_first_moves(moves, cap=10):
+    lines = ["\U0001F3AF Primer movimiento de un top trader:"]
+    for m in moves[:cap]:
+        quien = m["name"] or m["wallet"][:10]
+        lines.append(
+            f"\n• {quien} abre ${m['usd']:,.0f} → {m['title']} [{m['outcome']}]"
+            f"\n  @ {m['entryPrice']} (x{m['upside']} si gana)"
+            f"\n  https://polymarket.com/event/{m['eventSlug']}")
+    if len(moves) > cap:
+        lines.append(f"\n…y {len(moves) - cap} mas")
+    return "\n".join(lines)
 
 
 def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD):
@@ -196,8 +270,26 @@ def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD):
     return whales
 
 
+def categoria(titulo):
+    """Categoria del mercado por palabras clave del titulo (la API no la
+    expone). Mismo criterio que la heuristica de la web."""
+    t = titulo.lower()
+    if re.search(r"bitcoin|btc|ethereum|\beth\b|crypto|solana|xrp|doge", t):
+        return "cripto"
+    if re.search(r" vs\.? |world cup|mundial|nba|nfl|mlb|nhl|ufc|f1|grand prix"
+                 r"|premier|la ?liga|champions|europa league|bundesliga|serie a"
+                 r"|\bopen\b|masters|atp|wta|dota|league of legends|lol:|cs2"
+                 r"|valorant|olympic|golden (ball|boot)|to advance", t):
+        return "deportes"
+    if re.search(r"election|president|senate|congress|governor|mayor|minister"
+                 r"|parliament|trump|nominee|impeach|ceasefire|\bwar\b|tariff"
+                 r"|fed |rate (cut|hike)|supreme court|shutdown", t):
+        return "politica"
+    return "otras"
+
+
 def track_record(wallet, posiciones, since_ts, fetch=get_json):
-    """Rendimiento del wallet en la ventana. Devuelve (wins, losses, net):
+    """Rendimiento del wallet en la ventana. Devuelve (wins, losses, net, cats):
 
     - wins/losses (TASA de acierto): canjes REDEEM del feed /activity (canjear
       implica tener el lado ganador) vs posiciones muertas (redeemable a ~0)
@@ -213,26 +305,37 @@ def track_record(wallet, posiciones, since_ts, fetch=get_json):
     """
     since_date = datetime.fromtimestamp(since_ts, tz=timezone.utc).strftime("%Y-%m-%d")
     wins, cash_in, cash_out = set(), 0.0, 0.0
+    cats = {}  # acierto por categoria: mismo trader no vale igual en todas
+
+    def anota(titulo, campo):
+        c = cats.setdefault(categoria(titulo), {"wins": 0, "losses": 0})
+        c[campo] += 1
+
     for e in fetch(ACTIVITY_URL.format(wallet=wallet)):
         if e.get("timestamp", 0) < since_ts:
             continue
         usd = e.get("usdcSize", 0) or 0
         if e.get("type") == "REDEEM":
             cash_in += usd
-            if usd >= TRACK_MIN_USD:
+            if usd >= TRACK_MIN_USD and e["conditionId"] not in wins:
                 wins.add(e["conditionId"])
+                anota(e.get("title", ""), "wins")
         elif e.get("side") == "BUY":
             cash_out += usd
         elif e.get("side") == "SELL":
             cash_in += usd
-    losses = {p["conditionId"] for p in posiciones
-              if p.get("redeemable") and p.get("curPrice", 1) <= 0.5
-              and p.get("initialValue", 0) >= TRACK_MIN_USD
-              and (p.get("endDate") or "") >= since_date}
+    losses = set()
+    for p in posiciones:
+        if (p.get("redeemable") and p.get("curPrice", 1) <= 0.5
+                and p.get("initialValue", 0) >= TRACK_MIN_USD
+                and (p.get("endDate") or "") >= since_date
+                and p["conditionId"] not in losses):
+            losses.add(p["conditionId"])
+            anota(p.get("title", ""), "losses")
     open_value = sum(p.get("currentValue", 0) for p in posiciones
                      if not p.get("redeemable"))
     net = round(cash_in - cash_out + open_value, 2)
-    return len(wins), len(losses), net
+    return len(wins), len(losses), net, cats
 
 
 def win_rate(t):
@@ -270,8 +373,9 @@ def update_track_records(cache, wallets, positions_by_trader, now_ts, fetch=get_
                 posiciones = fetch(POSITIONS_URL.format(wallet=w, threshold=100))
                 positions_cache[w] = posiciones
                 time.sleep(0.3)
-            wins, losses, net = track_record(w, posiciones, since_ts, fetch=fetch)
-            tracks[w] = {"wins": wins, "losses": losses, "net": net, "at": now_ts}
+            wins, losses, net, cats = track_record(w, posiciones, since_ts, fetch=fetch)
+            tracks[w] = {"wins": wins, "losses": losses, "net": net,
+                         "cats": cats, "at": now_ts}
             time.sleep(0.3)
         except Exception:
             tracks[w] = old or {"wins": 0, "losses": 0, "net": None, "at": 0}
@@ -280,15 +384,29 @@ def update_track_records(cache, wallets, positions_by_trader, now_ts, fetch=get_
 
 def annotate_win_rates(signals, tracks):
     """Acierto 30d por trader y media por senal: mismo numero de traders
-    coincidentes no vale lo mismo si su historial reciente es malo."""
+    coincidentes no vale lo mismo si su historial reciente es malo. Ademas,
+    acierto EN LA CATEGORIA de la senal: un 70% en deportes es senal fuerte
+    en un partido y dice poco en politica."""
     for s in signals:
-        rates = []
+        cat = categoria(s["title"])
+        s["cat"] = cat
+        rates, cat_rates = [], []
         for t in s["traders"]:
-            r = win_rate(tracks.get(t["wallet"], {"wins": 0, "losses": 0}))
+            tr = tracks.get(t["wallet"], {"wins": 0, "losses": 0})
+            r = win_rate(tr)
             t["winRate"] = r
             if r is not None:
                 rates.append(r)
+            c = (tr.get("cats") or {}).get(cat)
+            cr = None
+            if c and c["wins"] + c["losses"] >= WHALE_MIN_TRACK:
+                cr = round(c["wins"] / (c["wins"] + c["losses"]), 2)
+            t["catWinRate"] = cr
+            if cr is not None:
+                cat_rates.append(cr)
         s["avgWinRate"] = round(sum(rates) / len(rates), 2) if rates else None
+        s["avgCatWinRate"] = (round(sum(cat_rates) / len(cat_rates), 2)
+                              if cat_rates else None)
     return signals
 
 
@@ -358,6 +476,8 @@ def format_message(new_signals, cap=10):
     for s in new_signals[:cap]:
         acierto = (f" | acierto medio 30d {round(s['avgWinRate'] * 100)}%"
                    if s.get("avgWinRate") is not None else "")
+        if s.get("avgCatWinRate") is not None:
+            acierto += f" | en {s.get('cat', '?')} {round(s['avgCatWinRate'] * 100)}%"
         lines.append(
             f"\n• {s['numTraders']} traders → {s['title']} [{s['outcome']}]"
             f"\n  precio {s['curPrice']} | entrada media {s['avgEntryPrice']}"
@@ -461,6 +581,17 @@ def main():
     # recalcula (y se descarta otra vez) en cada escaneo si hace falta
     tracks = {w: t for w, t in tracks.items() if not is_loser(t)}
 
+    # tercera fuente: primer movimiento de un solo top trader (solo wallets
+    # no-bot). first_index evita la avalancha del primer escaneo: fija el
+    # indice de posiciones conocidas sin avisar de nada.
+    known_prev = set(doc.get("knownPositions", []))
+    first_index = "knownPositions" not in doc
+    moves, known = detect_first_moves(scannable, known_prev,
+                                      {s["id"] for s in signals})
+    for m in moves:
+        m["firstSeen"] = now
+    first_moves = (moves + doc.get("firstMoves", []))[:FIRSTMOVES_KEEP]
+
     # indice de TODAS las posiciones (incluidas redeemable) para dar veredicto
     # a las senales cuyo mercado ya resolvio
     position_index = {}
@@ -471,6 +602,9 @@ def main():
                 position_index[key] = p
     resolved = resolve_history(previous, {s["id"] for s in signals}, position_index, now)
     history += resolved
+    first_moves, resolved_fm = resolve_first_moves(first_moves, position_index, now)
+    history += resolved_fm
+    resolved += resolved_fm  # el aviso de resoluciones cubre ambas fuentes
 
     SIGNALS_PATH.parent.mkdir(exist_ok=True)
     SIGNALS_PATH.write_text(json.dumps({
@@ -481,6 +615,8 @@ def main():
                    "whaleMinUsd": WHALE_MIN_USD},
         "signals": signals,
         "whales": whales,
+        "firstMoves": first_moves,
+        "knownPositions": known,
         "lastWhaleTs": last_whale_ts,
         "trackRecords": tracks,
         "history": history,
@@ -494,6 +630,8 @@ def main():
         grandes = [w for w in new_whales if w["usd"] >= r["whaleMinUsd"]]
         if grandes and not first_run:
             send_telegram(format_whales(grandes), r["chatId"])
+        if moves and not first_index:
+            send_telegram(format_first_moves(moves), r["chatId"])
         # aviso de resolucion con ROI real (incluye la 1a senal que resuelva):
         # va a todos los destinatarios, la resolucion es info universal
         if resolved:
@@ -505,6 +643,7 @@ def main():
           f"{len(fresh_new)} notificadas | {len(new_whales)}/{detected} whales "
           f"con historial ganador (resto descartado) | "
           f"{bots} wallets excluidos por bot | "
+          f"{len(moves)} primeros movimientos | "
           f"{len(resolved)} resueltas este scan | "
           f"historico {aciertos}/{len(history)} aciertos")
     for s in new:

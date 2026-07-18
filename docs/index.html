@@ -139,6 +139,10 @@
   </div>
   <div id="lista"></div>
   <p id="vacio" hidden></p>
+  <h2 id="fm-titulo" hidden
+      title="Un solo top trader abre una posición grande y nueva en un mercado donde no estaba: señal más temprana que esperar a que varios coincidan">
+    🎯 Primeros movimientos</h2>
+  <div id="fm"></div>
   <h2 id="whales-titulo" hidden>🐋 Compras grandes recientes</h2>
   <div id="whales"></div>
   <details id="historial" hidden>
@@ -248,6 +252,7 @@ function renderSignals() {
         ${s.upside != null ? `<span title="cuánto multiplicas si gana comprando ahora">potencial <b class="${s.curPrice > 0.8 ? '' : 'deriva-ok'}">×${s.upside}</b> si gana</span>` : ''}
         <span>capital <b>${usd(s.totalUsd)}</b></span>
         ${s.avgWinRate != null ? `<span>acierto medio 30d <b>${pct(s.avgWinRate)}</b></span>` : ''}
+        ${s.avgCatWinRate != null ? `<span title="acierto medio de estos traders en mercados de ${esc(s.cat)} (30d): un buen historial general dice poco fuera de su especialidad">en ${esc(s.cat)} <b>${pct(s.avgCatWinRate)}</b></span>` : ''}
         <span>detectada <b>${new Date(s.firstSeen).toLocaleDateString('es-ES')}</b></span>
       </div>
       ${s.stale ? `<div class="aviso-stale">⚠️ descartada: el precio difiere ${Math.abs(Math.round(deriva * 100))} pp de la entrada media (límite ±${Math.round((datos.params.maxPriceDrift ?? 0.15) * 100)}) — la tesis de entrada ya no es la actual</div>` : ''}
@@ -262,6 +267,28 @@ function renderSignals() {
       ? `Sin señales frescas ahora mismo (${ocultas} descartada${ocultas > 1 ? 's' : ''} por precio ya movido — activa "mostrar descartadas").`
       : 'Ninguna señal coincide con los filtros.';
   }
+}
+
+function renderFirstMoves() {
+  const fm = datos.firstMoves ?? [];
+  const q = el('busqueda').value.toLowerCase();
+  const cat = el('categoria').value;
+  const visibles = fm.filter(m =>
+    (!cat || categoria(m.title) === cat) &&
+    (!q || m.title.toLowerCase().includes(q)));
+  el('fm-titulo').hidden = !visibles.length;
+  el('fm').innerHTML = visibles.map(m => {
+    const quien = esc(nombre(m.name, m.wallet));
+    return `<div class="whale">
+      <span class="whale-usd">${usd(m.usd)}</span>
+      <a href="https://polymarket.com/event/${encodeURIComponent(m.eventSlug)}"
+         target="_blank" rel="noopener">${esc(m.title)}</a>
+      <span class="pastilla">${esc(m.outcome)}</span> @ ${pct(m.entryPrice)}
+      · <span title="cuánto multiplica si gana">×${m.upside}</span> ·
+      <a href="https://polymarket.com/profile/${encodeURIComponent(m.wallet)}"
+         target="_blank" rel="noopener">${quien}</a>
+      · ${new Date(m.firstSeen).toLocaleDateString('es-ES')}</div>`;
+  }).join('');
 }
 
 function renderWhales() {
@@ -326,7 +353,7 @@ function renderHistory() {
   el('historial-lista').innerHTML = hist
     .slice().reverse().map(h =>
       `<li><span class="${h.won ? 'acierto' : 'fallo'}">${h.won ? '✓ acierto' : '✗ fallo'}</span>
-       — ${esc(h.title)} [${esc(h.outcome)}] · ${h.numTraders} traders${h.roi != null ? ` · <b class="${h.roi >= 0 ? 'acierto' : 'fallo'}">ROI ${h.roi >= 0 ? '+' : ''}${Math.round(h.roi * 100)}%</b>` : ''}
+       — ${esc(h.title)} [${esc(h.outcome)}]${h.source === 'primer movimiento' ? ' · <span class="pastilla">🎯 primer movimiento</span>' : ` · ${h.numTraders} traders`}${h.roi != null ? ` · <b class="${h.roi >= 0 ? 'acierto' : 'fallo'}">ROI ${h.roi >= 0 ? '+' : ''}${Math.round(h.roi * 100)}%</b>` : ''}
        · resuelta ${new Date(h.resolvedAt).toLocaleDateString('es-ES')}${h.stale ? ' · (estaba descartada)' : ''}</li>`)
     .join('');
 }
@@ -342,6 +369,7 @@ async function cargar() {
     if (!cambio) return;   // no re-pintar listas sin datos nuevos (respeta <details> abiertos)
     renderTiles();
     renderSignals();
+    renderFirstMoves();
     renderWhales();
     renderHistory();
     el('filtros').hidden = false;
@@ -351,7 +379,7 @@ async function cargar() {
 }
 
 ['busqueda', 'minTraders', 'categoria', 'orden', 'ocultarFav', 'verStale'].forEach(id =>
-  el(id).addEventListener('input', () => { renderSignals(); renderWhales(); }));
+  el(id).addEventListener('input', () => { renderSignals(); renderFirstMoves(); renderWhales(); }));
 cargar();
 cargarBacktest();
 setInterval(cargar, 60000);

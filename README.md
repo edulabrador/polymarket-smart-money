@@ -59,6 +59,19 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
     el precio de la entrada media). La web permite **ocultar favoritos** (precio
     > 0.80, casi sin recorrido) y **ordenar por potencial** o por **mejor
     entrada** (precio aún cerca del de los traders, no llegas tarde).
+11. **🎯 Primer movimiento**: cuando un solo top trader (no bot) abre una
+    posición grande (≥ `FIRSTMOVE_MIN_USD`, defecto $10k) y NUEVA en un mercado
+    donde no estaba, se avisa al momento. Es la señal más temprana: la
+    coincidencia, por definición, espera a que N traders confluyan — y para
+    entonces el precio ya se movió. Se saltan favoritos (> `FIRSTMOVE_MAX_PRICE`,
+    defecto 0.80) y mercados que ya son señal. Cada primer movimiento registra
+    su ROI al resolver, etiquetado como fuente propia en el histórico: así los
+    datos dirán si esta señal paga por sí sola.
+12. **Especialización por categoría**: el track record de cada trader se
+    desglosa por categoría (deportes/política/cripto/otras, heurística por
+    título). Cada señal muestra el **acierto de sus traders en la categoría
+    del mercado**: un 70% en deportes es señal fuerte en un partido y dice
+    poco en política. Con muestra < `WHALE_MIN_TRACK` mercados no se afirma nada.
 
 ## Interfaz
 
