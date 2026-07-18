@@ -588,6 +588,9 @@ def main():
     first_index = "knownPositions" not in doc
     moves, known = detect_first_moves(scannable, known_prev,
                                       {s["id"] for s in signals})
+    if first_index:
+        moves = []  # posiciones preexistentes: no son movimientos detectados
+                    # temprano; guardarlas contaminaria el ROI de la fuente
     for m in moves:
         m["firstSeen"] = now
     first_moves = (moves + doc.get("firstMoves", []))[:FIRSTMOVES_KEEP]
