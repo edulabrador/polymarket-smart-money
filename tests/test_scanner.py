@@ -8,9 +8,10 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 from backtest import backtest_signals
 from scanner import (annotate_win_rates, detect_signals, detect_whales,
-                     enrich_whales, format_message, format_whales,
-                     merge_previous, recipients, resolve_history,
-                     track_record, update_track_records, whale_notifiable)
+                     enrich_whales, format_message, format_resolved,
+                     format_whales, merge_previous, recipients,
+                     resolve_history, track_record, update_track_records,
+                     whale_notifiable)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -139,6 +140,17 @@ def test_format_message():
     assert "[Yes]" in msg
     assert "https://polymarket.com/event/evento" in msg
     assert len(format_message(signals * 30)) < 4096  # limite de Telegram
+
+
+def test_format_resolved():
+    signals = detect_signals(traders(5), min_users=5, min_usd=500)
+    merged, _ = merge_previous(signals, [], "T1")
+    ganada = resolve_history(merged, set(), {merged[0]["id"]: pos(redeemable=True, curPrice=1)}, "T2")
+    msg = format_resolved(ganada)
+    assert "gano" in msg and "ROI +100%" in msg  # entrada 0.5 -> +100%
+    perdida = resolve_history(merged, set(), {merged[0]["id"]: pos(redeemable=True, curPrice=0)}, "T2")
+    assert "ROI -100%" in format_resolved(perdida)
+    assert len(format_resolved(ganada * 30)) < 4096  # limite de Telegram
 
 
 def test_detect_whales_from_real_fixture():

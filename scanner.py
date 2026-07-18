@@ -368,6 +368,23 @@ def format_message(new_signals, cap=10):
     return "\n".join(lines)
 
 
+def format_resolved(resolved, cap=10):
+    """Aviso de senales que acaban de resolver, con su ROI real: comprar a
+    entryPrice y cobrar $1 si gana. Es la respuesta a '¿esto es rentable?'."""
+    lines = ["\U0001F3C1 Senales resueltas en Polymarket (ROI real):"]
+    for h in resolved[:cap]:
+        signo = "+" if h["roi"] >= 0 else ""
+        verdict = "✅ gano" if h["won"] else "❌ perdio"
+        lines.append(
+            f"\n• {verdict} → {h['title']} [{h['outcome']}]"
+            f"\n  {h['numTraders']} traders · entrada {h['entryPrice']}"
+            f" · ROI {signo}{round(h['roi'] * 100)}%"
+            f"\n  https://polymarket.com/event/{h.get('eventSlug', '')}")
+    if len(resolved) > cap:
+        lines.append(f"\n…y {len(resolved) - cap} mas")
+    return "\n".join(lines)
+
+
 def recipients():
     """Destinatarios de alertas, cada uno con sus umbrales. Formatos:
     - TELEGRAM_RECIPIENTS (JSON): [{"chatId": "...", "minUsers": 7,
@@ -452,7 +469,8 @@ def main():
             key = f'{p["conditionId"]}:{p["outcomeIndex"]}'
             if key not in position_index or p.get("redeemable"):
                 position_index[key] = p
-    history += resolve_history(previous, {s["id"] for s in signals}, position_index, now)
+    resolved = resolve_history(previous, {s["id"] for s in signals}, position_index, now)
+    history += resolved
 
     SIGNALS_PATH.parent.mkdir(exist_ok=True)
     SIGNALS_PATH.write_text(json.dumps({
@@ -476,6 +494,10 @@ def main():
         grandes = [w for w in new_whales if w["usd"] >= r["whaleMinUsd"]]
         if grandes and not first_run:
             send_telegram(format_whales(grandes), r["chatId"])
+        # aviso de resolucion con ROI real (incluye la 1a senal que resuelva):
+        # va a todos los destinatarios, la resolucion es info universal
+        if resolved:
+            send_telegram(format_resolved(resolved), r["chatId"])
     stale_count = sum(1 for s in signals if s["stale"])
     bots = len(positions_by_trader) - len(scannable)
     aciertos = sum(1 for h in history if h["won"])
@@ -483,6 +505,7 @@ def main():
           f"{len(fresh_new)} notificadas | {len(new_whales)}/{detected} whales "
           f"con historial ganador (resto descartado) | "
           f"{bots} wallets excluidos por bot | "
+          f"{len(resolved)} resueltas este scan | "
           f"historico {aciertos}/{len(history)} aciertos")
     for s in new:
         tag = "STALE" if s["stale"] else "NUEVA"
