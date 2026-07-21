@@ -137,8 +137,7 @@
       <div class="tile" id="tile-roi" hidden
            title="Retorno medio de las coincidencias resueltas si hubieras apostado lo mismo en cada una a su precio de detección. Esto es lo que dice si es RENTABLE, no solo si acierta.">
         <b id="t-roi">–</b><span>ROI medio / señal</span></div>
-      <div class="tile" id="tile-backtest" hidden
-           title="Coincidencias del top 50 en mercados ya resueltos: ganadas desde sus canjes (REDEEM), perdidas desde posiciones muertas. Estimación, no un backtest completo">
+      <div class="tile" id="tile-backtest" hidden>
         <b id="t-backtest">–</b><span>backtest 30 días</span></div>
     </div>
     <div id="fuentes" hidden></div>
@@ -398,6 +397,24 @@ async function cargarBacktest() {
     if (!b.total || b.method !== 'redeem+positions') return;
     el('t-backtest').textContent =
       `${b.won}/${b.total} (${Math.round(100 * b.won / b.total)}%)`;
+    // el % absoluto está sesgado a la BAJA por supervivencia (las ganadoras se
+    // canjean y sus miembros desaparecen; las perdedoras persisten enteras), así
+    // que es un suelo, no la tasa real. Lo útil es comparar niveles de igual nº
+    // de traders. Se detalla por nivel en el tooltip.
+    const orden = ['amplio', 'especialistas', 'descartada'];
+    const detalle = orden.filter(t => b.tiers?.[t]).map(t => {
+      const d = b.tiers[t];
+      return `${t}: ${d.won}/${d.total} (${d.total ? Math.round(100 * d.won / d.total) : 0}%)`;
+    }).join('  ·  ');
+    el('tile-backtest').title =
+      'Coincidencias del top 50 en mercados ya resueltos, por nivel del algoritmo — '
+      + (detalle || '—') + '.\n\n'
+      + 'OJO: el % es un SUELO, no la tasa real. Sesgo de supervivencia: las '
+      + 'ganadoras se canjean y sus miembros desaparecen de la muestra, las '
+      + 'perdedoras se quedan enteras, así que los grupos grandes salen sesgados a '
+      + 'perdedora. Sirve para comparar niveles de igual tamaño, no como cifra de '
+      + 'rentabilidad. El ROI real y fiable lo da el histórico en vivo (se sigue '
+      + 'cada señal desde su detección con precio de entrada).';
     el('tile-backtest').hidden = false;
   } catch (e) {}
 }
