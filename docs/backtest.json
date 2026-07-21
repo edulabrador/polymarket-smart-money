@@ -1,651 +1,858 @@
 {
- "ranAt": "2026-07-17T11:42:25+00:00",
+ "ranAt": "2026-07-21T22:21:20+00:00",
  "method": "redeem+positions",
  "windowDays": 30,
  "params": {
   "topN": 50,
   "minUsers": 5,
+  "minUsersSpecialist": 3,
+  "specialistMinWinRate": 0.6,
   "minPositionUsd": 500.0
  },
- "won": 36,
- "total": 91,
+ "won": 4,
+ "total": 24,
+ "tiers": {
+  "descartada": {
+   "won": 8,
+   "total": 68
+  },
+  "especialistas": {
+   "won": 1,
+   "total": 1
+  },
+  "amplio": {
+   "won": 3,
+   "total": 23
+  }
+ },
  "signals": [
   {
-   "id": "0xecba7b1db1c698ab73b3572abfcde327a02b5112676144e049edcc1e1e0f5b0b:win",
-   "title": "France vs. Spain: Team to Advance",
-   "outcome": "(ganadora)",
-   "numTraders": 14,
-   "won": true
-  },
-  {
-   "id": "0x83d646ac5646bf847f2dc0ce9c18c4d8909bbb7b050b31075afb9b67d3802b33:win",
-   "title": "United States vs. Belgium: Team to Advance",
+   "id": "0x7976b8dbacf9077eb1453a62bcefd6ab2df199acd28aad276ff0d920d6992892",
+   "title": "Will Spain win the 2026 FIFA World Cup?",
    "outcome": "(ganadora)",
    "numTraders": 12,
-   "won": true
+   "won": true,
+   "tier": "amplio",
+   "avgWinRate": 0.42
   },
   {
-   "id": "0xccc07a8317079457585bc88e387b58d2bb94576ee2c9cea63b2f2adb7ed1a836:win",
-   "title": "Norway vs. England: Team to Advance",
-   "outcome": "(ganadora)",
-   "numTraders": 10,
-   "won": true
-  },
-  {
-   "id": "0x95f726bbb693b945f94473908298b2389989550b08a7bfd90f97ce7ba62cb719:win",
-   "title": "Will Argentina win on 2026-07-11?",
-   "outcome": "(ganadora)",
-   "numTraders": 10,
-   "won": true
-  },
-  {
-   "id": "0x2c37e07b722442c2381fac76f8564d580660aa028066e08bad1b32bd11813e9d:win",
-   "title": "Will Spain win on 2026-07-10?",
-   "outcome": "(ganadora)",
-   "numTraders": 10,
-   "won": true
-  },
-  {
-   "id": "0x94e50623d3cfdc1256e16ff372062d42c282bec8af620bb732a19fb4b0dce580:win",
-   "title": "Mexico vs. England: Team to Advance",
-   "outcome": "(ganadora)",
-   "numTraders": 9,
-   "won": true
-  },
-  {
-   "id": "0x2037b257e602784d35e800c8c7880f56331791e03aaacae5864d8a78db303948:win",
-   "title": "France vs. Morocco: O/U 2.5",
-   "outcome": "(ganadora)",
-   "numTraders": 9,
-   "won": true
-  },
-  {
-   "id": "0xc851fc5ae688d3d67bccb7c8f0ca475f61ebda796cfcddca7230042de6b48cfd:win",
-   "title": "UFC 329: Max Holloway vs. Conor McGregor (Welterweight, Main Card)",
-   "outcome": "(ganadora)",
-   "numTraders": 9,
-   "won": true
-  },
-  {
-   "id": "0x3a26ca6425e2d98f14935670bc22cdb0744defc6f6d83c65f8c413a921c5c70c:0",
+   "id": "0x3a26ca6425e2d98f14935670bc22cdb0744defc6f6d83c65f8c413a921c5c70c",
    "title": "Will Switzerland win the 2026 FIFA World Cup?",
    "outcome": "Yes",
-   "numTraders": 9,
-   "won": false
-  },
-  {
-   "id": "0xe99cc59f32b10d23acf196d1a0e8264ea30fca198428acadd3464b06ff60e771:0",
-   "title": "Will Colombia win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 9,
-   "won": false
-  },
-  {
-   "id": "0xcdb1f0400949238a63d3e88243d2ada08cd9c2a71985ced9f0cfd5e66354cf90:0",
-   "title": "Will USA win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 9,
-   "won": false
-  },
-  {
-   "id": "0x3c995fa852613961df5b34fc1b2d14eb6850145f5d28d349d1622f4ed8cd84ca:win",
-   "title": "Portugal vs. Spain: Team to Advance",
-   "outcome": "(ganadora)",
    "numTraders": 8,
-   "won": true
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.18
   },
   {
-   "id": "0x37a6de1b21803e5f3fb1965116218215d79963af4f7e51659696366267a63a03:0",
-   "title": "Will Morocco win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 8,
-   "won": false
-  },
-  {
-   "id": "0x67443cb1ffb2bf180f7df5b6ca7adff63f7e8e933c7e41405ba118f3e9f8befb:0",
-   "title": "Will Canada win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 8,
-   "won": false
-  },
-  {
-   "id": "0x30d55d8124ee1e12dabe89201badc45669b81dff69e4ce44d961f32878ec178a:0",
-   "title": "Will Brazil win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 8,
-   "won": false
-  },
-  {
-   "id": "0xfb2314dcad9273745bd3de0db31a2036cda3eae847039a58e41a3c2dcc233657:win",
-   "title": "France vs. Spain: O/U 2.5",
+   "id": "0x4b045e092c3166aa29d4864c11dffe7e316daafdac5677f11aa5cd16065fd042",
+   "title": "Spain vs. Argentina: Team to Advance",
    "outcome": "(ganadora)",
    "numTraders": 7,
-   "won": true
+   "won": true,
+   "tier": "amplio",
+   "avgWinRate": 0.08
   },
   {
-   "id": "0x180bce419c2b5ea2178514571c50c9d5ada7b85fd409e7088ff5d0d42e7fe867:win",
-   "title": "Norway vs. England: O/U 2.5",
-   "outcome": "(ganadora)",
-   "numTraders": 7,
-   "won": true
-  },
-  {
-   "id": "0x0f5e01cf1cabb6c49e424f230ca77a2ccd3e1ac63b31ae03ef749ac2bde7fa0e:win",
-   "title": "Will England win on 2026-07-11?",
-   "outcome": "(ganadora)",
-   "numTraders": 7,
-   "won": true
-  },
-  {
-   "id": "0xbbb20aee74d8d120db212bc10c1fc915a412a758117a64ed6ff6f3948c2f7d66:win",
-   "title": "Will England win on 2026-07-15?",
-   "outcome": "(ganadora)",
-   "numTraders": 7,
-   "won": true
-  },
-  {
-   "id": "0x375409bc5eeeff961e82b479caeccc20f33d15738e5bce1186d628aa3d9dfb1f:0",
-   "title": "Will England win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 7,
-   "won": false
-  },
-  {
-   "id": "0x32cfa52198e85e070d1b17d1b53c5c3a6aaae7736cdc33fa6aa04d353f0c2811:0",
-   "title": "Will Belgium win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 7,
-   "won": false
-  },
-  {
-   "id": "0xbaf7780f9059e34b84301fd411f8dc573b4d56adfe6e0cda33daf304b1438da4:0",
-   "title": "Will Ecuador win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 7,
-   "won": false
-  },
-  {
-   "id": "0xe5bd80313b8859e3f5761568ac9498866ea9d4419e4d1b6a877a9a9bd2754cb4:0",
-   "title": "Will Croatia win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 7,
-   "won": false
-  },
-  {
-   "id": "0x9b6fef249040fd17e9c107955b37ac2c3e923509b6b0ff01cc463a331ddeb894:0",
-   "title": "Will France win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 7,
-   "won": false
-  },
-  {
-   "id": "0x7876851632c295043c66536150a304cb785abdf712ba8489d298c6e6926be106:0",
-   "title": "Will Uruguay win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 7,
-   "won": false
-  },
-  {
-   "id": "0x6d621f9a6690d234786025521c650f3f65738e0f877ff776c8f50275a2b3aee7:win",
-   "title": "Switzerland vs. Colombia: Team to Advance",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0x17b566faa4c085b49020ab355d4b81f01037634c6b17b15f455861f3cfb0ab55:win",
-   "title": "Spread: France (-1.5)",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0x8ec1344d38fb55aa4adf043a3d81899bda2762b89bebec5769a81a50c3b9c25f:win",
-   "title": "Will Netherlands win on 2026-06-29?",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0x7e6a99d23ee6beff337091fc92ecac6f2d8810aa899eb70b7488b72d5abbb052:win",
-   "title": "Spain vs. Belgium: Team to Advance",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0x776956c5185fb6e9115e4a52fb0a8386172cae91d6812b447795fb171f478a69:win",
-   "title": "England vs. Argentina: Team to Advance",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0x597e0e209cef883bb95c6905f07d8066c3ef35652087d3611c43b93f0ed237c2:win",
-   "title": "Will Portugal win on 2026-06-27?",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0x7f481c96a3bf0d8292a2515e3dd0e709e5bdd240189b81fc98f8003480b4eb14:win",
-   "title": "Argentina vs. Egypt: Team to Advance",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0xc09537a0976d0927901432859fbb6dfe5d23d1d69bb4e8355253e7b142a44e83:win",
-   "title": "Will France win on 2026-07-09?",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0x0891e4792a016a079765dd25029639cd731f7dc0bde3d65d6002b2b19dae2777:win",
-   "title": "Argentina vs. Switzerland: Team to Advance",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0x1d57ae7d429a50e47843a712d7caf62e76b724310707faa892c1146c8e6a6742:win",
-   "title": "Netherlands vs. Morocco: Team to Advance",
-   "outcome": "(ganadora)",
-   "numTraders": 6,
-   "won": true
-  },
-  {
-   "id": "0x6972edb1b3f8cd8192651a665fc424dff846efe1c4a2376f628d4b20c704144c:0",
-   "title": "Will Senegal win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0xfe230d510eaf545198c0d62bb17871e5fe8989f1b19aa54c0c062b858360987c:0",
-   "title": "Will Austria win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0xc09537a0976d0927901432859fbb6dfe5d23d1d69bb4e8355253e7b142a44e83:1",
-   "title": "Will France win on 2026-07-09?",
-   "outcome": "No",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0x9be56371f6a29d12769b2f196847ee825b9585ebb8bfa042136be031b081eba1:0",
-   "title": "Will Netherlands win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0x1595b4818eeb1ea1e0bec5de6f057218e557feee9b405a0e930d290384fa1d16:0",
-   "title": "Will Germany win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0x4f3421fb2daf5cca7430ed8d8132463963081572d75434393a1808fdb8829fe8:0",
-   "title": "Will Portugal win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0xe574324078501de57aa22beaaeafe461518a6556f0f97764bbbbd78d3a8e8048:0",
-   "title": "Will Peru win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0x675bba4df50fd123f7fbfbafa67e9b75f4092d85ce0f9148ce78fc945964c856:0",
-   "title": "Will Paraguay win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0x5ccfe1b69a582d2985db08a8481a0d74c314b1fce9b4711ae2efb2c6467fe6aa:0",
-   "title": "Will Mexico win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0xc7c21c8972c773b34f36f67f15dada2584474d959f7e338aca5994727d37ae39:0",
-   "title": "Will Italy win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0x33a87d02fa01e958929385c74b8627d32cc4474e9ebd312d268865c5207147fa:0",
-   "title": "Will Jordan win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 6,
-   "won": false
-  },
-  {
-   "id": "0x744df2cb98d5dd869623f254c6bdfb167c9caf1e5dd16732106cb61b2d4bc577:win",
-   "title": "Spread: Spain (-1.5)",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0xe43caeeefb9438d44e3c73a10dddc88f3dd355daf89d0586f8e9c2369bbf762f:win",
-   "title": "Will Switzerland vs. Colombia end in a draw?",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0xadf4acda3ae836e6c4f6646eaa940c7934d1b97de2a8f7a51ff585139e8f693a:win",
-   "title": "Will Argentina win on 2026-07-15?",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0xfb22501ffce04e5a029bcc79ebb9e6a534cc676677c1354e29d29e3adfd08f46:win",
-   "title": "England vs. Argentina: O/U 2.5",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0x43bde2aa4a2067139451beb84649e5acaff989a3a0817fb1c592046c993d4168:win",
-   "title": "Will Portugal win on 2026-07-02?",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0xe690620297dfea974d20df84b4cf90460e46a26ec864353482717b90509a3c0b:win",
-   "title": "Will Germany win on 2026-06-25?",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0xf0164e968314bae58a0440248e2abd20ee9e4704df2b24c98c50072006b26315:win",
-   "title": "Spread: Morocco (-1.5)",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0xe1953a0f479de0ff3efabb7dff6116ff6cb9d7fe2d7ee6526c5d68da9cf09767:win",
-   "title": "Will Switzerland win on 2026-06-24?",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0xd1b44514a10d1041ecfeff34c4f96400a84a171e3c09944956fa936ec8049a58:win",
-   "title": "Spread: Spain (-1.5)",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0x688954ad8e279cc5febef6739d4f87acd3e42ca768ac6a8b621386a8578532ed:win",
-   "title": "Will Canada win on 2026-06-28?",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0xed731efabe978ae565a11181e2d785df1d0629a9614df9e372e40a8fac35af2d:win",
-   "title": "Spread: Argentina (-1.5)",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0x2f204628fdab76ab18a96c8b05ae7a13a3ff74b0047e63c22668c3ed28e7822b:win",
-   "title": "Argentina vs. Switzerland: O/U 2.5",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0xa7b5b123f9fd38f83fbe19773a5d04e38208b370ca66be27b9688155e7b5c60a:win",
-   "title": "Will Argentina win on 2026-07-07?",
-   "outcome": "(ganadora)",
-   "numTraders": 5,
-   "won": true
-  },
-  {
-   "id": "0x2c37e07b722442c2381fac76f8564d580660aa028066e08bad1b32bd11813e9d:1",
-   "title": "Will Spain win on 2026-07-10?",
-   "outcome": "No",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x498cd7fcb7d5209192cd31676f27413e0a3bdb8c8d8d228229cac24c0701fc27:1",
-   "title": "Will Switzerland win on 2026-07-02?",
-   "outcome": "No",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x02103f049a5fe127c4ea03c9531772e82f3b9f5e9f5f30d67fda5b472fb56c17:1",
-   "title": "Will Belgium win on 2026-07-06?",
-   "outcome": "No",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x776956c5185fb6e9115e4a52fb0a8386172cae91d6812b447795fb171f478a69:0",
+   "id": "0x776956c5185fb6e9115e4a52fb0a8386172cae91d6812b447795fb171f478a69",
    "title": "England vs. Argentina: Team to Advance",
    "outcome": "England",
-   "numTraders": 5,
-   "won": false
+   "numTraders": 7,
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.15
   },
   {
-   "id": "0x378f7b5c668014d9f6c42c305ec83902f3c8f6c770b336363aed0076ce6ce1c9:1",
+   "id": "0x498cd7fcb7d5209192cd31676f27413e0a3bdb8c8d8d228229cac24c0701fc27",
+   "title": "Will Switzerland win on 2026-07-02?",
+   "outcome": "No",
+   "numTraders": 7,
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.05
+  },
+  {
+   "id": "0x51166276fa646ca50165f7d030c297138ed1d62dc41f6ffde21e962c44182074",
+   "title": "Will Spain vs. Argentina end in a draw?",
+   "outcome": "(ganadora)",
+   "numTraders": 6,
+   "won": true,
+   "tier": "amplio",
+   "avgWinRate": 0.29
+  },
+  {
+   "id": "0x0f5e01cf1cabb6c49e424f230ca77a2ccd3e1ac63b31ae03ef749ac2bde7fa0e",
+   "title": "Will England win on 2026-07-11?",
+   "outcome": "Yes",
+   "numTraders": 6,
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.05
+  },
+  {
+   "id": "0x375409bc5eeeff961e82b479caeccc20f33d15738e5bce1186d628aa3d9dfb1f",
+   "title": "Will England win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "numTraders": 6,
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.25
+  },
+  {
+   "id": "0x051e0ea5b3c394114eacf8ce5e944ca63cbb6ccdef1d086cadc5dd129a3804e6",
+   "title": "Will Japan win on 2026-06-21?",
+   "outcome": "No",
+   "numTraders": 6,
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.09
+  },
+  {
+   "id": "0x378f7b5c668014d9f6c42c305ec83902f3c8f6c770b336363aed0076ce6ce1c9",
    "title": "Will France win on 2026-06-30?",
    "outcome": "No",
-   "numTraders": 5,
-   "won": false
+   "numTraders": 6,
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.06
   },
   {
-   "id": "0x7412d284c8f63791fec807f9b1f61c6fe61163621775a3dc8686cd2575272abe:0",
-   "title": "Will Egypt win the 2026 FIFA World Cup?",
+   "id": "0x2c37e07b722442c2381fac76f8564d580660aa028066e08bad1b32bd11813e9d",
+   "title": "Will Spain win on 2026-07-10?",
+   "outcome": "No",
+   "numTraders": 6,
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.04
+  },
+  {
+   "id": "0xe99cc59f32b10d23acf196d1a0e8264ea30fca198428acadd3464b06ff60e771",
+   "title": "Will Colombia win the 2026 FIFA World Cup?",
    "outcome": "Yes",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.13
   },
   {
-   "id": "0x7b52405ad0e0d31bfe970940b67d77f24ecedeab8a2361c11148c02a006e325c:0",
-   "title": "Will Norway win the 2026 FIFA World Cup?",
+   "id": "0x32cfa52198e85e070d1b17d1b53c5c3a6aaae7736cdc33fa6aa04d353f0c2811",
+   "title": "Will Belgium win the 2026 FIFA World Cup?",
    "outcome": "Yes",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.13
   },
   {
-   "id": "0x098e2be3df8ab529940c567819f8ef007cf007820e9d627642a5bbfaa42af372:0",
-   "title": "Will Australia win the 2026 FIFA World Cup?",
+   "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f",
+   "title": "Will Argentina win the 2026 FIFA World Cup?",
    "outcome": "Yes",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.23
   },
   {
-   "id": "0x881a3ffa618b6ae0ab95a5637e310afb1afc2d99c921bfe3235b15eccfce0344:0",
-   "title": "Will Ghana win the 2026 FIFA World Cup?",
+   "id": "0x37a6de1b21803e5f3fb1965116218215d79963af4f7e51659696366267a63a03",
+   "title": "Will Morocco win the 2026 FIFA World Cup?",
    "outcome": "Yes",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.14
   },
   {
-   "id": "0x3bc69cb672591e4fcd2ef856b64b219a906e15d4601b50066ac81a446574dfaf:0",
-   "title": "Will Cape Verde win the 2026 FIFA World Cup?",
+   "id": "0x9b6fef249040fd17e9c107955b37ac2c3e923509b6b0ff01cc463a331ddeb894",
+   "title": "Will France win the 2026 FIFA World Cup?",
    "outcome": "Yes",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.09
   },
   {
-   "id": "0xf950740bc71136155d6525cc0528a582c81f88812bff227803190c32ca25f54d:0",
-   "title": "Will Scotland win the 2026 FIFA World Cup?",
+   "id": "0xecba7b1db1c698ab73b3572abfcde327a02b5112676144e049edcc1e1e0f5b0b",
+   "title": "France vs. Spain: Team to Advance",
+   "outcome": "France",
+   "numTraders": 5,
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.2
+  },
+  {
+   "id": "0xdfbaae9f7587b11691c676d942f22b4ea9a9e3a68f7ca1d5d6bd4a1c967db23b",
+   "title": "Will Spain win on 2026-07-19?",
    "outcome": "Yes",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.07
   },
   {
-   "id": "0x9779c09fd4dd0a1c82dd82618269c2aa5669d91305293b396d1e0b8a166b566e:0",
-   "title": "Will Panama win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
+   "id": "0x2f3e8ba123deb05e3aff47ad738429054f345fbb872b9305510706bff3aa8c3e",
+   "title": "United States vs. Belgium: O/U 2.5",
+   "outcome": "Under",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.13
   },
   {
-   "id": "0x3fb8a8de2ac275882d72b2c4f22d41776fcf033f9e413a77a84dd395c0d5257c:0",
-   "title": "Will Saudi Arabia win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
+   "id": "0xc5943cca27ce657f519619520b1664829b1209f9a5ef9266be7f2954be1b0260",
+   "title": "Will Spain win on 2026-07-02?",
+   "outcome": "No",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.04
   },
   {
-   "id": "0x233ce0c3969a5cd5079287f16fcd283be7c1db82263e08697f85dbe1b4d2113c:0",
-   "title": "Will South Africa win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
+   "id": "0x9ad06dd68a4075ba2ac99fc138f7c1506f236851233b0ec79a130a348af19a82",
+   "title": "Australia vs. Egypt: Team to Advance",
+   "outcome": "Australia",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.28
   },
   {
-   "id": "0x84edef36bded182da6a395ac6c785dba8f3e09b6c5ad041385b2042536cbef25:0",
-   "title": "Will Iran win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
+   "id": "0xc09537a0976d0927901432859fbb6dfe5d23d1d69bb4e8355253e7b142a44e83",
+   "title": "Will France win on 2026-07-09?",
+   "outcome": "No",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.1
   },
   {
-   "id": "0x51e8c8df709aa78f64d2d9324d9d2556270f81e3966ade308099e5338bb4e4c9:0",
-   "title": "Will Iraq win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0xdb4b2f370c3d0e996fbb32213c87aa5402936e3d4882432b6738e2f5661b79a6:0",
-   "title": "Will Cura\u00e7ao win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x9e5f9d8c384f8fe368b195fa9a780be58643dff7360588a4e577012df8af00a7:0",
-   "title": "Will New Zealand win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x965ebc5d79eb1ec02cad67245a44b9e45b33359018f013fb6cf81d5bbf7bcc8d:0",
-   "title": "Will Uzbekistan win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x506f80bcf76bc75e6b31a250e2d754f347c4c231665326931d58bdb339ba1913:0",
-   "title": "Will Haiti win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x4fe305a2ae995a52ff278895344895fe587b4fec3d5f04347b4dbf5e99bce99c:0",
-   "title": "Will Qatar win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x106ccc4508432a065a67394837d4c2c529a8d77ed69fa3ba90b81eedf5236598:0",
-   "title": "Will Turkiye win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x0189df05ed7bf84d799213b01a79571e305c03b2ac5359cfbb3a323448ba20fa:0",
-   "title": "Will Japan win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x5e614739363bbfc399469102c600e4e8260032d41e59e0bc12ebc0e71231642d:0",
-   "title": "Will Czechia win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0xd0dbdc94b28c5cffeef64ed6b13e5f0f2324fb177e5ffaa634b48c88fe18d5e7:0",
-   "title": "Will Sweden win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x289568d555ec620ed6fa33c936c5f42649d3a2e30748a1daf7079f42453fbea4:0",
-   "title": "Will Ivory Coast win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x5a59d269c2b5108cd2f64c624e46ee2c8b5cfd88b882582565f927918315b6aa:0",
-   "title": "Will Algeria win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x65307f30dce84ac35e41813035d3c04933da830dc4efbbb2fcdc4b282700ef3b:0",
-   "title": "Will South Korea win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0xff0cfa9506cfa95759e4c7591654195bd26e3011f9882b51439135e04f2b69f1:0",
-   "title": "Will Tunisia win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0xcd836ec4d94b8a4ddc5713d80fe9db245d2fb4796eaf12337974da1b4e96100d:0",
-   "title": "Will Congo DR win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0xbce6698c9a61376c0709a2a724a9cf0dd0236d8dea882533073b6bb062efbee0:0",
-   "title": "Will Bosnia-Herzegovina win the 2026 FIFA World Cup?",
-   "outcome": "Yes",
-   "numTraders": 5,
-   "won": false
-  },
-  {
-   "id": "0x1f5cd4d1a23c11229b2781303dd39fb60ec6ee369dd173cedef8a7f7a1a27298:1",
+   "id": "0x1f5cd4d1a23c11229b2781303dd39fb60ec6ee369dd173cedef8a7f7a1a27298",
    "title": "Will Mexico win on 2026-06-24?",
    "outcome": "No",
    "numTraders": 5,
-   "won": false
+   "won": false,
+   "tier": "amplio",
+   "avgWinRate": 0.11
+  },
+  {
+   "id": "0xbbb20aee74d8d120db212bc10c1fc915a412a758117a64ed6ff6f3948c2f7d66",
+   "title": "Will England win on 2026-07-15?",
+   "outcome": "(ganadora)",
+   "numTraders": 4,
+   "won": true,
+   "tier": "descartada",
+   "avgWinRate": 0.04
+  },
+  {
+   "id": "0x3b9204e0fcba9234e3eaca1a941a342e4ce82aeb4ba373c668f2e8a72f1d41de",
+   "title": "Will France vs. Spain end in a draw?",
+   "outcome": "Yes",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.1
+  },
+  {
+   "id": "0x87030106adba59ce8ef007955073623da31f15fdf4655b96cf033fb9e57df694",
+   "title": "Will Brazil vs. Norway end in a draw?",
+   "outcome": "Yes",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.29
+  },
+  {
+   "id": "0x02103f049a5fe127c4ea03c9531772e82f3b9f5e9f5f30d67fda5b472fb56c17",
+   "title": "Will Belgium win on 2026-07-06?",
+   "outcome": "No",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.05
+  },
+  {
+   "id": "0x65f5760095b3b903c895b320765ccdd4074b72750458b09fde516f6254bcec67",
+   "title": "Will Mexico win on 2026-06-30?",
+   "outcome": "No",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.04
+  },
+  {
+   "id": "0xf95968b1334c35a5c17867680d783d1d592bb8648b014f7365d03e40e37c99fb",
+   "title": "Will Brazil win on 2026-06-29?",
+   "outcome": "No",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.07
+  },
+  {
+   "id": "0x4df0608dd27fe2a79cf6ad387b9f0e4ba1df864d8abf275c01273c297ea94942",
+   "title": "Argentina vs. Egypt: O/U 2.5",
+   "outcome": "Under",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.11
+  },
+  {
+   "id": "0x09620e07d807241bb41e5cf07d42dfd3e08943ee39e5c93ae3890e3b6164822e",
+   "title": "Will France win on 2026-06-26?",
+   "outcome": "No",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.05
+  },
+  {
+   "id": "0xd1b44514a10d1041ecfeff34c4f96400a84a171e3c09944956fa936ec8049a58",
+   "title": "Spread: Spain (-1.5)",
+   "outcome": "Austria",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.07
+  },
+  {
+   "id": "0xd14544ac7360f37de17eb6a442694de21a8c5ea01714323be6409b002c4d7d7d",
+   "title": "Will Brazil win on 2026-06-24?",
+   "outcome": "No",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.08
+  },
+  {
+   "id": "0x649bd3dc845f647aa8c9a739ad8de245b853224961afd01127de0071c13f84b3",
+   "title": "Will Morocco win on 2026-06-24?",
+   "outcome": "No",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.06
+  },
+  {
+   "id": "0xe1953a0f479de0ff3efabb7dff6116ff6cb9d7fe2d7ee6526c5d68da9cf09767",
+   "title": "Will Switzerland win on 2026-06-24?",
+   "outcome": "No",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.08
+  },
+  {
+   "id": "0x1ace94b4f0f374a5588317ce94dbc6ded25f9bfcfef0113a471684f58722944c",
+   "title": "Athens Open: Sapfo Sakellaridi vs Miriana Tona",
+   "outcome": "Sapfo Sakellaridi",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.1
+  },
+  {
+   "id": "0x750f495779adfc70a508af943bedb6e4759c9daaf067fd794f053d7e4505c717",
+   "title": "Spain vs. Argentina: O/U 2.5",
+   "outcome": "Over",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.28
+  },
+  {
+   "id": "0x0891e4792a016a079765dd25029639cd731f7dc0bde3d65d6002b2b19dae2777",
+   "title": "Argentina vs. Switzerland: Team to Advance",
+   "outcome": "Switzerland",
+   "numTraders": 4,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.14
+  },
+  {
+   "id": "0x54c20b1a28ef160a0e5c92a3febe3a74756915514c2828ee3d5ee4297f25ff0c",
+   "title": "Will FC Drita win on 2026-07-21?",
+   "outcome": "(ganadora)",
+   "numTraders": 3,
+   "won": true,
+   "tier": "descartada",
+   "avgWinRate": 0.43
+  },
+  {
+   "id": "0x4696802a83f939bb52cba4c9c97a9fb1d057bef5e3ae7b9abc1e26be6323dae5",
+   "title": "Floriana FC vs. FC Drita: O/U 1.5",
+   "outcome": "(ganadora)",
+   "numTraders": 3,
+   "won": true,
+   "tier": "descartada",
+   "avgWinRate": 0.38
+  },
+  {
+   "id": "0x0598f3ecb8bbcc48df5ef38685577b593c94a8f4672498f48bab2a99a4c7bd03",
+   "title": "Bloomfield Hills: Sebastian Gorzny vs Borna Gojo",
+   "outcome": "(ganadora)",
+   "numTraders": 3,
+   "won": true,
+   "tier": "descartada",
+   "avgWinRate": 0.4
+  },
+  {
+   "id": "0x750f495779adfc70a508af943bedb6e4759c9daaf067fd794f053d7e4505c717",
+   "title": "Spain vs. Argentina: O/U 2.5",
+   "outcome": "(ganadora)",
+   "numTraders": 3,
+   "won": true,
+   "tier": "descartada",
+   "avgWinRate": 0.2
+  },
+  {
+   "id": "0x0c4cd2055d6ea89354ffddc55d6dbcef9355748112ea952fc925f3db6a5c457f",
+   "title": "Will Argentina win the 2026 FIFA World Cup?",
+   "outcome": "(ganadora)",
+   "numTraders": 3,
+   "won": true,
+   "tier": "descartada",
+   "avgWinRate": 0.57
+  },
+  {
+   "id": "0x95f726bbb693b945f94473908298b2389989550b08a7bfd90f97ce7ba62cb719",
+   "title": "Will Argentina win on 2026-07-11?",
+   "outcome": "(ganadora)",
+   "numTraders": 3,
+   "won": true,
+   "tier": "descartada",
+   "avgWinRate": 0.5
+  },
+  {
+   "id": "0xdfbaae9f7587b11691c676d942f22b4ea9a9e3a68f7ca1d5d6bd4a1c967db23b",
+   "title": "Will Spain win on 2026-07-19?",
+   "outcome": "(ganadora)",
+   "numTraders": 3,
+   "won": true,
+   "tier": "descartada",
+   "avgWinRate": 0.02
+  },
+  {
+   "id": "0x67443cb1ffb2bf180f7df5b6ca7adff63f7e8e933c7e41405ba118f3e9f8befb",
+   "title": "Will Canada win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.1
+  },
+  {
+   "id": "0xbaf7780f9059e34b84301fd411f8dc573b4d56adfe6e0cda33daf304b1438da4",
+   "title": "Will Ecuador win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.16
+  },
+  {
+   "id": "0xcdb1f0400949238a63d3e88243d2ada08cd9c2a71985ced9f0cfd5e66354cf90",
+   "title": "Will USA win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.12
+  },
+  {
+   "id": "0x30d55d8124ee1e12dabe89201badc45669b81dff69e4ce44d961f32878ec178a",
+   "title": "Will Brazil win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.16
+  },
+  {
+   "id": "0xa526b8d2898ec27db4a6c096b6e5f2a5829305a77d738cf740389f10d5c585be",
+   "title": "Belgium vs. IR Iran: O/U 2.5",
+   "outcome": "Over",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.32
+  },
+  {
+   "id": "0xe5bd80313b8859e3f5761568ac9498866ea9d4419e4d1b6a877a9a9bd2754cb4",
+   "title": "Will Croatia win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.12
+  },
+  {
+   "id": "0x9814196ae917e1c962ce23612be50554586828a996b06c800d502a137001bc25",
+   "title": "Will Norway win on 2026-06-22?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.24
+  },
+  {
+   "id": "0x1f54c5d06e9e7a7a11ed24123ab5743ba5b525745cf1338b7ec23d371e6f55ea",
+   "title": "Will Mexico vs. Ecuador end in a draw?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.23
+  },
+  {
+   "id": "0xa5c34a67f76f57b54c2b02de07fda95fd0789e252fd595c2f27564509989cb82",
+   "title": "Spread: France (-1.5)",
+   "outcome": "France",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.08
+  },
+  {
+   "id": "0x8eb933271beaafebafc8f7615e69e6a20bdd61ef25f99f78f1e21486340f6570",
+   "title": "Will Brazil vs. Japan end in a draw?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.29
+  },
+  {
+   "id": "0xadf4acda3ae836e6c4f6646eaa940c7934d1b97de2a8f7a51ff585139e8f693a",
+   "title": "Will Argentina win on 2026-07-15?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.06
+  },
+  {
+   "id": "0x4f3421fb2daf5cca7430ed8d8132463963081572d75434393a1808fdb8829fe8",
+   "title": "Will Portugal win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.1
+  },
+  {
+   "id": "0x1525f6e38aad87d60dca762113a3bc8bd48baa8563aca8489b12c79330d77a92",
+   "title": "Will Senegal win on 2026-07-01?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.04
+  },
+  {
+   "id": "0x2cc359648ba6695498c169ceaa44c5444e0479102c453289c47ed9489e7f3e93",
+   "title": "Will Croatia win on 2026-06-27?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.05
+  },
+  {
+   "id": "0xeebaa583402170c5ed255445b525855b58ba7c8fdb587e3fde0708ebf37432b8",
+   "title": "Mexico vs. Ecuador: Team to Advance",
+   "outcome": "Ecuador",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.04
+  },
+  {
+   "id": "0x44e25f753ae47dbdf2705d35e0a45db24d3a1b2996b82a1350ade2c7e92c4f93",
+   "title": "Will Ecuador win on 2026-06-25?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.05
+  },
+  {
+   "id": "0xed731efabe978ae565a11181e2d785df1d0629a9614df9e372e40a8fac35af2d",
+   "title": "Spread: Argentina (-1.5)",
+   "outcome": "Argentina",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.04
+  },
+  {
+   "id": "0xa3150402afe114c762bcd2e5581dc4d0fe93560718640d8d490e0497350de5ad",
+   "title": "Will Netherlands win on 2026-06-25?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.05
+  },
+  {
+   "id": "0x0d2071920da35396162280a1af346e1f799ed45e019ed43fae0c88dc1ac4b4d6",
+   "title": "Will Algeria win on 2026-06-22?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.01
+  },
+  {
+   "id": "0x43bde2aa4a2067139451beb84649e5acaff989a3a0817fb1c592046c993d4168",
+   "title": "Will Portugal win on 2026-07-02?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.05
+  },
+  {
+   "id": "0xd894e6a98b1d031f77aa51cfb9a6abaff2bb8dbc82c5f66e4f2cd31aaa8f097a",
+   "title": "Switzerland vs. Colombia: O/U 2.5",
+   "outcome": "Over",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.11
+  },
+  {
+   "id": "0x6fcd127dbe2c45255d6b201b1b250c69dbf940de0fe80b4e40e23822c963443d",
+   "title": "Will Morocco vs. Haiti end in a draw?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.08
+  },
+  {
+   "id": "0x20fac1c925b7a2fed6b3b2736f47a800b4d0d4001b9deaeb7b918868eb63d081",
+   "title": "Will France win on 2026-07-14?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.0
+  },
+  {
+   "id": "0x7ff3ed46b924fc4516f3dd1e918df843c45163e8a064ac023b2c2163f3d16123",
+   "title": "Belgium vs. Senegal: O/U 1.5",
+   "outcome": "Under",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.09
+  },
+  {
+   "id": "0xa8d64ff826067a88d125173890b470ce99f1328da7b33bb038627ef67661fa10",
+   "title": "Spread: England (-1.5)",
+   "outcome": "England",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.0
+  },
+  {
+   "id": "0x4917c1901bf8b7cd6c917c1a37b6e7090982d267a0823d02ff5971babb3f723a",
+   "title": "France vs. Spain: O/U 0.5",
+   "outcome": "Under",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.08
+  },
+  {
+   "id": "0x0a549d2fe4a227122995cc50800acf7ac0d51608867895113bed7b3146ef9516",
+   "title": "San Diego Padres vs. Atlanta Braves",
+   "outcome": "San Diego Padres",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.12
+  },
+  {
+   "id": "0x688954ad8e279cc5febef6739d4f87acd3e42ca768ac6a8b621386a8578532ed",
+   "title": "Will Canada win on 2026-06-28?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.03
+  },
+  {
+   "id": "0x5becd484cc612594dd3f2a5138d9c191f9089dbc7dc3bd7dbbfb9d2184ed194c",
+   "title": "Spread: Spain (-1.5)",
+   "outcome": "Saudi Arabia",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.1
+  },
+  {
+   "id": "0x180bce419c2b5ea2178514571c50c9d5ada7b85fd409e7088ff5d0d42e7fe867",
+   "title": "Norway vs. England: O/U 2.5",
+   "outcome": "Over",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.05
+  },
+  {
+   "id": "0xd760a03102facc1287e6bab7d3526997634d3518cd39b39640443233b6c8e83c",
+   "title": "Jordan vs. Algeria: O/U 3.5",
+   "outcome": "Over",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.06
+  },
+  {
+   "id": "0x0fda0800bc4e6b9e17ef98cd2ae6eb7e50940b725195ab8552a74aeb88f9dd73",
+   "title": "France vs. England: Both Teams to Score",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.12
+  },
+  {
+   "id": "0xcf2f9e5fac1bf6f59012958743f1f25769ee880d4e4134e79fd7dd2c850a8522",
+   "title": "France vs. England: O/U 6.5",
+   "outcome": "Under",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.19
+  },
+  {
+   "id": "0xd19970ef22583c25568432815ef1ba141835da9d05209c665e2772eb8a5a1397",
+   "title": "Argentina vs. Egypt: O/U 1.5",
+   "outcome": "Under",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.08
+  },
+  {
+   "id": "0xb7297ad99cd8e4957c64aca2fbf143efeb7045e95826cf4aa6b327ebfe1f1ec3",
+   "title": "Will Czechia win on 2026-06-24?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.12
+  },
+  {
+   "id": "0xbbb20aee74d8d120db212bc10c1fc915a412a758117a64ed6ff6f3948c2f7d66",
+   "title": "Will England win on 2026-07-15?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.02
+  },
+  {
+   "id": "0x5bdcf0fd010eba1a55a0f3de9be6612fc72038279a734e994ce2e34664a3cfe4",
+   "title": "Will Argentina win on 2026-06-22?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.07
+  },
+  {
+   "id": "0x392b0b5b48989e2208978535ce82ed77ceaea60a3e906ffe201c129a6621f2bb",
+   "title": "Spread: Spain (-1.5)",
+   "outcome": "Spain",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.06
+  },
+  {
+   "id": "0x7b52405ad0e0d31bfe970940b67d77f24ecedeab8a2361c11148c02a006e325c",
+   "title": "Will Norway win the 2026 FIFA World Cup?",
+   "outcome": "Yes",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.06
+  },
+  {
+   "id": "0xa947b7c696453a288460a8e12aae31b854ca02d0b87970ffc259cec8a9fffcd2",
+   "title": "Will Morocco win on 2026-07-04?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.04
+  },
+  {
+   "id": "0x917aa2a97c0945edecd7b26b57d31e6d9c87c6e0b7d589c128c9216f345a6051",
+   "title": "Portugal vs. Croatia: Team to Advance",
+   "outcome": "Croatia",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.15
+  },
+  {
+   "id": "0xa7b5b123f9fd38f83fbe19773a5d04e38208b370ca66be27b9688155e7b5c60a",
+   "title": "Will Argentina win on 2026-07-07?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.07
+  },
+  {
+   "id": "0xe9d96f957f3f5e4ffa0e920087edf967c4cc353e9d1ad0c2d7ae928b32b61cb0",
+   "title": "Will United States win on 2026-07-01?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.07
+  },
+  {
+   "id": "0x51166276fa646ca50165f7d030c297138ed1d62dc41f6ffde21e962c44182074",
+   "title": "Will Spain vs. Argentina end in a draw?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.15
+  },
+  {
+   "id": "0xe43caeeefb9438d44e3c73a10dddc88f3dd355daf89d0586f8e9c2369bbf762f",
+   "title": "Will Switzerland vs. Colombia end in a draw?",
+   "outcome": "No",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.16
+  },
+  {
+   "id": "0x744df2cb98d5dd869623f254c6bdfb167c9caf1e5dd16732106cb61b2d4bc577",
+   "title": "Spread: Spain (-1.5)",
+   "outcome": "Spain",
+   "numTraders": 3,
+   "won": false,
+   "tier": "descartada",
+   "avgWinRate": 0.07
+  },
+  {
+   "id": "0xecba7b1db1c698ab73b3572abfcde327a02b5112676144e049edcc1e1e0f5b0b",
+   "title": "France vs. Spain: Team to Advance",
+   "outcome": "(ganadora)",
+   "numTraders": 4,
+   "won": true,
+   "tier": "especialistas",
+   "avgWinRate": 0.69
   }
  ]
 }
