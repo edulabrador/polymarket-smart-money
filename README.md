@@ -19,8 +19,11 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
    (defecto ±0.15), la señal se marca **descartada**: la tesis de entrada ya no
    es la actual. Se muestra atenuada en la web y no se notifica.
 6. **Segunda fuente de oportunidades**: el feed global de trades. Cualquier
-   compra individual ≥ `WHALE_MIN_USD` (defecto $50k) se notifica y se lista
-   en la web, marcando si el comprador está además en el top 50 vigilado.
+   compra individual ≥ `WHALE_MIN_USD` (defecto $50k) y a cuota < `MAX_ALERT_PRICE`
+   (defecto 0.90) se notifica y se lista en la web, marcando si el comprador
+   está además en el top 50 vigilado. Comprar a 0.99 asegura +poco% sin
+   recorrido ni información, así que esas casi-certezas se descartan (eran la
+   mayor fuente de ruido del feed de whales).
    Si la compra es a cuota improbable (precio ≤ `LONGSHOT_MAX_PRICE`, defecto
    0.30) se etiqueta **🕵 LONGSHOT**: dinero grande apostando a algo que el
    mercado cree improbable es la señal más informativa (posible insider).
@@ -64,9 +67,13 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
     donde no estaba, se avisa al momento. Es la señal más temprana: la
     coincidencia, por definición, espera a que N traders confluyan — y para
     entonces el precio ya se movió. Se saltan favoritos (> `FIRSTMOVE_MAX_PRICE`,
-    defecto 0.80) y mercados que ya son señal. Cada primer movimiento registra
-    su ROI al resolver, etiquetado como fuente propia en el histórico: así los
-    datos dirán si esta señal paga por sí sola.
+    defecto 0.80) y mercados que ya son señal. **Anti-ruido**: se descartan los
+    movimientos de un trader que nuestro track record marca como perdedor, y los
+    de un wallet que abre > `FIRSTMOVE_MAX_PER_WALLET` (defecto 2) posiciones
+    nuevas de golpe (está metiendo volumen — apostar cada partido — no haciendo
+    una jugada de convicción). Cada primer movimiento registra su ROI al
+    resolver, etiquetado como fuente propia en el histórico: así los datos
+    dirán si esta señal paga por sí sola.
 12. **Especialización por categoría**: el track record de cada trader se
     desglosa por categoría (deportes/política/cripto/otras, heurística por
     título). Cada señal muestra el **acierto de sus traders en la categoría

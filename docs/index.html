@@ -279,6 +279,9 @@ function renderFirstMoves() {
   el('fm-titulo').hidden = !visibles.length;
   el('fm').innerHTML = visibles.map(m => {
     const quien = esc(nombre(m.name, m.wallet));
+    const wr = m.catWinRate != null
+      ? ` · <b class="deriva-ok" title="acierto del trader en la categoría de este mercado">${pct(m.catWinRate)} en su categoría</b>`
+      : (m.winRate != null ? ` · <b class="deriva-ok">acierto ${pct(m.winRate)}</b>` : '');
     return `<div class="whale">
       <span class="whale-usd">${usd(m.usd)}</span>
       <a href="https://polymarket.com/event/${encodeURIComponent(m.eventSlug)}"
@@ -286,7 +289,7 @@ function renderFirstMoves() {
       <span class="pastilla">${esc(m.outcome)}</span> @ ${pct(m.entryPrice)}
       · <span title="cuánto multiplica si gana">×${m.upside}</span> ·
       <a href="https://polymarket.com/profile/${encodeURIComponent(m.wallet)}"
-         target="_blank" rel="noopener">${quien}</a>
+         target="_blank" rel="noopener">${quien}</a>${wr}
       · ${new Date(m.firstSeen).toLocaleDateString('es-ES')}</div>`;
   }).join('');
 }

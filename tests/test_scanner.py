@@ -10,9 +10,9 @@ from backtest import backtest_signals
 from scanner import (annotate_win_rates, categoria, detect_first_moves,
                      detect_signals, detect_whales, enrich_whales,
                      format_first_moves, format_message, format_resolved,
-                     format_whales, merge_previous, recipients,
-                     resolve_first_moves, resolve_history, track_record,
-                     update_track_records, whale_notifiable)
+                     format_whales, merge_previous, qualify_first_moves,
+                     recipients, resolve_first_moves, resolve_history,
+                     track_record, update_track_records, whale_notifiable)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -160,6 +160,10 @@ def test_detect_whales_from_real_fixture():
     whales = detect_whales(trades, last_ts=0, top_wallets=top, min_usd=10000)
     assert whales, "el fixture tiene compras > $10k"
     assert all(w["usd"] >= 10000 for w in whales)
+    # cuota altisima (>= max_price) fuera: comprar a 0.99 no es senal
+    assert all(w["price"] < 0.9 for w in whales)
+    con_cara = detect_whales(trades, last_ts=0, top_wallets=top, min_usd=10000, max_price=1.0)
+    assert len(con_cara) > len(whales)  # el fixture tiene una compra >= 0.9
     assert all(w["timestamp"] >= whales[-1]["timestamp"] for w in whales)  # desc
     # los SELL nunca pasan
     sells = [t for t in trades if t["side"] == "SELL"]
@@ -296,6 +300,38 @@ def test_format_first_moves():
     msg = format_first_moves([m])
     assert "ann" in msg and "$15,000" in msg and "x3.0" in msg and "ev" in msg
     assert len(format_first_moves([m] * 50)) < 4096  # limite de Telegram
+
+
+def move(wallet, title="Will X win?", cond=None):
+    return {"id": f"{cond or wallet}:0", "wallet": wallet, "name": wallet,
+            "title": title, "outcome": "Yes", "eventSlug": "e", "usd": 15000,
+            "entryPrice": 0.3, "avgPrice": 0.28, "upside": 2.33}
+
+
+def test_qualify_first_moves_drops_grinders_and_losers():
+    # grinder: un wallet con 3 movimientos nuevos de golpe (> 2) -> fuera todos
+    grinder = [move("0xg", cond=f"0xg{i}") for i in range(3)]
+    bueno = [move("0xok")]
+    perdedor = [move("0xbad")]
+    tracks = {
+        "0xok": {"wins": 8, "losses": 2, "net": 5000},        # ganador
+        "0xbad": {"wins": 2, "losses": 8, "net": -3000},      # perdedor: fuera
+        "0xg": {"wins": 9, "losses": 1, "net": 9000},         # ganador pero grinder
+    }
+    out = qualify_first_moves(grinder + bueno + perdedor, tracks, max_per_wallet=2)
+    assert [m["wallet"] for m in out] == ["0xok"]
+    assert out[0]["winRate"] == 0.8
+
+
+def test_qualify_first_moves_annotates_category():
+    m = [move("0xok", title="NBA Finals: Lakers vs Celtics")]
+    tracks = {"0xok": {"wins": 8, "losses": 2, "net": 5000,
+                       "cats": {"deportes": {"wins": 7, "losses": 1}}}}
+    out = qualify_first_moves(m, tracks, max_per_wallet=2)
+    assert out[0]["catWinRate"] == 0.88  # 7/8 en deportes
+    # sin track: se mantiene (top 50, beneficio de la duda) sin winRate
+    out2 = qualify_first_moves([move("0xnew")], {}, max_per_wallet=2)
+    assert len(out2) == 1 and out2[0]["winRate"] is None
 
 
 def test_update_track_records_respects_ttl():

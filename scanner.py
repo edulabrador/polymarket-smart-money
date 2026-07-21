@@ -25,6 +25,9 @@ MAX_PRICE_DRIFT = float(os.getenv("MAX_PRICE_DRIFT", "0.15"))
 MAX_POSITIONS_PER_TRADER = int(os.getenv("MAX_POSITIONS_PER_TRADER", "200"))
 # segunda fuente de oportunidades: compras individuales por encima de esto
 WHALE_MIN_USD = float(os.getenv("WHALE_MIN_USD", "50000"))
+# comprar a cuota altisima (>= esto) no es senal: asegura +poco%, sin recorrido
+# ni informacion (aparcar dinero en una casi-certeza). Aplica a whales y avisos.
+MAX_ALERT_PRICE = float(os.getenv("MAX_ALERT_PRICE", "0.9"))
 # whale comprando a cuota improbable = la mas informativa (posible insider)
 LONGSHOT_MAX_PRICE = float(os.getenv("LONGSHOT_MAX_PRICE", "0.3"))
 # una compra grande de un gran perdedor no es senal: solo se notifica la
@@ -40,6 +43,9 @@ WHALES_KEEP = 100  # movimientos whale que guarda el JSON para la web
 # donde no estaba — senal mas temprana que esperar a que N traders coincidan
 FIRSTMOVE_MIN_USD = float(os.getenv("FIRSTMOVE_MIN_USD", "10000"))
 FIRSTMOVE_MAX_PRICE = float(os.getenv("FIRSTMOVE_MAX_PRICE", "0.8"))  # favoritos: sin recorrido
+# un wallet que abre mas de esto de golpe esta metiendo volumen (apuesta cada
+# partido), no haciendo una jugada de conviccion: no es "primer movimiento"
+FIRSTMOVE_MAX_PER_WALLET = int(os.getenv("FIRSTMOVE_MAX_PER_WALLET", "2"))
 FIRSTMOVES_KEEP = 30
 SCAN_EVERY_MIN = 10  # cadencia real del bucle en .github/workflows/scan.yml
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
@@ -229,28 +235,66 @@ def resolve_first_moves(moves, position_index, now):
     return kept, resolved
 
 
+def qualify_first_moves(moves, tracks, max_per_wallet=FIRSTMOVE_MAX_PER_WALLET):
+    """Filtra el ruido de los primeros movimientos y les anota el track record:
+
+    - anti-grinding: un wallet que abre > max_per_wallet posiciones nuevas en
+      el mismo escaneo esta apostando cada partido, no haciendo una jugada de
+      conviccion — se descartan todas las suyas de este escaneo.
+    - calidad: se descarta el movimiento de un trader que nuestro propio track
+      record marca como perdedor (una apuesta suya no es senal rentable).
+    - anota winRate global y en la categoria del mercado para ordenar/mostrar.
+    """
+    por_wallet = {}
+    for m in moves:
+        por_wallet[m["wallet"]] = por_wallet.get(m["wallet"], 0) + 1
+    out = []
+    for m in moves:
+        if por_wallet[m["wallet"]] > max_per_wallet:
+            continue
+        t = tracks.get(m["wallet"])
+        if t and is_loser(t):
+            continue
+        m["winRate"] = win_rate(t) if t else None
+        cat = categoria(m["title"])
+        c = (t.get("cats") or {}).get(cat) if t else None
+        m["catWinRate"] = (round(c["wins"] / (c["wins"] + c["losses"]), 2)
+                           if c and c["wins"] + c["losses"] >= WHALE_MIN_TRACK else None)
+        out.append(m)
+    return out
+
+
 def format_first_moves(moves, cap=10):
     lines = ["\U0001F3AF Primer movimiento de un top trader:"]
     for m in moves[:cap]:
         quien = m["name"] or m["wallet"][:10]
+        wr = ""
+        if m.get("catWinRate") is not None:
+            wr = f" · {round(m['catWinRate'] * 100)}% en su categoria"
+        elif m.get("winRate") is not None:
+            wr = f" · acierto 30d {round(m['winRate'] * 100)}%"
         lines.append(
             f"\n• {quien} abre ${m['usd']:,.0f} → {m['title']} [{m['outcome']}]"
-            f"\n  @ {m['entryPrice']} (x{m['upside']} si gana)"
+            f"\n  @ {m['entryPrice']} (x{m['upside']} si gana){wr}"
             f"\n  https://polymarket.com/event/{m['eventSlug']}")
     if len(moves) > cap:
         lines.append(f"\n…y {len(moves) - cap} mas")
     return "\n".join(lines)
 
 
-def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD):
+def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD,
+                  max_price=MAX_ALERT_PRICE):
     """Compras nuevas (timestamp > last_ts) por encima de min_usd USD.
-    Los SELL no son oportunidad de entrada y se ignoran. isTop marca si el
-    comprador esta ademas en el leaderboard vigilado."""
+    Los SELL no son oportunidad de entrada y se ignoran. Las compras a cuota
+    >= max_price se descartan: comprar a 0.99 asegura +poco% y no aporta ni
+    recorrido ni informacion. isTop marca si el comprador esta ademas en el
+    leaderboard vigilado."""
     whales, seen = [], set()
     for t in trades:
         usd = t["size"] * t["price"]
         if (t["side"] != "BUY" or t["timestamp"] <= last_ts
-                or usd < min_usd or t["transactionHash"] in seen):
+                or usd < min_usd or t["price"] >= max_price
+                or t["transactionHash"] in seen):
             continue
         seen.add(t["transactionHash"])
         whales.append({
@@ -575,25 +619,33 @@ def main():
     # una whale con historial perdedor no se guarda ni se muestra en ningun
     # sitio (ni la nueva ni las que ya estuvieran guardadas de antes)
     new_whales = [w for w in new_whales if whale_notifiable(w)]
-    whales = (new_whales + [w for w in doc.get("whales", []) if whale_notifiable(w)])[:WHALES_KEEP]
+    # las whales ya guardadas se revalidan igual que las nuevas: perdedoras y
+    # cuotas altisimas fuera (pudieron guardarse antes de endurecer el filtro)
+    prev_whales = [w for w in doc.get("whales", [])
+                   if whale_notifiable(w) and w["price"] < MAX_ALERT_PRICE]
+    whales = (new_whales + prev_whales)[:WHALES_KEEP]
     last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
-    # el track record de un wallet perdedor tampoco se persiste: se
-    # recalcula (y se descarta otra vez) en cada escaneo si hace falta
-    tracks = {w: t for w, t in tracks.items() if not is_loser(t)}
 
     # tercera fuente: primer movimiento de un solo top trader (solo wallets
     # no-bot). first_index evita la avalancha del primer escaneo: fija el
-    # indice de posiciones conocidas sin avisar de nada.
+    # indice de posiciones conocidas sin avisar de nada. qualify_first_moves
+    # necesita el track record COMPLETO (con perdedores) para descartarlos,
+    # asi que corre antes de purgar tracks.
     known_prev = set(doc.get("knownPositions", []))
     first_index = "knownPositions" not in doc
     moves, known = detect_first_moves(scannable, known_prev,
                                       {s["id"] for s in signals})
+    moves = qualify_first_moves(moves, tracks)  # anti-ruido: grinders y perdedores fuera
     if first_index:
         moves = []  # posiciones preexistentes: no son movimientos detectados
                     # temprano; guardarlas contaminaria el ROI de la fuente
     for m in moves:
         m["firstSeen"] = now
     first_moves = (moves + doc.get("firstMoves", []))[:FIRSTMOVES_KEEP]
+
+    # el track record de un wallet perdedor no se persiste: se recalcula (y se
+    # descarta otra vez) en cada escaneo si hace falta
+    tracks = {w: t for w, t in tracks.items() if not is_loser(t)}
 
     # indice de TODAS las posiciones (incluidas redeemable) para dar veredicto
     # a las senales cuyo mercado ya resolvio
@@ -625,7 +677,9 @@ def main():
         "history": history,
     }, indent=1), encoding="utf-8")
 
-    fresh_new = [s for s in new if not s["stale"]]
+    # no se avisa de coincidencias en favoritos casi resueltos (>= MAX_ALERT_PRICE):
+    # comprar a 0.92 da +9% como mucho y una perdida se come muchas ganancias
+    fresh_new = [s for s in new if not s["stale"] and s["curPrice"] < MAX_ALERT_PRICE]
     for r in recipients():
         mias = [s for s in fresh_new if s["numTraders"] >= r["minUsers"]]
         if mias:
