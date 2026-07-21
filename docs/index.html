@@ -103,61 +103,95 @@
   .fallo { color: var(--aviso); font-weight: 700; }
   footer { margin-top: 3rem; color: var(--sutil); font-size: .78rem; text-align: center; }
   footer a { color: inherit; }
+  .tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.3rem;
+    border-bottom: 1px solid var(--borde); }
+  .tabs button { background: none; border: none; border-bottom: 2px solid transparent;
+    color: var(--sutil); font: inherit; font-size: .92rem; padding: .5rem .7rem;
+    cursor: pointer; margin-bottom: -1px; }
+  .tabs button:hover { color: var(--texto); }
+  .tabs button.active { color: var(--acento); border-bottom-color: var(--acento);
+    font-weight: 600; }
+  .nota { color: var(--sutil); font-size: .85rem; background: var(--card);
+    border: 1px solid var(--borde); border-radius: .7rem; padding: .6rem .9rem;
+    margin: 0 0 1rem; line-height: 1.5; }
 </style>
 </head>
 <body>
 <div class="contenedor">
   <h1>📡 Polymarket Smart Money</h1>
   <div class="sub" id="meta">Cargando…</div>
-  <div class="tiles" id="tiles" hidden>
-    <div class="tile"><b id="t-frescas">–</b><span>señales frescas</span></div>
-    <div class="tile"><b id="t-stale">–</b><span>descartadas</span></div>
-    <div class="tile"><b id="t-whales">–</b><span>whales últimas 24 h</span></div>
-    <div class="tile"><b id="t-aciertos">–</b><span>tasa de acierto</span></div>
-    <div class="tile" id="tile-roi" hidden
-         title="Retorno medio si hubieras apostado lo mismo en cada señal a su precio de detección y esperado a que resuelva. Esto es lo que dice si la herramienta es RENTABLE, no solo si acierta.">
-      <b id="t-roi">–</b><span>ROI medio / señal</span></div>
-    <div class="tile" id="tile-backtest" hidden
-         title="Coincidencias del top 50 en mercados ya resueltos: ganadas desde sus canjes (REDEEM), perdidas desde posiciones muertas. Estimación, no un backtest completo">
-      <b id="t-backtest">–</b><span>backtest 30 días</span></div>
-  </div>
-  <div id="fuentes" hidden></div>
-  <div class="filtros" id="filtros" hidden>
-    <input type="search" id="busqueda" placeholder="Buscar mercado…">
-    <select id="minTraders">
-      <option value="0">Todas las señales</option>
-      <option value="7">7+ traders</option>
-      <option value="10">10+ traders</option>
-      <option value="15">15+ traders</option>
-    </select>
-    <select id="categoria">
-      <option value="">Todas las categorías</option>
-      <option value="deportes">Deportes</option>
-      <option value="politica">Política</option>
-      <option value="cripto">Cripto</option>
-      <option value="otras">Otras</option>
-    </select>
-    <select id="orden">
-      <option value="traders">Ordenar: más traders</option>
-      <option value="upside">Ordenar: más potencial</option>
-      <option value="entrada">Ordenar: mejor entrada</option>
-    </select>
-    <label class="check"><input type="checkbox" id="ocultarFav"> ocultar favoritos</label>
-    <label class="check"><input type="checkbox" id="verStale"> mostrar descartadas</label>
-  </div>
-  <div id="lista"></div>
-  <p id="vacio" hidden></p>
-  <h2 id="fm-titulo" hidden
-      title="Un solo top trader abre una posición grande y nueva en un mercado donde no estaba: señal más temprana que esperar a que varios coincidan">
-    🎯 Primeros movimientos</h2>
-  <div id="fm"></div>
-  <h2 id="whales-titulo" hidden>🐋 Compras grandes recientes</h2>
-  <div id="whales"></div>
-  <details id="historial" hidden>
-    <summary></summary>
-    <ul id="historial-lista"></ul>
-  </details>
-  <footer>Escáner de coincidencias de top traders y compras whale ·
+
+  <nav class="tabs" id="tabs" hidden>
+    <button data-tab="coincidencias" class="active">👥 Coincidencias</button>
+    <button data-tab="whales" id="tab-btn-whales">🐋 Compras whale</button>
+    <button data-tab="movimientos" id="tab-btn-movimientos">🎯 Primeros movimientos</button>
+  </nav>
+
+  <section id="tab-coincidencias" class="tab">
+    <div class="tiles" id="tiles" hidden>
+      <div class="tile"><b id="t-frescas">–</b><span>señales frescas</span></div>
+      <div class="tile"><b id="t-stale">–</b><span>descartadas</span></div>
+      <div class="tile"><b id="t-aciertos">–</b><span>tasa de acierto</span></div>
+      <div class="tile" id="tile-roi" hidden
+           title="Retorno medio de las coincidencias resueltas si hubieras apostado lo mismo en cada una a su precio de detección. Esto es lo que dice si es RENTABLE, no solo si acierta.">
+        <b id="t-roi">–</b><span>ROI medio / señal</span></div>
+      <div class="tile" id="tile-backtest" hidden
+           title="Coincidencias del top 50 en mercados ya resueltos: ganadas desde sus canjes (REDEEM), perdidas desde posiciones muertas. Estimación, no un backtest completo">
+        <b id="t-backtest">–</b><span>backtest 30 días</span></div>
+    </div>
+    <div id="fuentes" hidden></div>
+    <div class="filtros" id="filtros" hidden>
+      <input type="search" id="busqueda" placeholder="Buscar mercado…">
+      <select id="minTraders">
+        <option value="0">Todas las señales</option>
+        <option value="7">7+ traders</option>
+        <option value="10">10+ traders</option>
+        <option value="15">15+ traders</option>
+      </select>
+      <select id="categoria">
+        <option value="">Todas las categorías</option>
+        <option value="deportes">Deportes</option>
+        <option value="politica">Política</option>
+        <option value="cripto">Cripto</option>
+        <option value="otras">Otras</option>
+      </select>
+      <select id="orden">
+        <option value="traders">Ordenar: más traders</option>
+        <option value="upside">Ordenar: más potencial</option>
+        <option value="entrada">Ordenar: mejor entrada</option>
+      </select>
+      <label class="check"><input type="checkbox" id="ocultarFav"> ocultar favoritos</label>
+      <label class="check"><input type="checkbox" id="verStale"> mostrar descartadas</label>
+    </div>
+    <div id="lista"></div>
+    <p id="vacio" hidden></p>
+    <details id="historial" hidden>
+      <summary></summary>
+      <ul id="historial-lista"></ul>
+    </details>
+  </section>
+
+  <section id="tab-whales" class="tab" hidden>
+    <p class="nota">🐋 Compras individuales ≥ $50k de un solo comprador rentable, a
+      cuota &lt; 0.90. Fuente <b>secundaria</b>: se muestra aquí pero <b>no</b> se
+      notifica por Telegram (solo las coincidencias lo hacen).</p>
+    <div id="whales"></div>
+    <p id="whales-vacio" class="nota" hidden>Sin compras whale recientes.</p>
+  </section>
+
+  <section id="tab-movimientos" class="tab" hidden>
+    <p class="nota" id="fm-nota">🎯 Un solo top trader abre una posición grande y nueva
+      donde no estaba. Fuente <b>secundaria</b>: no se notifica por Telegram.</p>
+    <div id="fm"></div>
+    <p id="fm-vacio" class="nota" hidden>Sin primeros movimientos recientes.</p>
+    <details id="historial-fm" hidden>
+      <summary></summary>
+      <ul id="historial-fm-lista"></ul>
+    </details>
+  </section>
+
+  <footer>Escáner de coincidencias de top traders (más whales y primeros movimientos
+    como fuentes secundarias) ·
     <a href="https://github.com/edulabrador/polymarket-smart-money"
        target="_blank" rel="noopener">código en GitHub</a> · no es consejo financiero</footer>
 </div>
@@ -193,17 +227,20 @@ function renderMeta() {
     `señal a partir de <b>${d.params.minUsers} traders</b> con posición ≥ <b>${usd(d.params.minPositionUsd)}</b>`;
 }
 
+// la pagina principal es SOLO coincidencias; las metricas se calculan sobre esa
+// fuente (el histórico incluye tambien primeros movimientos, silenciados)
+const esCoincidencia = h => !h.source || h.source === 'coincidencia';
+
 function renderTiles() {
-  const d = datos, hist = d.history ?? [], whales = d.whales ?? [];
+  const d = datos;
+  const hist = (d.history ?? []).filter(esCoincidencia);
   const frescas = d.signals.filter(s => !s.stale).length;
-  const dia = Date.now() / 1000 - 86400;
   el('t-frescas').textContent = frescas;
   el('t-stale').textContent = d.signals.length - frescas;
-  el('t-whales').textContent = whales.filter(w => w.timestamp > dia).length;
   const aciertos = hist.filter(h => h.won).length;
   el('t-aciertos').textContent = hist.length
     ? `${aciertos}/${hist.length} (${Math.round(100 * aciertos / hist.length)}%)` : '—';
-  // ROI real: media del retorno por señal resuelta (base del "¿es rentable?")
+  // ROI real de las coincidencias resueltas (base del "¿es rentable?")
   const conRoi = hist.filter(h => h.roi != null);
   if (conRoi.length) {
     const roi = conRoi.reduce((a, h) => a + h.roi, 0) / conRoi.length;
@@ -296,13 +333,9 @@ function renderSignals() {
 
 function renderFirstMoves() {
   const fm = datos.firstMoves ?? [];
-  const q = el('busqueda').value.toLowerCase();
-  const cat = el('categoria').value;
-  const visibles = fm.filter(m =>
-    (!cat || categoria(m.title) === cat) &&
-    (!q || m.title.toLowerCase().includes(q)));
-  el('fm-titulo').hidden = !visibles.length;
-  el('fm').innerHTML = visibles.map(m => {
+  el('tab-btn-movimientos').textContent = `🎯 Primeros movimientos${fm.length ? ` (${fm.length})` : ''}`;
+  el('fm-vacio').hidden = fm.length > 0;
+  el('fm').innerHTML = fm.map(m => {
     const quien = esc(nombre(m.name, m.wallet));
     const wr = m.catWinRate != null
       ? ` · <b class="deriva-ok" title="acierto del trader en la categoría de este mercado">${pct(m.catWinRate)} en su categoría</b>`
@@ -320,13 +353,9 @@ function renderFirstMoves() {
 }
 
 function renderWhales() {
-  const whales = datos.whales ?? [];
-  const q = el('busqueda').value.toLowerCase();
-  const cat = el('categoria').value;
-  const visibles = whales.filter(w =>
-    (!cat || categoria(w.title) === cat) &&
-    (!q || w.title.toLowerCase().includes(q)));
-  el('whales-titulo').hidden = !visibles.length;
+  const visibles = datos.whales ?? [];
+  el('tab-btn-whales').textContent = `🐋 Compras whale${visibles.length ? ` (${visibles.length})` : ''}`;
+  el('whales-vacio').hidden = visibles.length > 0;
   const mostradas = verTodasWhales ? visibles : visibles.slice(0, 30);
   el('whales').innerHTML = mostradas.map(w => {
     const horas = Math.floor((Date.now() / 1000 - w.timestamp) / 3600);
@@ -370,20 +399,28 @@ async function cargarBacktest() {
   } catch (e) {}
 }
 
+function filaHistorial(h) {
+  return `<li><span class="${h.won ? 'acierto' : 'fallo'}">${h.won ? '✓ acierto' : '✗ fallo'}</span>
+     — ${esc(h.title)} [${esc(h.outcome)}]${h.source === 'primer movimiento' ? '' : ` · ${h.numTraders} traders`}${h.roi != null ? ` · <b class="${h.roi >= 0 ? 'acierto' : 'fallo'}">ROI ${h.roi >= 0 ? '+' : ''}${Math.round(h.roi * 100)}%</b>` : ''}
+     · resuelta ${new Date(h.resolvedAt).toLocaleDateString('es-ES')}${h.stale ? ' · (estaba descartada)' : ''}</li>`;
+}
+
+function pintaHistorial(hs, detId, listId, titulo) {
+  const cont = el(detId);
+  cont.hidden = !hs.length;
+  if (!hs.length) return;
+  const aciertos = hs.filter(h => h.won).length;
+  cont.querySelector('summary').textContent = `${titulo} (${aciertos}/${hs.length} aciertos)`;
+  el(listId).innerHTML = hs.slice().reverse().map(filaHistorial).join('');
+}
+
 function renderHistory() {
   const hist = datos.history ?? [];
-  if (!hist.length) return;
-  const aciertos = hist.filter(h => h.won).length;
-  const histEl = el('historial');
-  histEl.hidden = false;
-  histEl.querySelector('summary').textContent =
-    `Histórico de señales resueltas (${aciertos}/${hist.length} aciertos)`;
-  el('historial-lista').innerHTML = hist
-    .slice().reverse().map(h =>
-      `<li><span class="${h.won ? 'acierto' : 'fallo'}">${h.won ? '✓ acierto' : '✗ fallo'}</span>
-       — ${esc(h.title)} [${esc(h.outcome)}]${h.source === 'primer movimiento' ? ' · <span class="pastilla">🎯 primer movimiento</span>' : ` · ${h.numTraders} traders`}${h.roi != null ? ` · <b class="${h.roi >= 0 ? 'acierto' : 'fallo'}">ROI ${h.roi >= 0 ? '+' : ''}${Math.round(h.roi * 100)}%</b>` : ''}
-       · resuelta ${new Date(h.resolvedAt).toLocaleDateString('es-ES')}${h.stale ? ' · (estaba descartada)' : ''}</li>`)
-    .join('');
+  pintaHistorial(hist.filter(esCoincidencia), 'historial', 'historial-lista',
+                 'Histórico de coincidencias resueltas');
+  pintaHistorial(hist.filter(h => h.source === 'primer movimiento'),
+                 'historial-fm', 'historial-fm-lista',
+                 'Histórico de primeros movimientos resueltos');
 }
 
 async function cargar() {
@@ -400,14 +437,24 @@ async function cargar() {
     renderFirstMoves();
     renderWhales();
     renderHistory();
+    el('tabs').hidden = false;
     el('filtros').hidden = false;
   } catch (e) {
     el('meta').textContent = 'Error cargando signals.json: ' + e.message;
   }
 }
 
+// pestañas: coincidencias es la principal; whales y primeros movimientos, secundarias
+document.querySelectorAll('.tabs button').forEach(btn =>
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab').forEach(sec =>
+      sec.hidden = sec.id !== 'tab-' + btn.dataset.tab);
+  }));
+
+// los filtros solo afectan a la lista de coincidencias
 ['busqueda', 'minTraders', 'categoria', 'orden', 'ocultarFav', 'verStale'].forEach(id =>
-  el(id).addEventListener('input', () => { renderSignals(); renderFirstMoves(); renderWhales(); }));
+  el(id).addEventListener('input', renderSignals));
 cargar();
 cargarBacktest();
 setInterval(cargar, 60000);

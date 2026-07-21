@@ -93,10 +93,19 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
 
 📊 **[edulabrador.github.io/polymarket-smart-money](https://edulabrador.github.io/polymarket-smart-money/)**
 
-Página estática en GitHub Pages que muestra, por señal:
-- Nº de traders top coincidiendo (y quiénes)
-- Mercado y resultado apostado
-- Precio actual del resultado y precio medio de entrada de los traders
+Página estática en GitHub Pages, organizada en pestañas:
+
+- **👥 Coincidencias** (principal): la única fuente que la data muestra rentable.
+  Por señal: nº de traders top coincidiendo (y quiénes), mercado y resultado,
+  precio actual vs entrada media, potencial, y acierto de los traders (global y
+  en la categoría). Métricas (tasa de acierto, ROI medio) calculadas **solo**
+  sobre coincidencias resueltas.
+- **🐋 Compras whale** y **🎯 Primeros movimientos**: fuentes secundarias, se
+  muestran para seguirlas pero **no** se notifican por Telegram.
+
+**Telegram solo avisa de coincidencias** (nuevas señales, sus resoluciones con
+ROI, y el hito de muestra suficiente). Whales y primeros movimientos no
+interrumpen: la data dice que seguir una posición individual no es rentable.
 
 ## Estado
 

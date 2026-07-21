@@ -735,26 +735,24 @@ def main():
         st = stats.get(src)
         return not (st and st["suppressed"])
 
-    # no se avisa de coincidencias en favoritos casi resueltos (>= MAX_ALERT_PRICE):
-    # comprar a 0.92 da +9% como mucho y una perdida se come muchas ganancias
+    # SOLO se notifican coincidencias por Telegram: es la unica fuente que la
+    # data muestra rentable. Whales y primeros movimientos quedan en la web
+    # (pestañas secundarias), sin avisos.
+    # Ademas no se avisa de coincidencias en favoritos casi resueltos
+    # (>= MAX_ALERT_PRICE): comprar a 0.92 da +9% y una perdida se come muchas.
     fresh_new = [s for s in new if not s["stale"] and s["curPrice"] < MAX_ALERT_PRICE]
+    resueltas_coinc = [h for h in resolved if h.get("source") == "coincidencia"]
     for r in recipients():
         mias = [s for s in fresh_new if s["numTraders"] >= r["minUsers"]]
         if mias and paga("coincidencia"):
             send_telegram(format_message(mias), r["chatId"])
-        grandes = [w for w in new_whales if w["usd"] >= r["whaleMinUsd"]]
-        if grandes and not first_run:
-            send_telegram(format_whales(grandes), r["chatId"])
-        if moves and not first_index and paga("primer movimiento"):
-            send_telegram(format_first_moves(moves), r["chatId"])
-        # aviso de resolucion con ROI real (incluye la 1a senal que resuelva):
-        # va a todos los destinatarios, la resolucion es info universal
-        if resolved:
-            send_telegram(format_resolved(resolved), r["chatId"])
-        # una fuente alcanzo muestra suficiente: aviso con su veredicto
-        if not first_announce:
-            for src in reached:
-                send_telegram(format_sample_reached(src, stats[src]), r["chatId"])
+        # resolucion con ROI real de las coincidencias (incluye la 1a que resuelva)
+        if resueltas_coinc:
+            send_telegram(format_resolved(resueltas_coinc), r["chatId"])
+        # coincidencia alcanzo muestra suficiente: aviso con su veredicto
+        # (solo esta fuente notifica; el cruce de otras se registra sin avisar)
+        if not first_announce and "coincidencia" in reached:
+            send_telegram(format_sample_reached("coincidencia", stats["coincidencia"]), r["chatId"])
     stale_count = sum(1 for s in signals if s["stale"])
     bots = len(positions_by_trader) - len(scannable)
     aciertos = sum(1 for h in history if h["won"])
