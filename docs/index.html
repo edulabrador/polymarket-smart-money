@@ -33,6 +33,13 @@
           border-radius: .8rem; padding: .65rem .9rem; }
   .tile b { display: block; font-size: 1.45rem; line-height: 1.2; }
   .tile span { color: var(--sutil); font-size: .78rem; }
+  #fuentes { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.2rem; }
+  .fuente { background: var(--card); border: 1px solid var(--borde);
+    border-radius: .7rem; padding: .5rem .8rem; font-size: .82rem; }
+  .fuente b { font-size: 1rem; }
+  .fuente.silenciada { opacity: .6; }
+  .fuente .tag { font-size: .7rem; font-weight: 700; color: var(--aviso);
+    background: var(--aviso-suave); border-radius: 999px; padding: .05rem .45rem; margin-left: .3rem; }
 
   .filtros { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center;
              margin-bottom: 1.2rem; }
@@ -114,6 +121,7 @@
          title="Coincidencias del top 50 en mercados ya resueltos: ganadas desde sus canjes (REDEEM), perdidas desde posiciones muertas. Estimación, no un backtest completo">
       <b id="t-backtest">–</b><span>backtest 30 días</span></div>
   </div>
+  <div id="fuentes" hidden></div>
   <div class="filtros" id="filtros" hidden>
     <input type="search" id="busqueda" placeholder="Buscar mercado…">
     <select id="minTraders">
@@ -205,6 +213,23 @@ function renderTiles() {
     el('tile-roi').hidden = false;
   }
   el('tiles').hidden = false;
+  renderSources();
+}
+
+const NOMBRE_FUENTE = {'coincidencia': '👥 coincidencias', 'primer movimiento': '🎯 primeros movimientos'};
+function renderSources() {
+  const st = datos.sourceStats ?? {};
+  const entradas = Object.entries(st).sort((a, b) => b[1].n - a[1].n);
+  const cont = el('fuentes');
+  cont.hidden = !entradas.length;
+  cont.innerHTML = entradas.map(([src, s]) => {
+    const roi = Math.round(s.avgRoi * 100);
+    const clase = s.avgRoi >= 0 ? 'deriva-ok' : 'deriva-mal';
+    return `<div class="fuente${s.suppressed ? ' silenciada' : ''}"
+      title="ROI medio real de esta fuente sobre ${s.n} señales resueltas${s.suppressed ? ' — pierde dinero de forma consistente, deja de avisar por Telegram hasta que vuelva a positivo' : ''}">
+      ${esc(NOMBRE_FUENTE[src] || src)}: <b class="${clase}">ROI ${roi >= 0 ? '+' : ''}${roi}%</b>
+      <span style="color:var(--sutil)">· ${s.wins}/${s.n} aciertos</span>${s.suppressed ? '<span class="tag">silenciada</span>' : ''}</div>`;
+  }).join('');
 }
 
 function renderSignals() {

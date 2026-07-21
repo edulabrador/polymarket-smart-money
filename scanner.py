@@ -47,6 +47,10 @@ FIRSTMOVE_MAX_PRICE = float(os.getenv("FIRSTMOVE_MAX_PRICE", "0.8"))  # favorito
 # partido), no haciendo una jugada de conviccion: no es "primer movimiento"
 FIRSTMOVE_MAX_PER_WALLET = int(os.getenv("FIRSTMOVE_MAX_PER_WALLET", "2"))
 FIRSTMOVES_KEEP = 30
+# gate auto-corrector: una fuente con >= SOURCE_MIN_SAMPLE señales resueltas y
+# ROI medio real negativo deja de notificar (sigue en la web, marcada). No es
+# una decision fija: si las señales nuevas resuelven en positivo, se reactiva.
+SOURCE_MIN_SAMPLE = int(os.getenv("SOURCE_MIN_SAMPLE", "20"))
 SCAN_EVERY_MIN = 10  # cadencia real del bucle en .github/workflows/scan.yml
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 SIGNALS_PATH = pathlib.Path(__file__).parent / "docs" / "signals.json"
@@ -178,6 +182,27 @@ def resolve_history(previous, active_ids, position_index, now):
             "resolvedAt": now, "won": won, "source": "coincidencia",
         })
     return resolved
+
+
+def source_stats(history, min_sample=SOURCE_MIN_SAMPLE):
+    """Rendimiento real por fuente de señal a partir del historico resuelto:
+    n, aciertos y ROI medio. `suppressed` = muestra suficiente y ROI negativo:
+    la fuente pierde dinero demostradamente, deja de notificar (se auto-reactiva
+    si señales nuevas la vuelven positiva)."""
+    by = {}
+    for h in history:
+        if h.get("roi") is None:
+            continue
+        s = by.setdefault(h.get("source", "?"), {"n": 0, "wins": 0, "roi": 0.0})
+        s["n"] += 1
+        s["wins"] += 1 if h.get("won") else 0
+        s["roi"] += h["roi"]
+    out = {}
+    for src, s in by.items():
+        avg = round(s["roi"] / s["n"], 3)
+        out[src] = {"n": s["n"], "wins": s["wins"], "avgRoi": avg,
+                    "suppressed": s["n"] >= min_sample and avg < 0}
+    return out
 
 
 def detect_first_moves(positions_by_trader, known, signal_ids,
@@ -660,6 +685,7 @@ def main():
     first_moves, resolved_fm = resolve_first_moves(first_moves, position_index, now)
     history += resolved_fm
     resolved += resolved_fm  # el aviso de resoluciones cubre ambas fuentes
+    stats = source_stats(history)  # rendimiento real por fuente
 
     SIGNALS_PATH.parent.mkdir(exist_ok=True)
     SIGNALS_PATH.write_text(json.dumps({
@@ -674,20 +700,26 @@ def main():
         "knownPositions": known,
         "lastWhaleTs": last_whale_ts,
         "trackRecords": tracks,
+        "sourceStats": stats,
         "history": history,
     }, indent=1), encoding="utf-8")
+
+    # gate por fuente: una fuente que pierde dinero demostradamente no notifica
+    def paga(src):
+        st = stats.get(src)
+        return not (st and st["suppressed"])
 
     # no se avisa de coincidencias en favoritos casi resueltos (>= MAX_ALERT_PRICE):
     # comprar a 0.92 da +9% como mucho y una perdida se come muchas ganancias
     fresh_new = [s for s in new if not s["stale"] and s["curPrice"] < MAX_ALERT_PRICE]
     for r in recipients():
         mias = [s for s in fresh_new if s["numTraders"] >= r["minUsers"]]
-        if mias:
+        if mias and paga("coincidencia"):
             send_telegram(format_message(mias), r["chatId"])
         grandes = [w for w in new_whales if w["usd"] >= r["whaleMinUsd"]]
         if grandes and not first_run:
             send_telegram(format_whales(grandes), r["chatId"])
-        if moves and not first_index:
+        if moves and not first_index and paga("primer movimiento"):
             send_telegram(format_first_moves(moves), r["chatId"])
         # aviso de resolucion con ROI real (incluye la 1a senal que resuelva):
         # va a todos los destinatarios, la resolucion es info universal
@@ -703,6 +735,9 @@ def main():
           f"{len(moves)} primeros movimientos | "
           f"{len(resolved)} resueltas este scan | "
           f"historico {aciertos}/{len(history)} aciertos")
+    for src, st in sorted(stats.items()):
+        marca = " [SILENCIADA: pierde dinero]" if st["suppressed"] else ""
+        print(f"  fuente {src}: n={st['n']} ROI medio {round(st['avgRoi']*100)}%{marca}")
     for s in new:
         tag = "STALE" if s["stale"] else "NUEVA"
         print(f"  {tag}: {s['numTraders']} traders -> {s['title']} [{s['outcome']}] @ {s['curPrice']}")

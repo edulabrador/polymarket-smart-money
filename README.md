@@ -79,6 +79,15 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
     título). Cada señal muestra el **acierto de sus traders en la categoría
     del mercado**: un 70% en deportes es señal fuerte en un partido y dice
     poco en política. Con muestra < `WHALE_MIN_TRACK` mercados no se afirma nada.
+13. **Gate auto-corrector por fuente** (deja de lanzar apuestas que no pagan):
+    cada fuente de señal (coincidencia / primer movimiento) mide su **ROI real**
+    sobre el histórico resuelto. Si acumula ≥ `SOURCE_MIN_SAMPLE` (defecto 20)
+    señales resueltas con ROI medio **negativo**, deja de notificar por Telegram
+    — sigue en la web, marcada como *silenciada*. No es una decisión fija: si
+    señales nuevas la vuelven positiva, se reactiva sola. La web muestra el ROI
+    real de cada fuente. Primer dato: "primer movimiento" salió a −40% sobre 74
+    resueltas (seguir la posición suelta de un trader es casi un coin-flip);
+    "coincidencia" +20% (muestra aún pequeña). El dato manda, no la intuición.
 
 ## Interfaz
 

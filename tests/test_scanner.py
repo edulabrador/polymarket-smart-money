@@ -12,7 +12,8 @@ from scanner import (annotate_win_rates, categoria, detect_first_moves,
                      format_first_moves, format_message, format_resolved,
                      format_whales, merge_previous, qualify_first_moves,
                      recipients, resolve_first_moves, resolve_history,
-                     track_record, update_track_records, whale_notifiable)
+                     source_stats, track_record, update_track_records,
+                     whale_notifiable)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -321,6 +322,24 @@ def test_qualify_first_moves_drops_grinders_and_losers():
     out = qualify_first_moves(grinder + bueno + perdedor, tracks, max_per_wallet=2)
     assert [m["wallet"] for m in out] == ["0xok"]
     assert out[0]["winRate"] == 0.8
+
+
+def test_source_stats_suppresses_losing_source():
+    hist = (
+        [{"source": "primer movimiento", "roi": -1.0, "won": False}] * 18
+        + [{"source": "primer movimiento", "roi": 0.5, "won": True}] * 2
+        + [{"source": "coincidencia", "roi": 1.0, "won": True}] * 3
+        + [{"source": "coincidencia", "roi": None, "won": False}]  # sin roi: ignorada
+    )
+    stats = source_stats(hist, min_sample=20)
+    fm = stats["primer movimiento"]
+    assert fm["n"] == 20 and fm["wins"] == 2 and fm["avgRoi"] < 0
+    assert fm["suppressed"] is True  # muestra suficiente y ROI negativo
+    co = stats["coincidencia"]
+    assert co["n"] == 3 and co["suppressed"] is False  # muestra corta: no se silencia
+    # misma fuente perdedora pero con < min_sample: aun no se silencia
+    corto = source_stats([{"source": "x", "roi": -1.0, "won": False}] * 5, min_sample=20)
+    assert corto["x"]["suppressed"] is False
 
 
 def test_qualify_first_moves_annotates_category():
