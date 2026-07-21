@@ -574,6 +574,22 @@ def format_resolved(resolved, cap=10):
     return "\n".join(lines)
 
 
+FUENTE_NOMBRE = {"coincidencia": "coincidencias de top traders",
+                 "primer movimiento": "primer movimiento de un top trader"}
+
+
+def format_sample_reached(src, st):
+    """Aviso de una sola vez: una fuente alcanzo muestra suficiente y ya se
+    puede juzgar si paga. El veredicto lo da su ROI real acumulado."""
+    signo = "+" if st["avgRoi"] >= 0 else ""
+    veredicto = ("es RENTABLE: sigue avisando." if st["avgRoi"] >= 0
+                 else "NO ha sido rentable: se silencia (se reactivara si vuelve a positivo).")
+    return (f"\U0001F4CA Ya hay muestra suficiente para '{FUENTE_NOMBRE.get(src, src)}': "
+            f"{st['n']} señales resueltas.\n"
+            f"ROI medio {signo}{round(st['avgRoi'] * 100)}% | {st['wins']}/{st['n']} aciertos.\n"
+            f"→ {veredicto}")
+
+
 def recipients():
     """Destinatarios de alertas, cada uno con sus umbrales. Formatos:
     - TELEGRAM_RECIPIENTS (JSON): [{"chatId": "...", "minUsers": 7,
@@ -687,6 +703,15 @@ def main():
     resolved += resolved_fm  # el aviso de resoluciones cubre ambas fuentes
     stats = source_stats(history)  # rendimiento real por fuente
 
+    # aviso de una sola vez cuando una fuente alcanza muestra suficiente. En el
+    # primer scan se siembran las que ya la tienen (sin avisar): solo se notifican
+    # los cruces nuevos de ahi en adelante.
+    announced = set(doc.get("announcedSamples", []))
+    first_announce = "announcedSamples" not in doc
+    reached = [src for src, st in stats.items()
+               if st["n"] >= SOURCE_MIN_SAMPLE and src not in announced]
+    announced |= set(reached)
+
     SIGNALS_PATH.parent.mkdir(exist_ok=True)
     SIGNALS_PATH.write_text(json.dumps({
         "updatedAt": now,
@@ -701,6 +726,7 @@ def main():
         "lastWhaleTs": last_whale_ts,
         "trackRecords": tracks,
         "sourceStats": stats,
+        "announcedSamples": sorted(announced),
         "history": history,
     }, indent=1), encoding="utf-8")
 
@@ -725,6 +751,10 @@ def main():
         # va a todos los destinatarios, la resolucion es info universal
         if resolved:
             send_telegram(format_resolved(resolved), r["chatId"])
+        # una fuente alcanzo muestra suficiente: aviso con su veredicto
+        if not first_announce:
+            for src in reached:
+                send_telegram(format_sample_reached(src, stats[src]), r["chatId"])
     stale_count = sum(1 for s in signals if s["stale"])
     bots = len(positions_by_trader) - len(scannable)
     aciertos = sum(1 for h in history if h["won"])
@@ -738,6 +768,8 @@ def main():
     for src, st in sorted(stats.items()):
         marca = " [SILENCIADA: pierde dinero]" if st["suppressed"] else ""
         print(f"  fuente {src}: n={st['n']} ROI medio {round(st['avgRoi']*100)}%{marca}")
+    if reached and not first_announce:
+        print(f"  MUESTRA SUFICIENTE alcanzada (avisada): {', '.join(reached)}")
     for s in new:
         tag = "STALE" if s["stale"] else "NUEVA"
         print(f"  {tag}: {s['numTraders']} traders -> {s['title']} [{s['outcome']}] @ {s['curPrice']}")

@@ -10,10 +10,10 @@ from backtest import backtest_signals
 from scanner import (annotate_win_rates, categoria, detect_first_moves,
                      detect_signals, detect_whales, enrich_whales,
                      format_first_moves, format_message, format_resolved,
-                     format_whales, merge_previous, qualify_first_moves,
-                     recipients, resolve_first_moves, resolve_history,
-                     source_stats, track_record, update_track_records,
-                     whale_notifiable)
+                     format_sample_reached, format_whales, merge_previous,
+                     qualify_first_moves, recipients, resolve_first_moves,
+                     resolve_history, source_stats, track_record,
+                     update_track_records, whale_notifiable)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -340,6 +340,13 @@ def test_source_stats_suppresses_losing_source():
     # misma fuente perdedora pero con < min_sample: aun no se silencia
     corto = source_stats([{"source": "x", "roi": -1.0, "won": False}] * 5, min_sample=20)
     assert corto["x"]["suppressed"] is False
+
+
+def test_format_sample_reached():
+    rentable = format_sample_reached("coincidencia", {"n": 22, "wins": 14, "avgRoi": 0.18})
+    assert "22 señales" in rentable and "+18%" in rentable and "RENTABLE" in rentable
+    perdedora = format_sample_reached("primer movimiento", {"n": 30, "wins": 8, "avgRoi": -0.4})
+    assert "-40%" in perdedora and "silencia" in perdedora
 
 
 def test_qualify_first_moves_annotates_category():
