@@ -15,6 +15,12 @@ from datetime import datetime, timezone
 
 TOP_N = int(os.getenv("TOP_N", "50"))
 MIN_USERS = int(os.getenv("MIN_USERS", "5"))
+# segundo umbral, mas bajo, para coincidencias de ESPECIALISTAS: bastan
+# MIN_USERS_SPECIALIST traders si su acierto 30d probado es alto. Encuentra la
+# señal antes (no espera a que confluyan 5) sin perder fiabilidad — exige que
+# esos pocos sean gente que demostradamente gana, no solo mas cuerpos.
+MIN_USERS_SPECIALIST = int(os.getenv("MIN_USERS_SPECIALIST", "3"))
+SPECIALIST_MIN_WINRATE = float(os.getenv("SPECIALIST_MIN_WINRATE", "0.6"))
 MIN_POSITION_USD = float(os.getenv("MIN_POSITION_USD", "500"))
 # si el precio actual difiere de la entrada media en mas de esto (en cualquier
 # direccion), la senal se marca "stale": al alza los top ya ganaron ese tramo;
@@ -479,6 +485,36 @@ def annotate_win_rates(signals, tracks):
     return signals
 
 
+def qualify_signals(signals, min_broad=MIN_USERS, min_specialist=MIN_USERS_SPECIALIST,
+                    min_winrate=SPECIALIST_MIN_WINRATE):
+    """Dos niveles de coincidencia (requiere annotate_win_rates ya aplicado):
+
+    - consenso amplio (>= min_broad traders): siempre señal. Comportamiento
+      original intacto — es la variante que la data muestra rentable.
+    - especialistas (>= min_specialist traders): señal SOLO si el acierto 30d
+      medio probado de esos traders es >= min_winrate (el de su categoria si
+      hay muestra, si no el global). Encuentra la señal antes sin bajar el
+      liston: pide gente que gana, no solo mas cuerpos.
+
+    Se descartan las coincidencias de 3-4 traders sin acierto probado alto:
+    poca gente y sin evidencia de que acierten es casi un coin-flip.
+    ponytail: si una señal cae de nivel entre escaneos deja de resolverse;
+    aceptable — si adelgaza por debajo de especialista, la tesis se debilito.
+    """
+    out = []
+    for s in signals:
+        broad = s["numTraders"] >= min_broad
+        wr = s.get("avgCatWinRate")
+        if wr is None:
+            wr = s.get("avgWinRate")
+        specialist = (s["numTraders"] >= min_specialist
+                      and wr is not None and wr >= min_winrate)
+        if broad or specialist:
+            s["tier"] = "amplio" if broad else "especialistas"
+            out.append(s)
+    return out
+
+
 def enrich_whales(new_whales, prev_whales, tracks, positions_cache, positions_by_trader):
     """Contexto por wallet: cartera abierta, recurrencia y acierto 30d."""
     counts = {}
@@ -547,8 +583,9 @@ def format_message(new_signals, cap=10):
                    if s.get("avgWinRate") is not None else "")
         if s.get("avgCatWinRate") is not None:
             acierto += f" | en {s.get('cat', '?')} {round(s['avgCatWinRate'] * 100)}%"
+        nivel = " especialistas" if s.get("tier") == "especialistas" else ""
         lines.append(
-            f"\n• {s['numTraders']} traders → {s['title']} [{s['outcome']}]"
+            f"\n• {s['numTraders']} traders{nivel} → {s['title']} [{s['outcome']}]"
             f"\n  precio {s['curPrice']} | entrada media {s['avgEntryPrice']}"
             f" | ${s['totalUsd']:,.0f}{acierto}"
             f"\n  https://polymarket.com/event/{s['eventSlug']}")
@@ -636,13 +673,12 @@ def main():
     # los bots/market makers (cientos de posiciones) no aportan senal
     scannable = {w: info for w, info in positions_by_trader.items()
                  if len(info["positions"]) <= MAX_POSITIONS_PER_TRADER}
-    signals = detect_signals(scannable)
+    signals = detect_signals(scannable, min_users=MIN_USERS_SPECIALIST)  # candidatos (>=3)
 
     doc = {}
     if SIGNALS_PATH.exists():
         doc = json.loads(SIGNALS_PATH.read_text(encoding="utf-8"))
     previous, history = doc.get("signals", []), doc.get("history", [])
-    signals, new = merge_previous(signals, previous, now)
 
     # segunda fuente: compras individuales gigantes (feed global de trades)
     trades = get_json(TRADES_URL.format(amount=int(WHALE_MIN_USD)))
@@ -654,7 +690,12 @@ def main():
         doc.get("trackRecords", {}), wallets_needed, positions_by_trader, now_ts)
     enrich_whales(new_whales, doc.get("whales", []), tracks, positions_cache,
                   positions_by_trader)
+    # acierto por trader/categoria y luego el gate de dos niveles (amplio /
+    # especialistas). merge_previous corre despues para que `new` (y el
+    # entryPrice del ROI) reflejen ya el conjunto final de señales.
     annotate_win_rates(signals, tracks)
+    signals = qualify_signals(signals)
+    signals, new = merge_previous(signals, previous, now)
     first_run = "lastWhaleTs" not in doc  # primera vez: fijar marca sin avisar
     detected = len(new_whales)
     # una whale con historial perdedor no se guarda ni se muestra en ningun

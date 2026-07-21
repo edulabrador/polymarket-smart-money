@@ -13,8 +13,18 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
    en repos públicos los minutos son gratis), descarga el leaderboard de PnL (top 50).
 2. Para cada trader, descarga sus posiciones abiertas (`data-api.polymarket.com/positions`).
 3. Agrupa por `(conditionId, outcome)` y filtra: posición mínima en USD, mercado no resuelto.
-4. Si ≥ `MIN_USERS` traders top coinciden → **señal**: se notifica por Telegram y se
-   publica en la interfaz web (GitHub Pages).
+4. **Señal en dos niveles** (para encontrar más oportunidades sin perder
+   fiabilidad): **consenso amplio** si ≥ `MIN_USERS` (defecto 5) traders top
+   coinciden — el comportamiento de siempre; o **especialistas** si coinciden
+   solo `MIN_USERS_SPECIALIST` (defecto 3) pero su acierto 30d **probado** es
+   ≥ `SPECIALIST_MIN_WINRATE` (defecto 60%), medido en la categoría del mercado
+   si hay muestra, si no en el global. El segundo nivel adelanta la señal (no
+   espera a que confluyan 5) exigiendo gente que demostradamente gana, no solo
+   más cuerpos. Una coincidencia de 3-4 traders sin acierto probado alto se
+   descarta (poca gente y sin evidencia = casi coin-flip). Ambos niveles se
+   notifican por Telegram y se publican en la web; el nivel especialistas se
+   marca 🎯 y su ROI se sigue midiendo — si no paga, el gate auto-corrector
+   (punto 13) lo silencia solo.
 5. Si el precio actual difiere de la entrada media en más de `MAX_PRICE_DRIFT`
    (defecto ±0.15), la señal se marca **descartada**: la tesis de entrada ya no
    es la actual. Se muestra atenuada en la web y no se notifica.

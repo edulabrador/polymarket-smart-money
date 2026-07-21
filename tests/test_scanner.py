@@ -11,9 +11,9 @@ from scanner import (annotate_win_rates, categoria, detect_first_moves,
                      detect_signals, detect_whales, enrich_whales,
                      format_first_moves, format_message, format_resolved,
                      format_sample_reached, format_whales, merge_previous,
-                     qualify_first_moves, recipients, resolve_first_moves,
-                     resolve_history, source_stats, track_record,
-                     update_track_records, whale_notifiable)
+                     qualify_first_moves, qualify_signals, recipients,
+                     resolve_first_moves, resolve_history, source_stats,
+                     track_record, update_track_records, whale_notifiable)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -358,6 +358,26 @@ def test_qualify_first_moves_annotates_category():
     # sin track: se mantiene (top 50, beneficio de la duda) sin winRate
     out2 = qualify_first_moves([move("0xnew")], {}, max_per_wallet=2)
     assert len(out2) == 1 and out2[0]["winRate"] is None
+
+
+def test_qualify_signals_two_tiers():
+    def sig(id_, n, **kw):
+        s = {"id": id_, "numTraders": n, "avgWinRate": None, "avgCatWinRate": None}
+        s.update(kw)
+        return s
+    cands = [
+        sig("amplio", 5),                        # >=5: siempre pasa
+        sig("esp_cat", 3, avgCatWinRate=0.7),    # 3 con acierto categoria alto
+        sig("esp_glob", 4, avgWinRate=0.65),     # 4 con acierto global alto
+        sig("flojo", 3, avgWinRate=0.5),         # 3 sin acierto probado: fuera
+        sig("sin_datos", 4),                     # 4 sin veredicto: fuera
+    ]
+    out = qualify_signals(cands)
+    assert {s["id"]: s["tier"] for s in out} == {
+        "amplio": "amplio", "esp_cat": "especialistas", "esp_glob": "especialistas"}
+    # la categoria manda sobre el global cuando existe: buen global no salva
+    # un mal historial en la categoria concreta del mercado
+    assert qualify_signals([sig("mal_cat", 3, avgCatWinRate=0.4, avgWinRate=0.9)]) == []
 
 
 def test_update_track_records_respects_ttl():

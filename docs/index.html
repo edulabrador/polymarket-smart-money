@@ -98,6 +98,8 @@
     padding: .05rem .5rem; font-size: .72rem; font-weight: 700; }
   .longshot-badge { background: #b45309; color: #fff; border-radius: 999px;
     padding: .05rem .5rem; font-size: .72rem; font-weight: 700; }
+  .esp-badge { background: var(--acento); color: var(--card); border-radius: 999px;
+    padding: .05rem .5rem; font-size: .72rem; font-weight: 700; }
   #historial { margin-top: 2rem; border-top: 1px solid var(--borde); padding-top: 1rem; }
   .acierto { color: var(--ok); font-weight: 700; }
   .fallo { color: var(--aviso); font-weight: 700; }
@@ -307,6 +309,7 @@ function renderSignals() {
         <a href="https://polymarket.com/event/${encodeURIComponent(s.eventSlug)}"
            target="_blank" rel="noopener">${esc(s.title)}</a>
         <span class="pastilla">${esc(s.outcome)}</span>
+        ${s.tier === 'especialistas' ? `<span class="esp-badge" title="menos de ${datos.params.minUsers ?? 5} traders, pero con acierto 30d probado alto: señal temprana de especialistas, no simple coincidencia numérica">🎯 especialistas</span>` : ''}
       </div>
       <div class="datos">
         <span>entrada <b>${pct(s.avgEntryPrice)}</b> → ahora <b>${pct(s.curPrice)}</b>
