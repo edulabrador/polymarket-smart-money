@@ -45,14 +45,6 @@ TRACK_WINDOW_DAYS = 30
 TRACK_TTL_S = 6 * 3600  # el track record por wallet se recalcula cada 6 h
 TRACK_MIN_USD = 100.0   # canjes/perdidas menores son ruido
 WHALES_KEEP = 100  # movimientos whale que guarda el JSON para la web
-# primer movimiento: un top trader abre posicion grande y NUEVA en un mercado
-# donde no estaba — senal mas temprana que esperar a que N traders coincidan
-FIRSTMOVE_MIN_USD = float(os.getenv("FIRSTMOVE_MIN_USD", "10000"))
-FIRSTMOVE_MAX_PRICE = float(os.getenv("FIRSTMOVE_MAX_PRICE", "0.8"))  # favoritos: sin recorrido
-# un wallet que abre mas de esto de golpe esta metiendo volumen (apuesta cada
-# partido), no haciendo una jugada de conviccion: no es "primer movimiento"
-FIRSTMOVE_MAX_PER_WALLET = int(os.getenv("FIRSTMOVE_MAX_PER_WALLET", "2"))
-FIRSTMOVES_KEEP = 30
 # gate auto-corrector: una fuente con >= SOURCE_MIN_SAMPLE señales resueltas y
 # ROI medio real negativo deja de notificar (sigue en la web, marcada). No es
 # una decision fija: si las señales nuevas resuelven en positivo, se reactiva.
@@ -73,6 +65,10 @@ TRADES_URL = ("https://data-api.polymarket.com/trades"
 # y el flujo de caja (compras/ventas) para el PnL neto real del wallet
 ACTIVITY_URL = ("https://data-api.polymarket.com/activity"
                 "?user={wallet}&limit=500")
+# resolucion de mercados: gamma devuelve closed + outcomePrices (["1","0"]...),
+# el indice del precio "1" es el resultado ganador. Sirve para medir el ROI de
+# las whales, cuyos compradores no son del top 50 (no estan en position_index).
+MARKETS_URL = "https://gamma-api.polymarket.com/markets?closed=true&limit=100&{ids}"
 
 
 def get_json(url, retries=3):
@@ -211,108 +207,6 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE):
     return out
 
 
-def detect_first_moves(positions_by_trader, known, signal_ids,
-                       min_usd=FIRSTMOVE_MIN_USD, max_price=FIRSTMOVE_MAX_PRICE):
-    """Primer movimiento: un top trader abre una posicion grande y NUEVA
-    (par wallet|mercado nunca visto en escaneos previos). Llega antes que la
-    coincidencia, que por definicion espera a que N traders confluyan.
-    Se salta favoritos (> max_price: sin recorrido) y mercados que ya son
-    senal de coincidencia (seria un aviso duplicado y tardio).
-    Devuelve (moves, indice_actualizado). El indice solo guarda posiciones
-    >= min_usd para que quepa en el JSON publico."""
-    new_known, moves = set(), []
-    for wallet, info in positions_by_trader.items():
-        for p in info["positions"]:
-            if p.get("redeemable") or p.get("currentValue", 0) < min_usd:
-                continue
-            key = f'{p["conditionId"]}:{p["outcomeIndex"]}'
-            par = f"{wallet}|{key}"
-            new_known.add(par)
-            if par in known or key in signal_ids or p["curPrice"] > max_price:
-                continue
-            moves.append({
-                "id": key, "wallet": wallet, "name": info.get("name", ""),
-                "title": p["title"], "outcome": p["outcome"],
-                "eventSlug": p["eventSlug"],
-                "usd": round(p["currentValue"], 2),
-                "entryPrice": p["curPrice"], "avgPrice": p["avgPrice"],
-                "upside": round((1 - p["curPrice"]) / p["curPrice"], 2)
-                          if p["curPrice"] > 0 else 0,
-            })
-    moves.sort(key=lambda m: -m["usd"])
-    return moves, sorted(new_known)
-
-
-def resolve_first_moves(moves, position_index, now):
-    """Primeros movimientos cuyo mercado resolvio -> historico con su ROI,
-    etiquetados como fuente propia para medir si esta senal paga por si sola.
-    Devuelve (vivos, resueltos)."""
-    kept, resolved = [], []
-    for m in moves:
-        p = position_index.get(m["id"])
-        if p is None or not p.get("redeemable"):
-            kept.append(m)
-            continue
-        won = p["curPrice"] > 0.5
-        e = m.get("entryPrice") or 0.5
-        resolved.append({
-            "id": m["id"], "title": m["title"], "outcome": m["outcome"],
-            "eventSlug": m.get("eventSlug", ""), "numTraders": 1,
-            "avgEntryPrice": m.get("avgPrice"), "entryPrice": round(e, 4),
-            "roi": round((1 - e) / e, 3) if won else -1.0,
-            "stale": False, "firstSeen": m.get("firstSeen", ""),
-            "resolvedAt": now, "won": won, "source": "primer movimiento",
-        })
-    return kept, resolved
-
-
-def qualify_first_moves(moves, tracks, max_per_wallet=FIRSTMOVE_MAX_PER_WALLET):
-    """Filtra el ruido de los primeros movimientos y les anota el track record:
-
-    - anti-grinding: un wallet que abre > max_per_wallet posiciones nuevas en
-      el mismo escaneo esta apostando cada partido, no haciendo una jugada de
-      conviccion — se descartan todas las suyas de este escaneo.
-    - calidad: se descarta el movimiento de un trader que nuestro propio track
-      record marca como perdedor (una apuesta suya no es senal rentable).
-    - anota winRate global y en la categoria del mercado para ordenar/mostrar.
-    """
-    por_wallet = {}
-    for m in moves:
-        por_wallet[m["wallet"]] = por_wallet.get(m["wallet"], 0) + 1
-    out = []
-    for m in moves:
-        if por_wallet[m["wallet"]] > max_per_wallet:
-            continue
-        t = tracks.get(m["wallet"])
-        if t and is_loser(t):
-            continue
-        m["winRate"] = win_rate(t) if t else None
-        cat = categoria(m["title"])
-        c = (t.get("cats") or {}).get(cat) if t else None
-        m["catWinRate"] = (round(c["wins"] / (c["wins"] + c["losses"]), 2)
-                           if c and c["wins"] + c["losses"] >= WHALE_MIN_TRACK else None)
-        out.append(m)
-    return out
-
-
-def format_first_moves(moves, cap=10):
-    lines = ["\U0001F3AF Primer movimiento de un top trader:"]
-    for m in moves[:cap]:
-        quien = m["name"] or m["wallet"][:10]
-        wr = ""
-        if m.get("catWinRate") is not None:
-            wr = f" · {round(m['catWinRate'] * 100)}% en su categoria"
-        elif m.get("winRate") is not None:
-            wr = f" · acierto 30d {round(m['winRate'] * 100)}%"
-        lines.append(
-            f"\n• {quien} abre ${m['usd']:,.0f} → {m['title']} [{m['outcome']}]"
-            f"\n  @ {m['entryPrice']} (x{m['upside']} si gana){wr}"
-            f"\n  https://polymarket.com/event/{m['eventSlug']}")
-    if len(moves) > cap:
-        lines.append(f"\n…y {len(moves) - cap} mas")
-    return "\n".join(lines)
-
-
 def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD,
                   max_price=MAX_ALERT_PRICE):
     """Compras nuevas (timestamp > last_ts) por encima de min_usd USD.
@@ -337,12 +231,72 @@ def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD,
             "title": t["title"],
             "outcome": t["outcome"],
             "eventSlug": t["eventSlug"],
+            # conditionId+outcomeIndex para resolver el ROI cuando cierre el mercado
+            "conditionId": t["conditionId"],
+            "outcomeIndex": t["outcomeIndex"],
             "timestamp": t["timestamp"],
             "isTop": t["proxyWallet"] in top_wallets,
             "longshot": t["price"] <= LONGSHOT_MAX_PRICE,
         })
     whales.sort(key=lambda w: -w["timestamp"])
     return whales
+
+
+def fetch_market_resolutions(condition_ids, fetch=get_json, chunk=40):
+    """{conditionId: outcomeIndex_ganador} para los mercados YA cerrados de la
+    lista. Usa gamma (closed + outcomePrices, donde el precio "1" marca al
+    ganador). Es el oraculo para medir el ROI de las whales, cuyos compradores
+    no son del top 50. Tolerante a fallos: si gamma no responde en un lote, se
+    salta ese lote sin romper el escaneo."""
+    out = {}
+    ids = [c for c in dict.fromkeys(condition_ids) if c]  # unicos, sin vacios
+    for i in range(0, len(ids), chunk):
+        q = "&".join(f"condition_ids={c}" for c in ids[i:i + chunk])
+        try:
+            markets = fetch(MARKETS_URL.format(ids=q)) or []
+        except Exception:
+            continue
+        for m in markets:
+            if not m.get("closed"):
+                continue
+            cid = m.get("conditionId") or m.get("condition_id")
+            precios = m.get("outcomePrices")
+            if isinstance(precios, str):
+                try:
+                    precios = json.loads(precios)
+                except Exception:
+                    continue
+            if not cid or not precios:
+                continue
+            win = next((j for j, p in enumerate(precios) if float(p) > 0.5), None)
+            if win is not None:
+                out[cid] = win
+    return out
+
+
+def resolve_whales(whales, resolutions, now):
+    """whales cuyo mercado ya cerro -> historico con su ROI real (entrada = el
+    precio al que compro la whale; cobra $1 si su resultado gana, $0 si no).
+    Asi el auto-gate (source_stats) puede decidir con datos si seguir compras
+    whale paga. Devuelve (vivas, resueltas)."""
+    kept, resolved = [], []
+    for w in whales:
+        win = resolutions.get(w.get("conditionId"))
+        if win is None:
+            kept.append(w)
+            continue
+        won = w.get("outcomeIndex") == win
+        e = w.get("price") or 0.5
+        e = e if e > 0 else 0.5
+        resolved.append({
+            "id": f'{w.get("conditionId", "")}:{w.get("outcomeIndex")}',
+            "title": w["title"], "outcome": w["outcome"],
+            "eventSlug": w.get("eventSlug", ""), "numTraders": 1,
+            "entryPrice": round(e, 4),
+            "roi": round((1 - e) / e, 3) if won else -1.0,
+            "resolvedAt": now, "won": won, "source": "whale",
+        })
+    return kept, resolved
 
 
 def categoria(titulo):
@@ -612,7 +566,7 @@ def format_resolved(resolved, cap=10):
 
 
 FUENTE_NOMBRE = {"coincidencia": "coincidencias de top traders",
-                 "primer movimiento": "primer movimiento de un top trader"}
+                 "whale": "compras whale"}
 
 
 def format_sample_reached(src, st):
@@ -705,25 +659,15 @@ def main():
     # cuotas altisimas fuera (pudieron guardarse antes de endurecer el filtro)
     prev_whales = [w for w in doc.get("whales", [])
                    if whale_notifiable(w) and w["price"] < MAX_ALERT_PRICE]
-    whales = (new_whales + prev_whales)[:WHALES_KEEP]
+    # medir el ROI de las whales cuyos mercados ya cerraron: gamma como oraculo
+    # (los compradores whale no son del top 50, no estan en position_index). Se
+    # resuelve el conjunto completo antes de recortar a WHALES_KEEP, para no
+    # perder la medicion de una whale que envejecio fuera de ese tope.
+    all_whales = new_whales + prev_whales
+    resolutions = fetch_market_resolutions([w.get("conditionId") for w in all_whales])
+    all_whales, resolved_wh = resolve_whales(all_whales, resolutions, now)
+    whales = all_whales[:WHALES_KEEP]
     last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
-
-    # tercera fuente: primer movimiento de un solo top trader (solo wallets
-    # no-bot). first_index evita la avalancha del primer escaneo: fija el
-    # indice de posiciones conocidas sin avisar de nada. qualify_first_moves
-    # necesita el track record COMPLETO (con perdedores) para descartarlos,
-    # asi que corre antes de purgar tracks.
-    known_prev = set(doc.get("knownPositions", []))
-    first_index = "knownPositions" not in doc
-    moves, known = detect_first_moves(scannable, known_prev,
-                                      {s["id"] for s in signals})
-    moves = qualify_first_moves(moves, tracks)  # anti-ruido: grinders y perdedores fuera
-    if first_index:
-        moves = []  # posiciones preexistentes: no son movimientos detectados
-                    # temprano; guardarlas contaminaria el ROI de la fuente
-    for m in moves:
-        m["firstSeen"] = now
-    first_moves = (moves + doc.get("firstMoves", []))[:FIRSTMOVES_KEEP]
 
     # el track record de un wallet perdedor no se persiste: se recalcula (y se
     # descarta otra vez) en cada escaneo si hace falta
@@ -739,9 +683,7 @@ def main():
                 position_index[key] = p
     resolved = resolve_history(previous, {s["id"] for s in signals}, position_index, now)
     history += resolved
-    first_moves, resolved_fm = resolve_first_moves(first_moves, position_index, now)
-    history += resolved_fm
-    resolved += resolved_fm  # el aviso de resoluciones cubre ambas fuentes
+    history += resolved_wh  # ROI de whales cerradas (fuente "whale", bajo el auto-gate)
     stats = source_stats(history)  # rendimiento real por fuente
 
     # aviso de una sola vez cuando una fuente alcanza muestra suficiente. En el
@@ -762,8 +704,6 @@ def main():
                    "whaleMinUsd": WHALE_MIN_USD},
         "signals": signals,
         "whales": whales,
-        "firstMoves": first_moves,
-        "knownPositions": known,
         "lastWhaleTs": last_whale_ts,
         "trackRecords": tracks,
         "sourceStats": stats,
@@ -777,8 +717,8 @@ def main():
         return not (st and st["suppressed"])
 
     # SOLO se notifican coincidencias por Telegram: es la unica fuente que la
-    # data muestra rentable. Whales y primeros movimientos quedan en la web
-    # (pestañas secundarias), sin avisos.
+    # data muestra rentable. Las whales quedan en la web (pestaña secundaria) y
+    # ahora se les mide el ROI para que el auto-gate las juzgue, pero sin avisar.
     # Ademas no se avisa de coincidencias en favoritos casi resueltos
     # (>= MAX_ALERT_PRICE): comprar a 0.92 da +9% y una perdida se come muchas.
     fresh_new = [s for s in new if not s["stale"] and s["curPrice"] < MAX_ALERT_PRICE]
@@ -801,8 +741,7 @@ def main():
           f"{len(fresh_new)} notificadas | {len(new_whales)}/{detected} whales "
           f"con historial ganador (resto descartado) | "
           f"{bots} wallets excluidos por bot | "
-          f"{len(moves)} primeros movimientos | "
-          f"{len(resolved)} resueltas este scan | "
+          f"{len(resolved)} coincidencias resueltas, {len(resolved_wh)} whales resueltas | "
           f"historico {aciertos}/{len(history)} aciertos")
     for src, st in sorted(stats.items()):
         marca = " [SILENCIADA: pierde dinero]" if st["suppressed"] else ""

@@ -126,7 +126,6 @@
   <nav class="tabs" id="tabs" hidden>
     <button data-tab="coincidencias" class="active">👥 Coincidencias</button>
     <button data-tab="whales" id="tab-btn-whales">🐋 Compras whale</button>
-    <button data-tab="movimientos" id="tab-btn-movimientos">🎯 Primeros movimientos</button>
   </nav>
 
   <section id="tab-coincidencias" class="tab">
@@ -175,24 +174,19 @@
   <section id="tab-whales" class="tab" hidden>
     <p class="nota">🐋 Compras individuales ≥ $50k de un solo comprador rentable, a
       cuota &lt; 0.90. Fuente <b>secundaria</b>: se muestra aquí pero <b>no</b> se
-      notifica por Telegram (solo las coincidencias lo hacen).</p>
+      notifica por Telegram (solo las coincidencias lo hacen). Ahora se <b>mide su
+      ROI real</b> al cerrar cada mercado — mira el panel de fuentes en la pestaña
+      principal para ver si seguir compras whale sale rentable.</p>
     <div id="whales"></div>
     <p id="whales-vacio" class="nota" hidden>Sin compras whale recientes.</p>
-  </section>
-
-  <section id="tab-movimientos" class="tab" hidden>
-    <p class="nota" id="fm-nota">🎯 Un solo top trader abre una posición grande y nueva
-      donde no estaba. Fuente <b>secundaria</b>: no se notifica por Telegram.</p>
-    <div id="fm"></div>
-    <p id="fm-vacio" class="nota" hidden>Sin primeros movimientos recientes.</p>
-    <details id="historial-fm" hidden>
+    <details id="historial-whales" hidden>
       <summary></summary>
-      <ul id="historial-fm-lista"></ul>
+      <ul id="historial-whales-lista"></ul>
     </details>
   </section>
 
-  <footer>Escáner de coincidencias de top traders (más whales y primeros movimientos
-    como fuentes secundarias) ·
+  <footer>Escáner de coincidencias de top traders (con compras whale medidas
+    como fuente secundaria) ·
     <a href="https://github.com/edulabrador/polymarket-smart-money"
        target="_blank" rel="noopener">código en GitHub</a> · no es consejo financiero</footer>
 </div>
@@ -229,7 +223,7 @@ function renderMeta() {
 }
 
 // la pagina principal es SOLO coincidencias; las metricas se calculan sobre esa
-// fuente (el histórico incluye tambien primeros movimientos, silenciados)
+// fuente (el histórico incluye tambien las whales, medidas pero no notificadas)
 const esCoincidencia = h => !h.source || h.source === 'coincidencia';
 
 function renderTiles() {
@@ -254,7 +248,7 @@ function renderTiles() {
   renderSources();
 }
 
-const NOMBRE_FUENTE = {'coincidencia': '👥 coincidencias', 'primer movimiento': '🎯 primeros movimientos'};
+const NOMBRE_FUENTE = {'coincidencia': '👥 coincidencias', 'whale': '🐋 compras whale'};
 function renderSources() {
   const st = datos.sourceStats ?? {};
   const entradas = Object.entries(st).sort((a, b) => b[1].n - a[1].n);
@@ -333,27 +327,6 @@ function renderSignals() {
   }
 }
 
-function renderFirstMoves() {
-  const fm = datos.firstMoves ?? [];
-  el('tab-btn-movimientos').textContent = `🎯 Primeros movimientos${fm.length ? ` (${fm.length})` : ''}`;
-  el('fm-vacio').hidden = fm.length > 0;
-  el('fm').innerHTML = fm.map(m => {
-    const quien = esc(nombre(m.name, m.wallet));
-    const wr = m.catWinRate != null
-      ? ` · <b class="deriva-ok" title="acierto del trader en la categoría de este mercado">${pct(m.catWinRate)} en su categoría</b>`
-      : (m.winRate != null ? ` · <b class="deriva-ok">acierto ${pct(m.winRate)}</b>` : '');
-    return `<div class="whale">
-      <span class="whale-usd">${usd(m.usd)}</span>
-      <a href="https://polymarket.com/event/${encodeURIComponent(m.eventSlug)}"
-         target="_blank" rel="noopener">${esc(m.title)}</a>
-      <span class="pastilla">${esc(m.outcome)}</span> @ ${pct(m.entryPrice)}
-      · <span title="cuánto multiplica si gana">×${m.upside}</span> ·
-      <a href="https://polymarket.com/profile/${encodeURIComponent(m.wallet)}"
-         target="_blank" rel="noopener">${quien}</a>${wr}
-      · ${new Date(m.firstSeen).toLocaleDateString('es-ES')}</div>`;
-  }).join('');
-}
-
 function renderWhales() {
   const visibles = datos.whales ?? [];
   el('tab-btn-whales').textContent = `🐋 Compras whale${visibles.length ? ` (${visibles.length})` : ''}`;
@@ -421,7 +394,7 @@ async function cargarBacktest() {
 
 function filaHistorial(h) {
   return `<li><span class="${h.won ? 'acierto' : 'fallo'}">${h.won ? '✓ acierto' : '✗ fallo'}</span>
-     — ${esc(h.title)} [${esc(h.outcome)}]${h.source === 'primer movimiento' ? '' : ` · ${h.numTraders} traders`}${h.roi != null ? ` · <b class="${h.roi >= 0 ? 'acierto' : 'fallo'}">ROI ${h.roi >= 0 ? '+' : ''}${Math.round(h.roi * 100)}%</b>` : ''}
+     — ${esc(h.title)} [${esc(h.outcome)}]${h.source === 'whale' ? '' : ` · ${h.numTraders} traders`}${h.roi != null ? ` · <b class="${h.roi >= 0 ? 'acierto' : 'fallo'}">ROI ${h.roi >= 0 ? '+' : ''}${Math.round(h.roi * 100)}%</b>` : ''}
      · resuelta ${new Date(h.resolvedAt).toLocaleDateString('es-ES')}${h.stale ? ' · (estaba descartada)' : ''}</li>`;
 }
 
@@ -438,9 +411,9 @@ function renderHistory() {
   const hist = datos.history ?? [];
   pintaHistorial(hist.filter(esCoincidencia), 'historial', 'historial-lista',
                  'Histórico de coincidencias resueltas');
-  pintaHistorial(hist.filter(h => h.source === 'primer movimiento'),
-                 'historial-fm', 'historial-fm-lista',
-                 'Histórico de primeros movimientos resueltos');
+  pintaHistorial(hist.filter(h => h.source === 'whale'),
+                 'historial-whales', 'historial-whales-lista',
+                 'Histórico de compras whale resueltas (ROI)');
 }
 
 async function cargar() {
@@ -454,7 +427,6 @@ async function cargar() {
     if (!cambio) return;   // no re-pintar listas sin datos nuevos (respeta <details> abiertos)
     renderTiles();
     renderSignals();
-    renderFirstMoves();
     renderWhales();
     renderHistory();
     el('tabs').hidden = false;
@@ -464,7 +436,7 @@ async function cargar() {
   }
 }
 
-// pestañas: coincidencias es la principal; whales y primeros movimientos, secundarias
+// pestañas: coincidencias es la principal; compras whale, secundaria
 document.querySelectorAll('.tabs button').forEach(btn =>
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b === btn));

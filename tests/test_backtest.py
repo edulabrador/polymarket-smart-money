@@ -1,4 +1,5 @@
 """Checks del backtest en dos niveles (sin red: funciones puras)."""
+import json
 import pathlib
 import sys
 
@@ -6,6 +7,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from backtest import (_winrate, avg_proven_winrate, classify,  # noqa: E402
                       coincidences, wallet_records)
+
+FIXTURES = pathlib.Path(__file__).resolve().parent / "fixtures"
 
 
 def redeem(cond, usd=1000, title="Neutral market", ts=1000):
@@ -66,6 +69,39 @@ def test_classify_three_tiers():
     assert by_tier["especialistas"]["won"] and by_tier["especialistas"]["avgWinRate"] == 1.0
     # 3 traders sin acierto probado en la perdedora: el algoritmo NO la dispara
     assert by_tier["descartada"]["cond"] == "cX" and not by_tier["descartada"]["won"]
+
+
+def test_coincidences_mixes_redeems_and_dead_positions():
+    # ganadas = canjes REDEEM; perdidas = posiciones muertas que nadie canjea
+    canje = {"type": "REDEEM", "conditionId": "0xwin", "timestamp": 100,
+             "usdcSize": 900.0, "title": "Ganado", "outcome": ""}
+    redeems = {f"0xw{i}": [canje] for i in range(5)}
+    perdida = {"conditionId": "0xl", "outcomeIndex": 0, "outcome": "No",
+               "title": "Perdido", "redeemable": True, "curPrice": 0.0,
+               "initialValue": 800, "endDate": "2026-01-01"}
+    positions = {f"0xl{i}": [perdida] for i in range(5)}
+    # ruido que no cuenta: canje pequeno, fuera de ventana, posicion viva,
+    # ganadora sin canjear (contara cuando se canjee)
+    redeems["0xmini"] = [dict(canje, usdcSize=10)]
+    redeems["0xviejo"] = [dict(canje, timestamp=1)]
+    positions["0xviva"] = [{"conditionId": "0xv", "outcomeIndex": 0, "redeemable": False,
+                            "curPrice": 0.5, "initialValue": 9999, "endDate": "2026-01-01",
+                            "outcome": "Yes", "title": "Viva"}]
+    positions["0xsin"] = [{"conditionId": "0xs", "outcomeIndex": 0, "redeemable": True,
+                           "curPrice": 1.0, "initialValue": 9999, "endDate": "2026-01-01",
+                           "outcome": "Yes", "title": "Sin canjear"}]
+    groups = coincidences(redeems, positions, min_users=5, since_ts=50)
+    assert {g["cond"]: g["won"] for g in groups} == {"0xwin": True, "0xl": False}
+
+
+def test_coincidences_parses_real_activity_fixture():
+    activity = json.loads((FIXTURES / "activity.json").read_text(encoding="utf-8"))
+    redeems = {f"0xr{i}": activity for i in range(5)}
+    groups = coincidences(redeems, {}, min_users=5, since_ts=0)
+    grandes = {e["conditionId"] for e in activity
+               if e.get("type") == "REDEEM" and e["usdcSize"] >= 500}
+    assert len(groups) == len(grandes)
+    assert all(g["won"] and len(g["wallets"]) == 5 for g in groups)
 
 
 if __name__ == "__main__":

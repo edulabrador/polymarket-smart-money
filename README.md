@@ -24,14 +24,14 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
    descarta (poca gente y sin evidencia = casi coin-flip). Ambos niveles se
    notifican por Telegram y se publican en la web; el nivel especialistas se
    marca 🎯 y su ROI se sigue midiendo — si no paga, el gate auto-corrector
-   (punto 13) lo silencia solo.
+   (punto 12) lo silencia solo.
 5. Si el precio actual difiere de la entrada media en más de `MAX_PRICE_DRIFT`
    (defecto ±0.15), la señal se marca **descartada**: la tesis de entrada ya no
    es la actual. Se muestra atenuada en la web y no se notifica.
 6. **Segunda fuente de oportunidades**: el feed global de trades. Cualquier
    compra individual ≥ `WHALE_MIN_USD` (defecto $50k) y a cuota < `MAX_ALERT_PRICE`
-   (defecto 0.90) se notifica y se lista en la web, marcando si el comprador
-   está además en el top 50 vigilado. Comprar a 0.99 asegura +poco% sin
+   (defecto 0.90) se lista en la web (pestaña secundaria; **no** se notifica por
+   Telegram), marcando si el comprador está además en el top 50 vigilado. Comprar a 0.99 asegura +poco% sin
    recorrido ni información, así que esas casi-certezas se descartan (eran la
    mayor fuente de ruido del feed de whales).
    Si la compra es a cuota improbable (precio ≤ `LONGSHOT_MAX_PRICE`, defecto
@@ -51,6 +51,12 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
    resueltos), y el top 50 solo hace de comodín cuando tampoco hay eso. Los
    subsidios (rewards/rebates de market making) se ignoran: mide habilidad
    apostando, no minería de liquidez. Cache de 6 h por wallet.
+   **ROI medido** (para saber si esta fuente paga, en vez de suponerlo): al
+   cerrar el mercado de una whale se calcula su ROI real (oráculo gamma
+   `/markets`: `closed` + `outcomePrices`, donde el precio "1" marca al ganador,
+   ya que el comprador whale no suele ser del top 50 y no está en las posiciones
+   descargadas) y pasa al histórico como fuente `whale`, bajo el gate
+   auto-corrector (punto 12).
 7. **Backtest inicial** (workflow `backtest`, manual): mide la tasa de acierto
    de las coincidencias del top 50 en mercados ya resueltos (30 días). Las
    ganadas se detectan por los canjes REDEEM del feed `/activity` (canjear con
@@ -72,32 +78,22 @@ la probabilidad de que ese lado gane es mayor que la que refleja el precio.
     el precio de la entrada media). La web permite **ocultar favoritos** (precio
     > 0.80, casi sin recorrido) y **ordenar por potencial** o por **mejor
     entrada** (precio aún cerca del de los traders, no llegas tarde).
-11. **🎯 Primer movimiento**: cuando un solo top trader (no bot) abre una
-    posición grande (≥ `FIRSTMOVE_MIN_USD`, defecto $10k) y NUEVA en un mercado
-    donde no estaba, se avisa al momento. Es la señal más temprana: la
-    coincidencia, por definición, espera a que N traders confluyan — y para
-    entonces el precio ya se movió. Se saltan favoritos (> `FIRSTMOVE_MAX_PRICE`,
-    defecto 0.80) y mercados que ya son señal. **Anti-ruido**: se descartan los
-    movimientos de un trader que nuestro track record marca como perdedor, y los
-    de un wallet que abre > `FIRSTMOVE_MAX_PER_WALLET` (defecto 2) posiciones
-    nuevas de golpe (está metiendo volumen — apostar cada partido — no haciendo
-    una jugada de convicción). Cada primer movimiento registra su ROI al
-    resolver, etiquetado como fuente propia en el histórico: así los datos
-    dirán si esta señal paga por sí sola.
-12. **Especialización por categoría**: el track record de cada trader se
+11. **Especialización por categoría**: el track record de cada trader se
     desglosa por categoría (deportes/política/cripto/otras, heurística por
     título). Cada señal muestra el **acierto de sus traders en la categoría
     del mercado**: un 70% en deportes es señal fuerte en un partido y dice
     poco en política. Con muestra < `WHALE_MIN_TRACK` mercados no se afirma nada.
-13. **Gate auto-corrector por fuente** (deja de lanzar apuestas que no pagan):
-    cada fuente de señal (coincidencia / primer movimiento) mide su **ROI real**
-    sobre el histórico resuelto. Si acumula ≥ `SOURCE_MIN_SAMPLE` (defecto 20)
-    señales resueltas con ROI medio **negativo**, deja de notificar por Telegram
-    — sigue en la web, marcada como *silenciada*. No es una decisión fija: si
-    señales nuevas la vuelven positiva, se reactiva sola. La web muestra el ROI
-    real de cada fuente. Primer dato: "primer movimiento" salió a −40% sobre 74
-    resueltas (seguir la posición suelta de un trader es casi un coin-flip);
-    "coincidencia" +20% (muestra aún pequeña). El dato manda, no la intuición.
+12. **Gate auto-corrector por fuente** (deja de lanzar apuestas que no pagan):
+    cada fuente (coincidencia / whale) mide su **ROI real** sobre el histórico
+    resuelto. Si acumula ≥ `SOURCE_MIN_SAMPLE` (defecto 20) señales resueltas con
+    ROI medio **negativo**, deja de notificar por Telegram — sigue en la web,
+    marcada como *silenciada*. No es una decisión fija: si señales nuevas la
+    vuelven positiva, se reactiva sola. La web muestra el ROI real de cada fuente.
+    **El dato manda, no la intuición**: la fuente "primer movimiento" (seguir la
+    posición suelta de un top trader) salió a **−42% sobre 91** resueltas —
+    acierto 26%, por debajo de lo que implicaba el propio precio de mercado — así
+    que se **retiró**. Las whales, que nunca se habían medido, ahora sí se miden
+    bajo este gate para decidir con datos, no por corazonada.
 
 ## Interfaz
 
@@ -110,12 +106,15 @@ Página estática en GitHub Pages, organizada en pestañas:
   precio actual vs entrada media, potencial, y acierto de los traders (global y
   en la categoría). Métricas (tasa de acierto, ROI medio) calculadas **solo**
   sobre coincidencias resueltas.
-- **🐋 Compras whale** y **🎯 Primeros movimientos**: fuentes secundarias, se
-  muestran para seguirlas pero **no** se notifican por Telegram.
+- **🐋 Compras whale**: fuente secundaria. Se muestra para seguirla y **se le
+  mide el ROI real** (visible en el panel de fuentes de la pestaña principal),
+  pero **no** se notifica por Telegram. El histórico de whales resueltas con su
+  ROI está en la propia pestaña.
 
 **Telegram solo avisa de coincidencias** (nuevas señales, sus resoluciones con
-ROI, y el hito de muestra suficiente). Whales y primeros movimientos no
-interrumpen: la data dice que seguir una posición individual no es rentable.
+ROI, y el hito de muestra suficiente). Las whales no interrumpen: se miden en
+silencio y solo subirían a notificar si el dato las respalda. La fuente "primer
+movimiento" se retiró por no ser rentable (−42% sobre 91 resueltas).
 
 ## Estado
 

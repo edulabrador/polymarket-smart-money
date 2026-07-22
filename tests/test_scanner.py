@@ -6,13 +6,11 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
-from backtest import backtest_signals
-from scanner import (annotate_win_rates, categoria, detect_first_moves,
-                     detect_signals, detect_whales, enrich_whales,
-                     format_first_moves, format_message, format_resolved,
-                     format_sample_reached, format_whales, merge_previous,
-                     qualify_first_moves, qualify_signals, recipients,
-                     resolve_first_moves, resolve_history, source_stats,
+from scanner import (annotate_win_rates, categoria, detect_signals,
+                     detect_whales, enrich_whales, fetch_market_resolutions,
+                     format_message, format_resolved, format_sample_reached,
+                     format_whales, merge_previous, qualify_signals, recipients,
+                     resolve_history, resolve_whales, source_stats,
                      track_record, update_track_records, whale_notifiable)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
@@ -258,81 +256,43 @@ def test_annotate_category_win_rates():
     assert s["avgCatWinRate"] == 0.9      # media de los que tienen muestra
 
 
-def test_detect_first_moves():
-    data = {
-        "0xa": {"name": "ann", "positions": [
-            pos(cond="0xnuevo", currentValue=15000, curPrice=0.3),   # NUEVA y grande
-            pos(cond="0xviejo", currentValue=20000, curPrice=0.4),   # ya conocida
-            pos(cond="0xchica", currentValue=500, curPrice=0.3),     # pequena
-            pos(cond="0xfav", currentValue=30000, curPrice=0.95),    # favorito
-            pos(cond="0xcoinc", currentValue=15000, curPrice=0.3),   # ya es senal
-            pos(cond="0xmuerta", currentValue=15000, redeemable=True),
-        ]},
-    }
-    known = {"0xa|0xviejo:0"}
-    moves, idx = detect_first_moves(data, known, signal_ids={"0xcoinc:0"},
-                                    min_usd=10000, max_price=0.8)
-    assert [m["id"] for m in moves] == ["0xnuevo:0"]
-    m = moves[0]
-    assert m["wallet"] == "0xa" and m["usd"] == 15000
-    assert m["entryPrice"] == 0.3 and m["upside"] == 2.33
-    # el indice nuevo tiene las 4 posiciones vivas >= min (favorito y senal incluidos)
-    assert set(idx) == {"0xa|0xnuevo:0", "0xa|0xviejo:0", "0xa|0xfav:0", "0xa|0xcoinc:0"}
+def test_resolve_whales_roi_and_pending():
+    whales = [
+        {"conditionId": "0xW", "outcomeIndex": 1, "price": 0.25, "title": "M",
+         "outcome": "No", "eventSlug": "e"},                    # gana (idx 1)
+        {"conditionId": "0xL", "outcomeIndex": 0, "price": 0.6, "title": "M2",
+         "outcome": "Yes", "eventSlug": "e2"},                  # pierde (gano idx 1)
+        {"conditionId": "0xOpen", "outcomeIndex": 0, "price": 0.5, "title": "M3",
+         "outcome": "Yes", "eventSlug": "e3"},                  # sin cerrar
+    ]
+    kept, res = resolve_whales(whales, {"0xW": 1, "0xL": 1}, "T")  # 0xOpen ausente
+    assert [w["conditionId"] for w in kept] == ["0xOpen"]        # no cerrada: sigue viva
+    by = {r["id"]: r for r in res}
+    assert by["0xW:1"]["won"] and by["0xW:1"]["roi"] == 3.0      # entrada 0.25 -> x3
+    assert by["0xL:0"]["won"] is False and by["0xL:0"]["roi"] == -1.0
+    assert all(r["source"] == "whale" for r in res)
 
 
-def test_resolve_first_moves_roi():
-    m = {"id": "0xm:0", "wallet": "0xa", "title": "M", "outcome": "Yes",
-         "eventSlug": "e", "usd": 15000, "entryPrice": 0.25, "avgPrice": 0.2,
-         "upside": 3.0, "firstSeen": "T1"}
-    ganada = {"0xm:0": pos(cond="0xm", redeemable=True, curPrice=1)}
-    kept, res = resolve_first_moves([m], ganada, "T2")
-    assert kept == [] and len(res) == 1
-    assert res[0]["won"] is True and res[0]["roi"] == 3.0  # entrada 0.25 -> x3
-    assert res[0]["source"] == "primer movimiento" and res[0]["numTraders"] == 1
-    # sin resolver: sigue viva
-    kept, res = resolve_first_moves([m], {}, "T2")
-    assert kept == [m] and res == []
-
-
-def test_format_first_moves():
-    m = {"id": "0xm:0", "wallet": "0xabcdef12", "name": "ann", "title": "Mercado M",
-         "outcome": "Yes", "eventSlug": "ev", "usd": 15000.0,
-         "entryPrice": 0.25, "avgPrice": 0.2, "upside": 3.0}
-    msg = format_first_moves([m])
-    assert "ann" in msg and "$15,000" in msg and "x3.0" in msg and "ev" in msg
-    assert len(format_first_moves([m] * 50)) < 4096  # limite de Telegram
-
-
-def move(wallet, title="Will X win?", cond=None):
-    return {"id": f"{cond or wallet}:0", "wallet": wallet, "name": wallet,
-            "title": title, "outcome": "Yes", "eventSlug": "e", "usd": 15000,
-            "entryPrice": 0.3, "avgPrice": 0.28, "upside": 2.33}
-
-
-def test_qualify_first_moves_drops_grinders_and_losers():
-    # grinder: un wallet con 3 movimientos nuevos de golpe (> 2) -> fuera todos
-    grinder = [move("0xg", cond=f"0xg{i}") for i in range(3)]
-    bueno = [move("0xok")]
-    perdedor = [move("0xbad")]
-    tracks = {
-        "0xok": {"wins": 8, "losses": 2, "net": 5000},        # ganador
-        "0xbad": {"wins": 2, "losses": 8, "net": -3000},      # perdedor: fuera
-        "0xg": {"wins": 9, "losses": 1, "net": 9000},         # ganador pero grinder
-    }
-    out = qualify_first_moves(grinder + bueno + perdedor, tracks, max_per_wallet=2)
-    assert [m["wallet"] for m in out] == ["0xok"]
-    assert out[0]["winRate"] == 0.8
+def test_fetch_market_resolutions_parses_gamma():
+    # gamma da outcomePrices como string JSON; el indice del "1" es el ganador
+    fake = [
+        {"conditionId": "0xA", "closed": True, "outcomePrices": '["1", "0"]'},
+        {"conditionId": "0xB", "closed": True, "outcomePrices": '["0", "1"]'},
+        {"conditionId": "0xC", "closed": False, "outcomePrices": '["0.4", "0.6"]'},
+    ]
+    got = fetch_market_resolutions(["0xA", "0xB", "0xC"], fetch=lambda url: fake)
+    assert got == {"0xA": 0, "0xB": 1}  # 0xC sin cerrar: fuera
 
 
 def test_source_stats_suppresses_losing_source():
     hist = (
-        [{"source": "primer movimiento", "roi": -1.0, "won": False}] * 18
-        + [{"source": "primer movimiento", "roi": 0.5, "won": True}] * 2
+        [{"source": "whale", "roi": -1.0, "won": False}] * 18
+        + [{"source": "whale", "roi": 0.5, "won": True}] * 2
         + [{"source": "coincidencia", "roi": 1.0, "won": True}] * 3
         + [{"source": "coincidencia", "roi": None, "won": False}]  # sin roi: ignorada
     )
     stats = source_stats(hist, min_sample=20)
-    fm = stats["primer movimiento"]
+    fm = stats["whale"]
     assert fm["n"] == 20 and fm["wins"] == 2 and fm["avgRoi"] < 0
     assert fm["suppressed"] is True  # muestra suficiente y ROI negativo
     co = stats["coincidencia"]
@@ -345,19 +305,8 @@ def test_source_stats_suppresses_losing_source():
 def test_format_sample_reached():
     rentable = format_sample_reached("coincidencia", {"n": 22, "wins": 14, "avgRoi": 0.18})
     assert "22 señales" in rentable and "+18%" in rentable and "RENTABLE" in rentable
-    perdedora = format_sample_reached("primer movimiento", {"n": 30, "wins": 8, "avgRoi": -0.4})
+    perdedora = format_sample_reached("whale", {"n": 30, "wins": 8, "avgRoi": -0.4})
     assert "-40%" in perdedora and "silencia" in perdedora
-
-
-def test_qualify_first_moves_annotates_category():
-    m = [move("0xok", title="NBA Finals: Lakers vs Celtics")]
-    tracks = {"0xok": {"wins": 8, "losses": 2, "net": 5000,
-                       "cats": {"deportes": {"wins": 7, "losses": 1}}}}
-    out = qualify_first_moves(m, tracks, max_per_wallet=2)
-    assert out[0]["catWinRate"] == 0.88  # 7/8 en deportes
-    # sin track: se mantiene (top 50, beneficio de la duda) sin winRate
-    out2 = qualify_first_moves([move("0xnew")], {}, max_per_wallet=2)
-    assert len(out2) == 1 and out2[0]["winRate"] is None
 
 
 def test_qualify_signals_two_tiers():
@@ -427,34 +376,6 @@ def test_recipients_env():
     assert r["whaleMinUsd"] == 50000.0  # umbral no definido cae al global
     del os.environ["TELEGRAM_RECIPIENTS"], os.environ["TELEGRAM_CHAT_ID"]
     assert recipients() == []
-
-
-def test_backtest_mixes_redeems_and_dead_positions():
-    # ganadas = canjes REDEEM; perdidas = posiciones muertas que nadie canjea
-    canje = {"type": "REDEEM", "conditionId": "0xwin", "timestamp": 100,
-             "usdcSize": 900.0, "title": "Ganado", "outcome": ""}
-    redeems = {f"0xw{i}": [canje] for i in range(5)}
-    perdida = dict(pos(cond="0xl", redeemable=True, curPrice=0),
-                   currentValue=0, initialValue=800)
-    positions = {f"0xl{i}": [perdida] for i in range(5)}
-    # ruido que no debe contar: canje pequeno, canje fuera de ventana,
-    # posicion viva, ganadora sin canjear (contara cuando se canjee)
-    redeems["0xmini"] = [dict(canje, usdcSize=10)]
-    redeems["0xviejo"] = [dict(canje, timestamp=1)]
-    positions["0xviva"] = [dict(pos(cond="0xv"), initialValue=9999)]
-    positions["0xsin"] = [dict(pos(cond="0xs", redeemable=True, curPrice=1),
-                               initialValue=9999)]
-    out = backtest_signals(redeems, positions, min_users=5, min_usd=500, since_ts=50)
-    assert {s["id"]: s["won"] for s in out} == {"0xwin:win": True, "0xl:0": False}
-
-
-def test_backtest_parses_real_activity_fixture():
-    activity = json.loads((FIXTURES / "activity.json").read_text(encoding="utf-8"))
-    redeems = {f"0xr{i}": activity for i in range(5)}
-    out = backtest_signals(redeems, {}, min_users=5, min_usd=500, since_ts=0)
-    grandes = {e["conditionId"] for e in activity if e["usdcSize"] >= 500}
-    assert len(out) == len(grandes)
-    assert all(s["won"] and s["numTraders"] == 5 for s in out)
 
 
 if __name__ == "__main__":
