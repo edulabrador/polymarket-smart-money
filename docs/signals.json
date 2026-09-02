@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-09-02T23:29:15+00:00",
+ "updatedAt": "2026-09-02T23:39:43+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
@@ -11,6 +11,27 @@
  },
  "signals": [],
  "whales": [
+  {
+   "tx": "0x5a0b26354d4bf6e4cb6a353cdd7f4587f698c92ae53444ce07f931a1f9b580cf",
+   "wallet": "0x82398835fe16616214d928ba87127e28fc1cd9a3",
+   "name": "Kosherlocks",
+   "usd": 59000.0,
+   "price": 0.7207518908,
+   "title": "St. Louis Cardinals vs. Los Angeles Dodgers",
+   "outcome": "Los Angeles Dodgers",
+   "eventSlug": "mlb-stl-lad-2026-09-02",
+   "conditionId": "0x5c1eb8b894c5157946c56578bf7969f43521b8cb6030368faf14023ebb34c95b",
+   "outcomeIndex": 1,
+   "timestamp": 1788391903,
+   "isTop": false,
+   "longshot": false,
+   "repeatBuys": 1,
+   "walletUsd": 66065.01,
+   "winRate": 0.62,
+   "netPnl": 96118.82,
+   "wins30d": 56,
+   "losses30d": 34
+  },
   {
    "tx": "0x64e7c80bdae78eda5e9f8dbaed38e5ac3a0f600c6f224eec696d131f525ac007",
    "wallet": "0x3dfb153c197d4c19d3b31c1ecd2c7b6860eeabaf",
@@ -1363,51 +1384,167 @@
    "losses30d": 25
   }
  ],
- "lastWhaleTs": 1788388755,
+ "lastWhaleTs": 1788391903,
  "trackRecords": {
-  "0xce29c0049a9abc3ce97ccca91bae0a480d073b0d": {
-   "wins": 12,
-   "losses": 51,
-   "net": 95709.78,
+  "0x004c832cb3af8ee0771fdf5fc3d494fe8ca2bb89": {
+   "wins": 2,
+   "losses": 0,
+   "net": 270325.67,
    "cats": {
     "deportes": {
-     "wins": 12,
-     "losses": 51
-    }
-   },
-   "at": 1788374399
-  },
-  "0x6f0ebea3c2e777699519ee128faaa07a9d0b2ee5": {
-   "wins": 11,
-   "losses": 10,
-   "net": 12206.28,
-   "cats": {
-    "deportes": {
-     "wins": 4,
-     "losses": 1
-    },
-    "otras": {
-     "wins": 7,
-     "losses": 9
-    }
-   },
-   "at": 1788371217
-  },
-  "0x983eedfbd75803602e4a6e6ea9aab6dc6b9c6748": {
-   "wins": 15,
-   "losses": 6,
-   "net": 3038980.47,
-   "cats": {
-    "deportes": {
-     "wins": 3,
+     "wins": 1,
      "losses": 0
     },
     "otras": {
-     "wins": 12,
-     "losses": 6
+     "wins": 1,
+     "losses": 0
     }
    },
-   "at": 1788371217
+   "at": 1788375040
+  },
+  "0x29b52d98ac9ef9414b04164246c95bc63d74cc6c": {
+   "wins": 28,
+   "losses": 1,
+   "net": 140572.79,
+   "cats": {
+    "deportes": {
+     "wins": 25,
+     "losses": 1
+    },
+    "otras": {
+     "wins": 3,
+     "losses": 0
+    }
+   },
+   "at": 1788372488
+  },
+  "0xbc43c8bfbc4d77c2fc9011adad38ba43b88996d3": {
+   "wins": 14,
+   "losses": 33,
+   "net": 137378.32,
+   "cats": {
+    "deportes": {
+     "wins": 12,
+     "losses": 22
+    },
+    "otras": {
+     "wins": 2,
+     "losses": 11
+    }
+   },
+   "at": 1788389289
+  },
+  "0xc32359bbc920b365a05cd310b9a998508c980077": {
+   "wins": 4,
+   "losses": 2,
+   "net": 47294.72,
+   "cats": {
+    "deportes": {
+     "wins": 4,
+     "losses": 2
+    }
+   },
+   "at": 1788378864
+  },
+  "0x0cb038487586d1119b165466072e9baf666f3a90": {
+   "wins": 4,
+   "losses": 1,
+   "net": 839.56,
+   "cats": {
+    "cripto": {
+     "wins": 4,
+     "losses": 1
+    }
+   },
+   "at": 1788382699
+  },
+  "0x6b97ebe911d7f2e5e3e8c4a0faad4a5c7c0b8d30": {
+   "wins": 20,
+   "losses": 199,
+   "net": 67348.65,
+   "cats": {
+    "deportes": {
+     "wins": 20,
+     "losses": 196
+    },
+    "otras": {
+     "wins": 0,
+     "losses": 3
+    }
+   },
+   "at": 1788372488
+  },
+  "0xb8e32d575b8d360f90bcc95596e9a0bee444aaf2": {
+   "wins": 29,
+   "losses": 7,
+   "net": 416708.34,
+   "cats": {
+    "deportes": {
+     "wins": 27,
+     "losses": 7
+    },
+    "otras": {
+     "wins": 2,
+     "losses": 0
+    }
+   },
+   "at": 1788380140
+  },
+  "0xe015b5a2a299167be835a2fd1e86f09c49e06ffd": {
+   "wins": 17,
+   "losses": 158,
+   "net": 146227.8,
+   "cats": {
+    "deportes": {
+     "wins": 15,
+     "losses": 154
+    },
+    "otras": {
+     "wins": 2,
+     "losses": 4
+    }
+   },
+   "at": 1788391149
+  },
+  "0x73e3fec494611d73c170cb2f23850fd998b21be9": {
+   "wins": 9,
+   "losses": 58,
+   "net": 78705.19,
+   "cats": {
+    "deportes": {
+     "wins": 9,
+     "losses": 58
+    }
+   },
+   "at": 1788389289
+  },
+  "0xfe787d2da716d60e8acff57fb87eb13cd4d10319": {
+   "wins": 8,
+   "losses": 189,
+   "net": 102647.27,
+   "cats": {
+    "deportes": {
+     "wins": 8,
+     "losses": 189
+    }
+   },
+   "at": 1788382699
+  },
+  "0xb55fa1296e6ec55d0ce53d93b9237389f11764d4": {
+   "wins": 16,
+   "losses": 42,
+   "net": 11954.25,
+   "cats": {
+    "cripto": {
+     "wins": 15,
+     "losses": 42
+    },
+    "otras": {
+     "wins": 1,
+     "losses": 0
+    }
+   },
+   "at": 1788390562
   },
   "0x5a218c7ad04135830a45c41aaed7294df7809318": {
    "wins": 12,
@@ -1429,6 +1566,50 @@
    },
    "at": 1788380140
   },
+  "0x84cfffc3f16dcc353094de30d4a45226eccd2f63": {
+   "wins": 14,
+   "losses": 2,
+   "net": 619453.85,
+   "cats": {
+    "deportes": {
+     "wins": 9,
+     "losses": 1
+    },
+    "otras": {
+     "wins": 5,
+     "losses": 1
+    }
+   },
+   "at": 1788385458
+  },
+  "0xabb89972b21b304c1bed2bf26f35c8741ac9bba3": {
+   "wins": 38,
+   "losses": 2,
+   "net": 1060.98,
+   "cats": {
+    "deportes": {
+     "wins": 36,
+     "losses": 2
+    },
+    "otras": {
+     "wins": 2,
+     "losses": 0
+    }
+   },
+   "at": 1788382699
+  },
+  "0x06dc51826bc524d9a83770e7de9dd7e005b04524": {
+   "wins": 40,
+   "losses": 43,
+   "net": 997428.19,
+   "cats": {
+    "cripto": {
+     "wins": 40,
+     "losses": 43
+    }
+   },
+   "at": 1788390562
+  },
   "0xb8ef617fd5d960e61e56c50d2971697300b32864": {
    "wins": 1,
    "losses": 193,
@@ -1445,89 +1626,12 @@
    },
    "at": 1788390562
   },
-  "0xb55fa1296e6ec55d0ce53d93b9237389f11764d4": {
-   "wins": 16,
-   "losses": 42,
-   "net": 11954.25,
-   "cats": {
-    "cripto": {
-     "wins": 15,
-     "losses": 42
-    },
-    "otras": {
-     "wins": 1,
-     "losses": 0
-    }
-   },
-   "at": 1788390562
-  },
-  "0x397062018dfb77e855608fe23223592bc82c44ce": {
-   "wins": 6,
-   "losses": 9,
-   "net": 296464.7,
-   "cats": {
-    "deportes": {
-     "wins": 6,
-     "losses": 9
-    }
-   },
-   "at": 1788383518
-  },
-  "0x979fc186184ae75754d32c4ef68d8ca00f744032": {
-   "wins": 7,
-   "losses": 2,
-   "net": 52953.59,
-   "cats": {
-    "deportes": {
-     "wins": 7,
-     "losses": 2
-    }
-   },
-   "at": 1788375040
-  },
-  "0xdecffda0ca685646001e7f2f525f39de905f4daf": {
-   "wins": 15,
+  "0xc8ad11a2c47477f80c1e079956470e030ec683dc": {
+   "wins": 0,
    "losses": 0,
-   "net": 43129.99,
-   "cats": {
-    "deportes": {
-     "wins": 11,
-     "losses": 0
-    },
-    "otras": {
-     "wins": 4,
-     "losses": 0
-    }
-   },
-   "at": 1788376318
-  },
-  "0x73e3fec494611d73c170cb2f23850fd998b21be9": {
-   "wins": 9,
-   "losses": 58,
-   "net": 78705.19,
-   "cats": {
-    "deportes": {
-     "wins": 9,
-     "losses": 58
-    }
-   },
-   "at": 1788389289
-  },
-  "0xa71093cafc0c099b4ccab24c3cb8018d817923c4": {
-   "wins": 9,
-   "losses": 0,
-   "net": 113715.88,
-   "cats": {
-    "deportes": {
-     "wins": 8,
-     "losses": 0
-    },
-    "otras": {
-     "wins": 1,
-     "losses": 0
-    }
-   },
-   "at": 1788377591
+   "net": 33044.75,
+   "cats": {},
+   "at": 1788374399
   },
   "0xd3faf1906cc31e75d1dfa0d7b57e8f97d33da26c": {
    "wins": 25,
@@ -1561,33 +1665,45 @@
    },
    "at": 1788391149
   },
-  "0xbc43c8bfbc4d77c2fc9011adad38ba43b88996d3": {
-   "wins": 14,
-   "losses": 33,
-   "net": 137378.32,
+  "0x58f8f1138be2192696378629fc9aa23c7910dc70": {
+   "wins": 25,
+   "losses": 0,
+   "net": 85472.31,
    "cats": {
     "deportes": {
-     "wins": 12,
-     "losses": 22
+     "wins": 20,
+     "losses": 0
     },
     "otras": {
-     "wins": 2,
-     "losses": 11
+     "wins": 5,
+     "losses": 0
     }
    },
-   "at": 1788389289
+   "at": 1788383518
   },
-  "0x0cb038487586d1119b165466072e9baf666f3a90": {
-   "wins": 4,
+  "0x4bff30af91642dc7d2b19a8664378fe55c45fc26": {
+   "wins": 6,
    "losses": 1,
-   "net": 839.56,
+   "net": 237735.55,
    "cats": {
-    "cripto": {
-     "wins": 4,
+    "deportes": {
+     "wins": 6,
      "losses": 1
     }
    },
-   "at": 1788382699
+   "at": 1788385458
+  },
+  "0x821dab0565ebf5b327f51db06223fdcfe01acf16": {
+   "wins": 1,
+   "losses": 0,
+   "net": 496189.31,
+   "cats": {
+    "deportes": {
+     "wins": 1,
+     "losses": 0
+    }
+   },
+   "at": 1788380140
   },
   "0x760f1063f9f07d5125de802b16775a967b7f326a": {
    "wins": 15,
@@ -1605,177 +1721,6 @@
    },
    "at": 1788382699
   },
-  "0x58f8f1138be2192696378629fc9aa23c7910dc70": {
-   "wins": 25,
-   "losses": 0,
-   "net": 85472.31,
-   "cats": {
-    "deportes": {
-     "wins": 20,
-     "losses": 0
-    },
-    "otras": {
-     "wins": 5,
-     "losses": 0
-    }
-   },
-   "at": 1788383518
-  },
-  "0x5e9458202b5817a72cf81105ec8a30e6f3705ba1": {
-   "wins": 5,
-   "losses": 0,
-   "net": 565835.69,
-   "cats": {
-    "deportes": {
-     "wins": 5,
-     "losses": 0
-    }
-   },
-   "at": 1788383518
-  },
-  "0x64e93f87d8a0c1b2cde6f20d71f211372a95eb4c": {
-   "wins": 13,
-   "losses": 5,
-   "net": 27478.04,
-   "cats": {
-    "otras": {
-     "wins": 10,
-     "losses": 5
-    },
-    "deportes": {
-     "wins": 3,
-     "losses": 0
-    }
-   },
-   "at": 1788376318
-  },
-  "0x004c832cb3af8ee0771fdf5fc3d494fe8ca2bb89": {
-   "wins": 2,
-   "losses": 0,
-   "net": 270325.67,
-   "cats": {
-    "deportes": {
-     "wins": 1,
-     "losses": 0
-    },
-    "otras": {
-     "wins": 1,
-     "losses": 0
-    }
-   },
-   "at": 1788375040
-  },
-  "0xdb859a551fcf56e49416160911476bea7307152f": {
-   "wins": 10,
-   "losses": 193,
-   "net": 411023.3,
-   "cats": {
-    "deportes": {
-     "wins": 10,
-     "losses": 156
-    },
-    "otras": {
-     "wins": 0,
-     "losses": 37
-    }
-   },
-   "at": 1788383518
-  },
-  "0xd570e634aeb745d6501566dba5f81a555cc7e4f8": {
-   "wins": 8,
-   "losses": 13,
-   "net": 612955.74,
-   "cats": {
-    "deportes": {
-     "wins": 8,
-     "losses": 13
-    }
-   },
-   "at": 1788391149
-  },
-  "0xb8e32d575b8d360f90bcc95596e9a0bee444aaf2": {
-   "wins": 29,
-   "losses": 7,
-   "net": 416708.34,
-   "cats": {
-    "deportes": {
-     "wins": 27,
-     "losses": 7
-    },
-    "otras": {
-     "wins": 2,
-     "losses": 0
-    }
-   },
-   "at": 1788380140
-  },
-  "0xbca08c1bc204a34f2fddbe47b438b9bd42ac9705": {
-   "wins": 69,
-   "losses": 181,
-   "net": 99154.04,
-   "cats": {
-    "deportes": {
-     "wins": 44,
-     "losses": 127
-    },
-    "otras": {
-     "wins": 25,
-     "losses": 54
-    }
-   },
-   "at": 1788390562
-  },
-  "0x4f29e103339919c4baaea2a60195cf1c8bb27a7e": {
-   "wins": 47,
-   "losses": 107,
-   "net": 126902.83,
-   "cats": {
-    "deportes": {
-     "wins": 28,
-     "losses": 92
-    },
-    "otras": {
-     "wins": 19,
-     "losses": 15
-    }
-   },
-   "at": 1788383518
-  },
-  "0x6b97ebe911d7f2e5e3e8c4a0faad4a5c7c0b8d30": {
-   "wins": 20,
-   "losses": 199,
-   "net": 67348.65,
-   "cats": {
-    "deportes": {
-     "wins": 20,
-     "losses": 196
-    },
-    "otras": {
-     "wins": 0,
-     "losses": 3
-    }
-   },
-   "at": 1788372488
-  },
-  "0x629c2844d5c0e36774a67fe10dcd43ca31a76c01": {
-   "wins": 11,
-   "losses": 0,
-   "net": 63330.7,
-   "cats": {
-    "otras": {
-     "wins": 11,
-     "losses": 0
-    }
-   },
-   "at": 1788385458
-  },
-  "0xc8ad11a2c47477f80c1e079956470e030ec683dc": {
-   "wins": 0,
-   "losses": 0,
-   "net": 33044.75,
-   "cats": {},
-   "at": 1788374399
-  },
   "0x75a27d0cc95b3586297c1e6b5417269332cd6992": {
    "wins": 7,
    "losses": 2,
@@ -1787,78 +1732,6 @@
     }
    },
    "at": 1788371217
-  },
-  "0xe015b5a2a299167be835a2fd1e86f09c49e06ffd": {
-   "wins": 17,
-   "losses": 158,
-   "net": 146227.8,
-   "cats": {
-    "deportes": {
-     "wins": 15,
-     "losses": 154
-    },
-    "otras": {
-     "wins": 2,
-     "losses": 4
-    }
-   },
-   "at": 1788391149
-  },
-  "0xabb89972b21b304c1bed2bf26f35c8741ac9bba3": {
-   "wins": 38,
-   "losses": 2,
-   "net": 1060.98,
-   "cats": {
-    "deportes": {
-     "wins": 36,
-     "losses": 2
-    },
-    "otras": {
-     "wins": 2,
-     "losses": 0
-    }
-   },
-   "at": 1788382699
-  },
-  "0x821dab0565ebf5b327f51db06223fdcfe01acf16": {
-   "wins": 1,
-   "losses": 0,
-   "net": 496189.31,
-   "cats": {
-    "deportes": {
-     "wins": 1,
-     "losses": 0
-    }
-   },
-   "at": 1788380140
-  },
-  "0xc0f89d4e30b3ab40ab1f1979ebdcf8a02c39ae2e": {
-   "wins": 23,
-   "losses": 10,
-   "net": 90940.96,
-   "cats": {
-    "deportes": {
-     "wins": 16,
-     "losses": 9
-    },
-    "otras": {
-     "wins": 7,
-     "losses": 1
-    }
-   },
-   "at": 1788385458
-  },
-  "0xfe787d2da716d60e8acff57fb87eb13cd4d10319": {
-   "wins": 8,
-   "losses": 189,
-   "net": 102647.27,
-   "cats": {
-    "deportes": {
-     "wins": 8,
-     "losses": 189
-    }
-   },
-   "at": 1788382699
   },
   "0x6d3c5bd13984b2de47c3a88ddc455309aab3d294": {
    "wins": 16,
@@ -1876,33 +1749,41 @@
    },
    "at": 1788382062
   },
-  "0x715ce1ecfa3836fbb10e6829109ebce10a5f19d1": {
-   "wins": 4,
-   "losses": 3,
-   "net": 11441.21,
+  "0xce29c0049a9abc3ce97ccca91bae0a480d073b0d": {
+   "wins": 12,
+   "losses": 51,
+   "net": 95709.78,
    "cats": {
     "deportes": {
-     "wins": 3,
-     "losses": 2
-    },
-    "otras": {
-     "wins": 1,
-     "losses": 1
+     "wins": 12,
+     "losses": 51
     }
    },
-   "at": 1788375040
+   "at": 1788374399
   },
-  "0x06dc51826bc524d9a83770e7de9dd7e005b04524": {
-   "wins": 40,
-   "losses": 43,
-   "net": 997428.19,
+  "0x5e9458202b5817a72cf81105ec8a30e6f3705ba1": {
+   "wins": 5,
+   "losses": 0,
+   "net": 565835.69,
    "cats": {
-    "cripto": {
-     "wins": 40,
-     "losses": 43
+    "deportes": {
+     "wins": 5,
+     "losses": 0
     }
    },
-   "at": 1788390562
+   "at": 1788383518
+  },
+  "0xd570e634aeb745d6501566dba5f81a555cc7e4f8": {
+   "wins": 8,
+   "losses": 13,
+   "net": 612955.74,
+   "cats": {
+    "deportes": {
+     "wins": 8,
+     "losses": 13
+    }
+   },
+   "at": 1788391149
   },
   "0x13fa4ce1b8a27dd0b7a72db6205a50ee6ff0954c": {
    "wins": 0,
@@ -1924,6 +1805,30 @@
    },
    "at": 1788391149
   },
+  "0xf23c5bc7b547867eb6532920144562718aa49f81": {
+   "wins": 17,
+   "losses": 49,
+   "net": 38500.55,
+   "cats": {
+    "deportes": {
+     "wins": 17,
+     "losses": 49
+    }
+   },
+   "at": 1788378864
+  },
+  "0x629c2844d5c0e36774a67fe10dcd43ca31a76c01": {
+   "wins": 11,
+   "losses": 0,
+   "net": 63330.7,
+   "cats": {
+    "otras": {
+     "wins": 11,
+     "losses": 0
+    }
+   },
+   "at": 1788385458
+  },
   "0xc430e5b17128df7ce78d69fa28bc7de038641ebf": {
    "wins": 5,
    "losses": 10,
@@ -1940,69 +1845,61 @@
    },
    "at": 1788391149
   },
-  "0x9cb990f1862568a63d8601efeebe0304225c32f2": {
-   "wins": 32,
-   "losses": 1,
-   "net": 67688.64,
+  "0x4f29e103339919c4baaea2a60195cf1c8bb27a7e": {
+   "wins": 47,
+   "losses": 107,
+   "net": 126902.83,
    "cats": {
     "deportes": {
-     "wins": 30,
-     "losses": 1
+     "wins": 28,
+     "losses": 92
     },
     "otras": {
-     "wins": 2,
-     "losses": 0
+     "wins": 19,
+     "losses": 15
     }
    },
-   "at": 1788372488
+   "at": 1788383518
   },
-  "0xf23c5bc7b547867eb6532920144562718aa49f81": {
-   "wins": 17,
-   "losses": 49,
-   "net": 38500.55,
-   "cats": {
-    "deportes": {
-     "wins": 17,
-     "losses": 49
-    }
-   },
-   "at": 1788378864
-  },
-  "0xc32359bbc920b365a05cd310b9a998508c980077": {
-   "wins": 4,
-   "losses": 2,
-   "net": 47294.72,
-   "cats": {
-    "deportes": {
-     "wins": 4,
-     "losses": 2
-    }
-   },
-   "at": 1788378864
-  },
-  "0x4bff30af91642dc7d2b19a8664378fe55c45fc26": {
+  "0x397062018dfb77e855608fe23223592bc82c44ce": {
    "wins": 6,
-   "losses": 1,
-   "net": 237735.55,
+   "losses": 9,
+   "net": 296464.7,
    "cats": {
     "deportes": {
      "wins": 6,
-     "losses": 1
+     "losses": 9
     }
    },
-   "at": 1788385458
+   "at": 1788383518
   },
-  "0x84cfffc3f16dcc353094de30d4a45226eccd2f63": {
-   "wins": 14,
-   "losses": 2,
-   "net": 619453.85,
+  "0x64e93f87d8a0c1b2cde6f20d71f211372a95eb4c": {
+   "wins": 13,
+   "losses": 5,
+   "net": 27478.04,
+   "cats": {
+    "otras": {
+     "wins": 10,
+     "losses": 5
+    },
+    "deportes": {
+     "wins": 3,
+     "losses": 0
+    }
+   },
+   "at": 1788376318
+  },
+  "0xc0f89d4e30b3ab40ab1f1979ebdcf8a02c39ae2e": {
+   "wins": 23,
+   "losses": 10,
+   "net": 90940.96,
    "cats": {
     "deportes": {
-     "wins": 9,
-     "losses": 1
+     "wins": 16,
+     "losses": 9
     },
     "otras": {
-     "wins": 5,
+     "wins": 7,
      "losses": 1
     }
    },
@@ -2020,21 +1917,133 @@
    },
    "at": 1788388012
   },
-  "0x29b52d98ac9ef9414b04164246c95bc63d74cc6c": {
-   "wins": 28,
-   "losses": 1,
-   "net": 140572.79,
+  "0x6f0ebea3c2e777699519ee128faaa07a9d0b2ee5": {
+   "wins": 11,
+   "losses": 10,
+   "net": 12206.28,
    "cats": {
     "deportes": {
-     "wins": 25,
+     "wins": 4,
      "losses": 1
     },
     "otras": {
+     "wins": 7,
+     "losses": 9
+    }
+   },
+   "at": 1788371217
+  },
+  "0xbca08c1bc204a34f2fddbe47b438b9bd42ac9705": {
+   "wins": 69,
+   "losses": 181,
+   "net": 99154.04,
+   "cats": {
+    "deportes": {
+     "wins": 44,
+     "losses": 127
+    },
+    "otras": {
+     "wins": 25,
+     "losses": 54
+    }
+   },
+   "at": 1788390562
+  },
+  "0xdecffda0ca685646001e7f2f525f39de905f4daf": {
+   "wins": 15,
+   "losses": 0,
+   "net": 43129.99,
+   "cats": {
+    "deportes": {
+     "wins": 11,
+     "losses": 0
+    },
+    "otras": {
+     "wins": 4,
+     "losses": 0
+    }
+   },
+   "at": 1788376318
+  },
+  "0x983eedfbd75803602e4a6e6ea9aab6dc6b9c6748": {
+   "wins": 15,
+   "losses": 6,
+   "net": 3038980.47,
+   "cats": {
+    "deportes": {
      "wins": 3,
+     "losses": 0
+    },
+    "otras": {
+     "wins": 12,
+     "losses": 6
+    }
+   },
+   "at": 1788371217
+  },
+  "0x9cb990f1862568a63d8601efeebe0304225c32f2": {
+   "wins": 32,
+   "losses": 1,
+   "net": 67688.64,
+   "cats": {
+    "deportes": {
+     "wins": 30,
+     "losses": 1
+    },
+    "otras": {
+     "wins": 2,
      "losses": 0
     }
    },
    "at": 1788372488
+  },
+  "0xa71093cafc0c099b4ccab24c3cb8018d817923c4": {
+   "wins": 9,
+   "losses": 0,
+   "net": 113715.88,
+   "cats": {
+    "deportes": {
+     "wins": 8,
+     "losses": 0
+    },
+    "otras": {
+     "wins": 1,
+     "losses": 0
+    }
+   },
+   "at": 1788377591
+  },
+  "0xdb859a551fcf56e49416160911476bea7307152f": {
+   "wins": 10,
+   "losses": 193,
+   "net": 411023.3,
+   "cats": {
+    "deportes": {
+     "wins": 10,
+     "losses": 156
+    },
+    "otras": {
+     "wins": 0,
+     "losses": 37
+    }
+   },
+   "at": 1788383518
+  },
+  "0x715ce1ecfa3836fbb10e6829109ebce10a5f19d1": {
+   "wins": 4,
+   "losses": 3,
+   "net": 11441.21,
+   "cats": {
+    "deportes": {
+     "wins": 3,
+     "losses": 2
+    },
+    "otras": {
+     "wins": 1,
+     "losses": 1
+    }
+   },
+   "at": 1788375040
   },
   "0x5f659bccbc353dbf7bcdffdee73bee60bb482036": {
    "wins": 0,
@@ -2042,6 +2051,34 @@
    "net": 18514.0,
    "cats": {},
    "at": 1788390562
+  },
+  "0x979fc186184ae75754d32c4ef68d8ca00f744032": {
+   "wins": 7,
+   "losses": 2,
+   "net": 52953.59,
+   "cats": {
+    "deportes": {
+     "wins": 7,
+     "losses": 2
+    }
+   },
+   "at": 1788375040
+  },
+  "0x82398835fe16616214d928ba87127e28fc1cd9a3": {
+   "wins": 56,
+   "losses": 34,
+   "net": 96118.82,
+   "cats": {
+    "otras": {
+     "wins": 12,
+     "losses": 6
+    },
+    "deportes": {
+     "wins": 44,
+     "losses": 28
+    }
+   },
+   "at": 1788392408
   }
  },
  "sourceStats": {
