@@ -18,7 +18,7 @@ jobs:
       TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: bucle de escaneo cada 10 min (~5h30; el cron lo relanza)
         run: |
           git config user.name "github-actions[bot]"

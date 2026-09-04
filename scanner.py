@@ -71,17 +71,24 @@ ACTIVITY_URL = ("https://data-api.polymarket.com/activity"
 MARKETS_URL = "https://gamma-api.polymarket.com/markets?closed=true&limit=100&{ids}"
 
 
+class FetchError(RuntimeError):
+    """La API no respondio tras varios intentos. No es un bug del scanner."""
+
+
 def get_json(url, retries=3):
+    last = None
     for attempt in range(retries):
         try:
             req = urllib.request.Request(
                 url, headers={"User-Agent": "polymarket-smart-money/0.1"})
             with urllib.request.urlopen(req, timeout=30) as r:
                 return json.loads(r.read().decode())
-        except Exception:
+        except (OSError, json.JSONDecodeError) as exc:
+            last = exc
             if attempt == retries - 1:
-                raise
+                break
             time.sleep(2 ** attempt)
+    raise FetchError(f"fallo temporal consultando {url}: {last}") from last
 
 
 def detect_signals(positions_by_trader, min_users=MIN_USERS, min_usd=MIN_POSITION_USD,
@@ -613,16 +620,33 @@ def send_telegram(text, chat_id):
 
 def main():
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    leaderboard = get_json(LEADERBOARD_URL.format(n=TOP_N))
+    try:
+        leaderboard = get_json(LEADERBOARD_URL.format(n=TOP_N))
+    except FetchError as exc:
+        print(f"AVISO: {exc}; se conservan los datos anteriores")
+        return
     positions_by_trader = {}
+    failed_wallets = []
     for entry in leaderboard:
         wallet = entry["proxyWallet"]
         url = POSITIONS_URL.format(wallet=wallet, threshold=int(MIN_POSITION_USD))
+        try:
+            posiciones = get_json(url)
+        except FetchError:
+            failed_wallets.append(wallet)
+            continue
         positions_by_trader[wallet] = {
             "name": entry.get("userName", ""),
-            "positions": get_json(url),
+            "positions": posiciones,
         }
         time.sleep(0.3)  # ~50 requests por escaneo: sin prisa, evita rate limits
+
+    # Un snapshot parcial eliminaria senales y podria resolverlas por error.
+    # Conservamos el JSON anterior y reintentamos en la siguiente vuelta.
+    if failed_wallets:
+        print(f"AVISO: fallaron {len(failed_wallets)}/{len(leaderboard)} wallets; "
+              "se conservan los datos anteriores")
+        return
 
     # los bots/market makers (cientos de posiciones) no aportan senal
     scannable = {w: info for w, info in positions_by_trader.items()
@@ -635,7 +659,11 @@ def main():
     previous, history = doc.get("signals", []), doc.get("history", [])
 
     # segunda fuente: compras individuales gigantes (feed global de trades)
-    trades = get_json(TRADES_URL.format(amount=int(WHALE_MIN_USD)))
+    try:
+        trades = get_json(TRADES_URL.format(amount=int(WHALE_MIN_USD)))
+    except FetchError as exc:
+        print(f"AVISO: feed de whales no disponible ({exc}); continuo sin whales nuevas")
+        trades = []
     last_whale_ts = doc.get("lastWhaleTs", 0)
     new_whales = detect_whales(trades, last_whale_ts, set(positions_by_trader))
     now_ts = int(time.time())

@@ -6,6 +6,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
+import scanner
 from scanner import (annotate_win_rates, categoria, detect_signals,
                      detect_whales, enrich_whales, fetch_market_resolutions,
                      format_message, format_resolved, format_sample_reached,
@@ -32,6 +33,27 @@ def traders(n, prefix="a", **pos_over):
     return {f"0x{prefix}{i}": {"name": f"trader{i}", "positions": [pos(**pos_over)]}
             for i in range(n)}
 
+
+def test_get_json_wraps_transient_failure():
+    original_urlopen, original_sleep = scanner.urllib.request.urlopen, scanner.time.sleep
+    calls = []
+
+    def offline(request, timeout):
+        calls.append(request.full_url)
+        raise OSError("offline")
+
+    scanner.urllib.request.urlopen = offline
+    scanner.time.sleep = lambda _: None
+    try:
+        try:
+            scanner.get_json("https://example.test", retries=3)
+            assert False, "debio lanzar FetchError"
+        except scanner.FetchError as exc:
+            assert "fallo temporal" in str(exc)
+        assert len(calls) == 3
+    finally:
+        scanner.urllib.request.urlopen = original_urlopen
+        scanner.time.sleep = original_sleep
 
 def test_five_traders_same_outcome_is_signal():
     signals = detect_signals(traders(5), min_users=5, min_usd=500)
