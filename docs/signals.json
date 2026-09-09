@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-09-09T18:54:02+00:00",
+ "updatedAt": "2026-09-09T19:04:44+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
@@ -17,34 +17,42 @@
    "slug": "ucl-spo-gal-2026-09-09-spo",
    "eventSlug": "ucl-spo-gal-2026-09-09",
    "endDate": "2026-09-09",
-   "curPrice": 0.395,
+   "curPrice": 0.385,
    "numTraders": 6,
-   "totalUsd": 529980.95,
-   "avgEntryPrice": 0.3968,
+   "totalUsd": 651783.51,
+   "avgEntryPrice": 0.3954,
    "stale": false,
-   "upside": 1.53,
-   "entryGap": -0.002,
+   "upside": 1.6,
+   "entryGap": -0.01,
    "traders": [
     {
      "wallet": "0xd3a0b4e941b557d33a8efd5a51c581e7c79cf136",
      "name": "0xd3A0b4E941B557D33A8EFd5a51c581e7c79cF136-1787996319116",
-     "usd": 204254.16,
-     "avgPrice": 0.3977,
+     "usd": 263819.1,
+     "avgPrice": 0.3957,
      "winRate": 0.47,
      "catWinRate": 0.44
     },
     {
      "wallet": "0x9ee8bbc36d378af72e5f6b8e2ea2eb67c05a89de",
      "name": "gambamaster",
-     "usd": 200702.17,
+     "usd": 195621.1,
      "avgPrice": 0.3919,
      "winRate": 0.15,
      "catWinRate": 0.11
     },
     {
+     "wallet": "0x39d3c773be30fcc73161fc6768f46d563a779ef0",
+     "name": "matanovik",
+     "usd": 85295.21,
+     "avgPrice": 0.3909,
+     "winRate": 0.29,
+     "catWinRate": 0.33
+    },
+    {
      "wallet": "0x37e053beabee77acc15e641dfe8e395b2b2d024e",
      "name": "ChinesePro",
-     "usd": 55300,
+     "usd": 53900,
      "avgPrice": 0.4114,
      "winRate": 0.35,
      "catWinRate": 0.32
@@ -52,7 +60,7 @@
     {
      "wallet": "0x23c8a4c266d10ba5846837eac391fea89ed6f293",
      "name": "Netrol",
-     "usd": 34511.15,
+     "usd": 33637.45,
      "avgPrice": 0.4,
      "winRate": 0.45,
      "catWinRate": 0.25
@@ -60,18 +68,10 @@
     {
      "wallet": "0x381b9294c1b95b61d018ff56312fbcc4897c4d74",
      "name": "hansama231",
-     "usd": 20017.42,
+     "usd": 19510.65,
      "avgPrice": 0.3925,
      "winRate": 1.0,
      "catWinRate": 1.0
-    },
-    {
-     "wallet": "0x39d3c773be30fcc73161fc6768f46d563a779ef0",
-     "name": "matanovik",
-     "usd": 15196.05,
-     "avgPrice": 0.3952,
-     "winRate": 0.29,
-     "catWinRate": 0.33
     }
    ],
    "cat": "otras",
@@ -79,11 +79,88 @@
    "avgCatWinRate": 0.41,
    "tier": "amplio",
    "firstSeen": "2026-09-09T18:32:40+00:00",
-   "lastSeen": "2026-09-09T18:54:02+00:00",
+   "lastSeen": "2026-09-09T19:04:44+00:00",
    "entryPrice": 0.395
+  },
+  {
+   "id": "0x93953a8ae1b4a59023067c35725491ef70ad6de52bba3ff1eecb1f3f6e0a484a:0",
+   "title": "US Open WTA: Mirra Andreeva vs Coco Gauff",
+   "outcome": "Mirra Andreeva",
+   "slug": "wta-andreev-gauff-2026-09-08",
+   "eventSlug": "wta-andreev-gauff-2026-09-08",
+   "endDate": "2026-09-15",
+   "curPrice": 0.615,
+   "numTraders": 4,
+   "totalUsd": 616104.57,
+   "avgEntryPrice": 0.4488,
+   "stale": true,
+   "upside": 0.63,
+   "entryGap": 0.166,
+   "traders": [
+    {
+     "wallet": "0x31e5d54aded22aa7cd80dbe9e33102abe2504879",
+     "name": "Noprajsk",
+     "usd": 423612.35,
+     "avgPrice": 0.4258,
+     "winRate": null,
+     "catWinRate": null
+    },
+    {
+     "wallet": "0x2dfa4e79eca44b7c774f40a45535adbc368a6f60",
+     "name": "BillyGating",
+     "usd": 131184.96,
+     "avgPrice": 0.5399,
+     "winRate": 0.89,
+     "catWinRate": 0.89
+    },
+    {
+     "wallet": "0xd3a0b4e941b557d33a8efd5a51c581e7c79cf136",
+     "name": "0xd3A0b4E941B557D33A8EFd5a51c581e7c79cF136-1787996319116",
+     "usd": 36900,
+     "avgPrice": 0.32,
+     "winRate": 0.47,
+     "catWinRate": null
+    },
+    {
+     "wallet": "0x9c68e5a4b3004bf6ac9d6735a33ffb5f983a247a",
+     "name": "Antblack",
+     "usd": 24407.26,
+     "avgPrice": 0.5543,
+     "winRate": null,
+     "catWinRate": null
+    }
+   ],
+   "cat": "deportes",
+   "avgWinRate": 0.68,
+   "avgCatWinRate": 0.89,
+   "tier": "especialistas",
+   "firstSeen": "2026-09-09T19:04:44+00:00",
+   "lastSeen": "2026-09-09T19:04:44+00:00",
+   "entryPrice": 0.615
   }
  ],
  "whales": [
+  {
+   "tx": "0xce0d9e41db5f1108a7ff90ebaad67bd99d3ff444511fd7648e3d5117b0a2fb2f",
+   "wallet": "0x7c37b52eb226bcb9411375ec48b0169663fb6aeb",
+   "name": "Diabolical-Prize",
+   "usd": 61000.0,
+   "price": 0.61,
+   "title": "Will Sporting CP win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-spo-gal-2026-09-09",
+   "conditionId": "0x789f0872f66cfffd21a33020e5c90e11f95f947e03be77ac2df7e86b0cb71527",
+   "outcomeIndex": 0,
+   "timestamp": 1788979977,
+   "isTop": false,
+   "longshot": false,
+   "repeatBuys": 3,
+   "walletUsd": 537500,
+   "winRate": 0.09,
+   "netPnl": 28530.94,
+   "wins30d": 4,
+   "losses30d": 41
+  },
   {
    "tx": "0x487a65855ef915c3bbdf82a5c15a9ecbbd69004f59352dcda3e7ac8e00ff235b",
    "wallet": "0x7c37b52eb226bcb9411375ec48b0169663fb6aeb",
@@ -274,216 +351,6 @@
    "losses30d": 41
   },
   {
-   "tx": "0x6c06f7ee70f298d0474f522fb9d1e123eff13c5e9c63f5c54c0a720811aec954",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 127555.1,
-   "price": 0.82,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788972271,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 12,
-   "walletUsd": 2272960.46,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0x579769403498ae8b9fe0e2729b215216a2e0dbd58a201cd1309312de2749dbe7",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 72888.15,
-   "price": 0.82,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788972246,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 13,
-   "walletUsd": 2272960.46,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0xf081109cbca653f9bd0d75b4ac7f545a921ba932fa4fe11772c46b711c914fdd",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 127449.32,
-   "price": 0.82,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788972223,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 14,
-   "walletUsd": 2272960.46,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0x449cf269e3fac2210d242ebec0ae3e234d6937a6ab429804010e81ba4812a792",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 209555.1,
-   "price": 0.82,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788972213,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 15,
-   "walletUsd": 2272960.46,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0x73ee1cbd75ff30c3d81f556888a40e1678099fb28da89f75d7331964daaf2ab5",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 454901.6,
-   "price": 0.8188237073,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788972153,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 9,
-   "walletUsd": 2301196.0,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0xc115927f7e47795dd93e1f19a925cbef2d598c5a57266339c4c8a05525099384",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 71999.27,
-   "price": 0.81,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788971772,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 10,
-   "walletUsd": 2301196.0,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0x1bea2d4892b5545c851fac72382c8a7c16d8034eef9f2d030d7b19fd79eab448",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 152999.28,
-   "price": 0.81,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788971724,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 11,
-   "walletUsd": 2301196.0,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0xc46c016c51977f38b2cae09190d3dab4ddd2fb8497c8cdb2b1da98b897536e35",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 247499.55,
-   "price": 0.81,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788971359,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 6,
-   "walletUsd": 1190790.13,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0x16d49817cbe7b5b95b156b118cb5f1e14f28438b348edcdd39d505cefd28b604",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 53332.8,
-   "price": 0.8,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788970651,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 7,
-   "walletUsd": 1190790.13,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0xc6f75c6c37d175fecb455966a22cef65bcc35116110339681d1cff50e8453a2d",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 65266.72,
-   "price": 0.8,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788970549,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 8,
-   "walletUsd": 1190790.13,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
    "tx": "0x82e758bd3d858372022b3430ba83b70e3b57973f7691fea35deb9e7ef77d039d",
    "wallet": "0x51698a47f840a242abc2ca0351371c7ffac41842",
    "name": "00gringo00",
@@ -503,153 +370,6 @@
    "netPnl": 672664.25,
    "wins30d": null,
    "losses30d": null
-  },
-  {
-   "tx": "0x000e205aaa0c774b62c14e1cebca7c592f873902aceb6272f0dc5aaaacd86abc",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 142221.6,
-   "price": 0.8,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788970411,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 3,
-   "walletUsd": 718433.07,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0x01a596f3b052f2a9385a28f350e5c8015688e16fd8e306297b33f126a0d325d3",
-   "wallet": "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563",
-   "name": "0x2c335066FE58fe9237c3d3Dc7b275C2a034a0563-1759935795465",
-   "usd": 58603.68,
-   "price": 0.8,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788970249,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 1,
-   "walletUsd": 6269287.92,
-   "winRate": 0.08,
-   "netPnl": 6441105.18,
-   "wins30d": 22,
-   "losses30d": 237
-  },
-  {
-   "tx": "0xbb05fff42f997965e71904ed0984643f311d31fc7e786cb3f2dde07aadbbafc7",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 231110.4,
-   "price": 0.8,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788970245,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 4,
-   "walletUsd": 718433.07,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0x364810bd23eeb3cdcb9f5e1d5206389afdc2b1ff9dacde8c35b6bc4ab49c8895",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 79999.2,
-   "price": 0.8,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788970227,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 5,
-   "walletUsd": 718433.07,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0xfa5b130f14e421f022dc3d5a7b42a09ff96ea8c4bf6547ca7f307ff5c52036d0",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 70221.52,
-   "price": 0.79,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788970104,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 1,
-   "walletUsd": 600574.8,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0x239059ff8f882999bf7477d8c7aca5f1ac04d0b5c087b76314dc03e75fc93de2",
-   "wallet": "0x0f6f76ced62a911bccef92f50faaff143854d977",
-   "name": "totoro3miyazaki",
-   "usd": 77912.64,
-   "price": 0.78,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788970059,
-   "isTop": true,
-   "longshot": false,
-   "repeatBuys": 2,
-   "walletUsd": 600574.8,
-   "winRate": 0.64,
-   "netPnl": 85328.16,
-   "wins30d": 7,
-   "losses30d": 4
-  },
-  {
-   "tx": "0x391cc5264306cda7f139363955659b234d0a18a4982099efc36948c870e32c24",
-   "wallet": "0x076daa87c4fe1a85402a9b6b8e0a866224388d4c",
-   "name": "",
-   "usd": 147928.99,
-   "price": 0.78,
-   "title": "Will VfB Stuttgart win on 2026-09-09?",
-   "outcome": "Yes",
-   "eventSlug": "ucl-stu-vf-2026-09-09",
-   "conditionId": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74",
-   "outcomeIndex": 0,
-   "timestamp": 1788969268,
-   "isTop": false,
-   "longshot": false,
-   "repeatBuys": 3,
-   "walletUsd": 205704.23,
-   "winRate": 0.15,
-   "netPnl": 64828.45,
-   "wins30d": 34,
-   "losses30d": 190
   },
   {
    "tx": "0x68560f0c027273a0ffc9bc9ea2c0217b1d8ad63329e57fa99ff71f3a2454ed6c",
@@ -2066,169 +1786,55 @@
    "losses30d": 25
   }
  ],
- "lastWhaleTs": 1788979824,
+ "lastWhaleTs": 1788980112,
  "trackRecords": {
-  "0xc2e7800b5af46e6093872b177b7a5e7f0563be51": {
-   "wins": 24,
-   "losses": 1,
-   "net": 1606178.48,
-   "cats": {
-    "deportes": {
-     "wins": 16,
-     "losses": 1
-    },
-    "otras": {
-     "wins": 8,
-     "losses": 0
-    }
-   },
-   "at": 1788976232
-  },
-  "0x83720820a8aa6c3f20ad71850e7a1a17d16c5223": {
-   "wins": 9,
-   "losses": 9,
-   "net": 120724.28,
+  "0x7ad71d79a3bb90d0a87a06500fa0fe11663842aa": {
+   "wins": 1,
+   "losses": 31,
+   "net": 115803.06,
    "cats": {
     "otras": {
-     "wins": 9,
-     "losses": 3
+     "wins": 1,
+     "losses": 22
     },
     "deportes": {
      "wins": 0,
-     "losses": 6
+     "losses": 9
     }
    },
-   "at": 1788974305
+   "at": 1788960948
   },
-  "0x076daa87c4fe1a85402a9b6b8e0a866224388d4c": {
-   "wins": 33,
-   "losses": 187,
-   "net": 69922.75,
-   "cats": {
-    "deportes": {
-     "wins": 31,
-     "losses": 125
-    },
-    "otras": {
-     "wins": 2,
-     "losses": 62
-    }
-   },
-   "at": 1788977511
-  },
-  "0xeb34b86ca3ca64eb3cee6c9a0cce668385df7268": {
-   "wins": 0,
-   "losses": 0,
-   "net": 22356.28,
-   "cats": {},
-   "at": 1788965383
-  },
-  "0xd570e634aeb745d6501566dba5f81a555cc7e4f8": {
+  "0x397062018dfb77e855608fe23223592bc82c44ce": {
    "wins": 8,
-   "losses": 13,
-   "net": 614463.17,
+   "losses": 12,
+   "net": 420389.28,
    "cats": {
     "deportes": {
      "wins": 8,
-     "losses": 13
+     "losses": 12
     }
    },
    "at": 1788960948
   },
-  "0x39d3c773be30fcc73161fc6768f46d563a779ef0": {
-   "wins": 4,
-   "losses": 10,
-   "net": 1804.62,
-   "cats": {
-    "otras": {
-     "wins": 3,
-     "losses": 6
-    },
-    "deportes": {
-     "wins": 1,
-     "losses": 4
-    }
-   },
-   "at": 1788971094
-  },
-  "0x5e9458202b5817a72cf81105ec8a30e6f3705ba1": {
-   "wins": 5,
-   "losses": 0,
-   "net": 232717.05,
-   "cats": {
-    "deportes": {
-     "wins": 5,
-     "losses": 0
-    }
-   },
-   "at": 1788960948
-  },
-  "0x51698a47f840a242abc2ca0351371c7ffac41842": {
-   "wins": 0,
-   "losses": 0,
-   "net": 657305.69,
-   "cats": {},
-   "at": 1788974305
-  },
-  "0x3f985e3a68f88e6ed8da1a22e1a5eda81c8e0aa1": {
-   "wins": 13,
-   "losses": 94,
-   "net": 118004.98,
-   "cats": {
-    "otras": {
-     "wins": 1,
-     "losses": 4
-    },
-    "deportes": {
-     "wins": 12,
-     "losses": 90
-    }
-   },
-   "at": 1788977511
-  },
-  "0x224a89dbe0db0d6124b335edabd15b3f877da3d5": {
-   "wins": 30,
-   "losses": 168,
-   "net": 280102.11,
-   "cats": {
-    "deportes": {
-     "wins": 21,
-     "losses": 97
-    },
-    "otras": {
-     "wins": 9,
-     "losses": 71
-    }
-   },
-   "at": 1788960948
-  },
-  "0x31e5d54aded22aa7cd80dbe9e33102abe2504879": {
+  "0x4f1d5ae26fc31472966e951af3183308736d8de2": {
    "wins": 1,
-   "losses": 0,
-   "net": 195175.38,
+   "losses": 53,
+   "net": 1021.72,
    "cats": {
-    "deportes": {
+    "cripto": {
      "wins": 1,
      "losses": 0
-    }
-   },
-   "at": 1788966019
-  },
-  "0xd3a0b4e941b557d33a8efd5a51c581e7c79cf136": {
-   "wins": 8,
-   "losses": 9,
-   "net": 262245.41,
-   "cats": {
-    "otras": {
-     "wins": 7,
-     "losses": 9
     },
-    "deportes": {
-     "wins": 1,
-     "losses": 0
+    "otras": {
+     "wins": 0,
+     "losses": 31
+    },
+    "politica": {
+     "wins": 0,
+     "losses": 22
     }
    },
-   "at": 1788974305
+   "at": 1788972389
   },
   "0xc32359bbc920b365a05cd310b9a998508c980077": {
    "wins": 20,
@@ -2242,17 +1848,17 @@
    },
    "at": 1788980075
   },
-  "0xa9bb7b5ef3d2e8ddb498ac251a4ec144e089701b": {
-   "wins": 2,
+  "0x18aa8876fb0b103590ba8fd9744a6eabf5bdf959": {
+   "wins": 1,
    "losses": 0,
-   "net": 173129.2,
+   "net": 147693.07,
    "cats": {
-    "otras": {
-     "wins": 2,
+    "deportes": {
+     "wins": 1,
      "losses": 0
     }
    },
-   "at": 1788978153
+   "at": 1788964748
   },
   "0x42477970683d4d0a52ec7082fee5d760cc5591c4": {
    "wins": 22,
@@ -2274,152 +1880,88 @@
    },
    "at": 1788960948
   },
-  "0xb52e8b3afd9f0f0d502a5a76494b42816d67285c": {
-   "wins": 16,
-   "losses": 18,
-   "net": 217188.49,
-   "cats": {
-    "otras": {
-     "wins": 12,
-     "losses": 13
-    },
-    "deportes": {
-     "wins": 4,
-     "losses": 5
-    }
-   },
-   "at": 1788980075
-  },
-  "0x82cf2b31d18fca19830e216b98cffa5dbc6c0998": {
-   "wins": 17,
-   "losses": 0,
-   "net": 137302.17,
-   "cats": {
-    "otras": {
-     "wins": 7,
-     "losses": 0
-    },
-    "deportes": {
-     "wins": 10,
-     "losses": 0
-    }
-   },
-   "at": 1788959051
-  },
-  "0xb1ca909e848cc24ec4e220ce1c453bc290c51705": {
-   "wins": 3,
-   "losses": 15,
-   "net": 848851.6,
-   "cats": {
-    "otras": {
-     "wins": 1,
-     "losses": 7
-    },
-    "politica": {
-     "wins": 2,
-     "losses": 8
-    }
-   },
-   "at": 1788966656
-  },
-  "0x18aa8876fb0b103590ba8fd9744a6eabf5bdf959": {
-   "wins": 1,
-   "losses": 0,
-   "net": 147693.07,
-   "cats": {
-    "deportes": {
-     "wins": 1,
-     "losses": 0
-    }
-   },
-   "at": 1788964748
-  },
-  "0x821dab0565ebf5b327f51db06223fdcfe01acf16": {
+  "0xb0c85813a7a4428f1139ff91d3118a92c391fe7f": {
    "wins": 0,
    "losses": 0,
-   "net": 616485.56,
+   "net": 537.41,
    "cats": {},
-   "at": 1788975592
+   "at": 1788974305
   },
-  "0x9ee8bbc36d378af72e5f6b8e2ea2eb67c05a89de": {
-   "wins": 3,
-   "losses": 17,
-   "net": 157379.22,
+  "0x83720820a8aa6c3f20ad71850e7a1a17d16c5223": {
+   "wins": 9,
+   "losses": 9,
+   "net": 120724.28,
    "cats": {
     "otras": {
-     "wins": 2,
-     "losses": 16
+     "wins": 9,
+     "losses": 3
     },
     "deportes": {
-     "wins": 1,
-     "losses": 1
+     "wins": 0,
+     "losses": 6
     }
    },
    "at": 1788974305
   },
-  "0x23c8a4c266d10ba5846837eac391fea89ed6f293": {
-   "wins": 13,
-   "losses": 16,
-   "net": 729.5,
+  "0x2dfa4e79eca44b7c774f40a45535adbc368a6f60": {
+   "wins": 8,
+   "losses": 1,
+   "net": 509288.39,
    "cats": {
     "deportes": {
-     "wins": 11,
-     "losses": 10
-    },
-    "otras": {
-     "wins": 2,
-     "losses": 6
-    }
-   },
-   "at": 1788980075
-  },
-  "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563": {
-   "wins": 22,
-   "losses": 237,
-   "net": 6441105.18,
-   "cats": {
-    "deportes": {
-     "wins": 13,
-     "losses": 187
-    },
-    "otras": {
-     "wins": 9,
-     "losses": 50
-    }
-   },
-   "at": 1788961585
-  },
-  "0x381b9294c1b95b61d018ff56312fbcc4897c4d74": {
-   "wins": 30,
-   "losses": 0,
-   "net": 127560.54,
-   "cats": {
-    "otras": {
-     "wins": 23,
-     "losses": 0
-    },
-    "deportes": {
-     "wins": 7,
-     "losses": 0
-    }
-   },
-   "at": 1788978153
-  },
-  "0x0f6f76ced62a911bccef92f50faaff143854d977": {
-   "wins": 7,
-   "losses": 4,
-   "net": 525913.83,
-   "cats": {
-    "otras": {
-     "wins": 6,
-     "losses": 3
-    },
-    "deportes": {
-     "wins": 1,
+     "wins": 8,
      "losses": 1
     }
    },
+   "at": 1788960948
+  },
+  "0x076daa87c4fe1a85402a9b6b8e0a866224388d4c": {
+   "wins": 33,
+   "losses": 187,
+   "net": 69922.75,
+   "cats": {
+    "deportes": {
+     "wins": 31,
+     "losses": 125
+    },
+    "otras": {
+     "wins": 2,
+     "losses": 62
+    }
+   },
    "at": 1788977511
+  },
+  "0xabb89972b21b304c1bed2bf26f35c8741ac9bba3": {
+   "wins": 82,
+   "losses": 6,
+   "net": 9224.51,
+   "cats": {
+    "deportes": {
+     "wins": 71,
+     "losses": 3
+    },
+    "otras": {
+     "wins": 11,
+     "losses": 3
+    }
+   },
+   "at": 1788967923
+  },
+  "0xa71093cafc0c099b4ccab24c3cb8018d817923c4": {
+   "wins": 16,
+   "losses": 2,
+   "net": 221554.05,
+   "cats": {
+    "deportes": {
+     "wins": 11,
+     "losses": 1
+    },
+    "otras": {
+     "wins": 5,
+     "losses": 1
+    }
+   },
+   "at": 1788974305
   },
   "0x37e053beabee77acc15e641dfe8e395b2b2d024e": {
    "wins": 7,
@@ -2437,12 +1979,223 @@
    },
    "at": 1788974953
   },
-  "0xb0c85813a7a4428f1139ff91d3118a92c391fe7f": {
+  "0x9c68e5a4b3004bf6ac9d6735a33ffb5f983a247a": {
    "wins": 0,
    "losses": 0,
-   "net": 537.41,
+   "net": 112611.26,
    "cats": {},
-   "at": 1788974305
+   "at": 1788979435
+  },
+  "0x23c8a4c266d10ba5846837eac391fea89ed6f293": {
+   "wins": 13,
+   "losses": 16,
+   "net": 729.5,
+   "cats": {
+    "deportes": {
+     "wins": 11,
+     "losses": 10
+    },
+    "otras": {
+     "wins": 2,
+     "losses": 6
+    }
+   },
+   "at": 1788980075
+  },
+  "0xe76f0a36d05d215a69f1f84466c8922702a1d40c": {
+   "wins": 2,
+   "losses": 1,
+   "net": 65049.98,
+   "cats": {
+    "deportes": {
+     "wins": 2,
+     "losses": 1
+    }
+   },
+   "at": 1788961585
+  },
+  "0x7c37b52eb226bcb9411375ec48b0169663fb6aeb": {
+   "wins": 4,
+   "losses": 41,
+   "net": 28530.94,
+   "cats": {
+    "deportes": {
+     "wins": 3,
+     "losses": 40
+    },
+    "otras": {
+     "wins": 1,
+     "losses": 1
+    }
+   },
+   "at": 1788980718
+  },
+  "0xd570e634aeb745d6501566dba5f81a555cc7e4f8": {
+   "wins": 8,
+   "losses": 13,
+   "net": 614463.17,
+   "cats": {
+    "deportes": {
+     "wins": 8,
+     "losses": 13
+    }
+   },
+   "at": 1788960948
+  },
+  "0x5e9458202b5817a72cf81105ec8a30e6f3705ba1": {
+   "wins": 5,
+   "losses": 0,
+   "net": 232717.05,
+   "cats": {
+    "deportes": {
+     "wins": 5,
+     "losses": 0
+    }
+   },
+   "at": 1788960948
+  },
+  "0x0f6f76ced62a911bccef92f50faaff143854d977": {
+   "wins": 7,
+   "losses": 4,
+   "net": 525913.83,
+   "cats": {
+    "otras": {
+     "wins": 6,
+     "losses": 3
+    },
+    "deportes": {
+     "wins": 1,
+     "losses": 1
+    }
+   },
+   "at": 1788977511
+  },
+  "0xa9bb7b5ef3d2e8ddb498ac251a4ec144e089701b": {
+   "wins": 2,
+   "losses": 0,
+   "net": 173129.2,
+   "cats": {
+    "otras": {
+     "wins": 2,
+     "losses": 0
+    }
+   },
+   "at": 1788978153
+  },
+  "0x381b9294c1b95b61d018ff56312fbcc4897c4d74": {
+   "wins": 30,
+   "losses": 0,
+   "net": 127560.54,
+   "cats": {
+    "otras": {
+     "wins": 23,
+     "losses": 0
+    },
+    "deportes": {
+     "wins": 7,
+     "losses": 0
+    }
+   },
+   "at": 1788978153
+  },
+  "0x3f985e3a68f88e6ed8da1a22e1a5eda81c8e0aa1": {
+   "wins": 13,
+   "losses": 94,
+   "net": 118004.98,
+   "cats": {
+    "otras": {
+     "wins": 1,
+     "losses": 4
+    },
+    "deportes": {
+     "wins": 12,
+     "losses": 90
+    }
+   },
+   "at": 1788977511
+  },
+  "0xb52e8b3afd9f0f0d502a5a76494b42816d67285c": {
+   "wins": 16,
+   "losses": 18,
+   "net": 217188.49,
+   "cats": {
+    "otras": {
+     "wins": 12,
+     "losses": 13
+    },
+    "deportes": {
+     "wins": 4,
+     "losses": 5
+    }
+   },
+   "at": 1788980075
+  },
+  "0x03805a13a0b3e058f55f6c6af95389d4f431073d": {
+   "wins": 1,
+   "losses": 1,
+   "net": 17100.37,
+   "cats": {
+    "otras": {
+     "wins": 1,
+     "losses": 0
+    },
+    "deportes": {
+     "wins": 0,
+     "losses": 1
+    }
+   },
+   "at": 1788960948
+  },
+  "0xeb34b86ca3ca64eb3cee6c9a0cce668385df7268": {
+   "wins": 0,
+   "losses": 0,
+   "net": 22356.28,
+   "cats": {},
+   "at": 1788965383
+  },
+  "0x0346afae2603313d2bbee96b628536c8cbe352a5": {
+   "wins": 11,
+   "losses": 267,
+   "net": 225298.49,
+   "cats": {
+    "otras": {
+     "wins": 4,
+     "losses": 149
+    },
+    "deportes": {
+     "wins": 7,
+     "losses": 118
+    }
+   },
+   "at": 1788976872
+  },
+  "0x21064fd320bfd5a86f8c92a94d3209edf4154dea": {
+   "wins": 0,
+   "losses": 24,
+   "net": 69151.18,
+   "cats": {
+    "otras": {
+     "wins": 0,
+     "losses": 15
+    },
+    "deportes": {
+     "wins": 0,
+     "losses": 9
+    }
+   },
+   "at": 1788964748
+  },
+  "0x31e5d54aded22aa7cd80dbe9e33102abe2504879": {
+   "wins": 1,
+   "losses": 0,
+   "net": 195175.38,
+   "cats": {
+    "deportes": {
+     "wins": 1,
+     "losses": 0
+    }
+   },
+   "at": 1788966019
   },
   "0x9319a045cdd0c2180e5eb7ad44374383db9a6410": {
    "wins": 10,
@@ -2484,49 +2237,21 @@
    },
    "at": 1788975592
   },
-  "0x03805a13a0b3e058f55f6c6af95389d4f431073d": {
-   "wins": 1,
-   "losses": 1,
-   "net": 17100.37,
+  "0xd3a0b4e941b557d33a8efd5a51c581e7c79cf136": {
+   "wins": 8,
+   "losses": 9,
+   "net": 262245.41,
    "cats": {
     "otras": {
+     "wins": 7,
+     "losses": 9
+    },
+    "deportes": {
      "wins": 1,
      "losses": 0
-    },
-    "deportes": {
-     "wins": 0,
-     "losses": 1
-    }
-   },
-   "at": 1788960948
-  },
-  "0xa71093cafc0c099b4ccab24c3cb8018d817923c4": {
-   "wins": 16,
-   "losses": 2,
-   "net": 221554.05,
-   "cats": {
-    "deportes": {
-     "wins": 11,
-     "losses": 1
-    },
-    "otras": {
-     "wins": 5,
-     "losses": 1
     }
    },
    "at": 1788974305
-  },
-  "0x2dfa4e79eca44b7c774f40a45535adbc368a6f60": {
-   "wins": 8,
-   "losses": 1,
-   "net": 509288.39,
-   "cats": {
-    "deportes": {
-     "wins": 8,
-     "losses": 1
-    }
-   },
-   "at": 1788960948
   },
   "0xce29c0049a9abc3ce97ccca91bae0a480d073b0d": {
    "wins": 18,
@@ -2540,56 +2265,93 @@
    },
    "at": 1788964748
   },
-  "0x9c68e5a4b3004bf6ac9d6735a33ffb5f983a247a": {
-   "wins": 0,
-   "losses": 0,
-   "net": 112611.26,
-   "cats": {},
-   "at": 1788979435
-  },
-  "0xe76f0a36d05d215a69f1f84466c8922702a1d40c": {
-   "wins": 2,
-   "losses": 1,
-   "net": 65049.98,
+  "0xd3b034d7bfb2473fb252d0414646d9786bac329e": {
+   "wins": 20,
+   "losses": 5,
+   "net": 77662.55,
    "cats": {
     "deportes": {
+     "wins": 20,
+     "losses": 5
+    }
+   },
+   "at": 1788962218
+  },
+  "0x82cf2b31d18fca19830e216b98cffa5dbc6c0998": {
+   "wins": 17,
+   "losses": 0,
+   "net": 137302.17,
+   "cats": {
+    "otras": {
+     "wins": 7,
+     "losses": 0
+    },
+    "deportes": {
+     "wins": 10,
+     "losses": 0
+    }
+   },
+   "at": 1788980718
+  },
+  "0x9ee8bbc36d378af72e5f6b8e2ea2eb67c05a89de": {
+   "wins": 3,
+   "losses": 17,
+   "net": 157379.22,
+   "cats": {
+    "otras": {
      "wins": 2,
+     "losses": 16
+    },
+    "deportes": {
+     "wins": 1,
      "losses": 1
     }
    },
-   "at": 1788961585
+   "at": 1788974305
   },
-  "0x7ad71d79a3bb90d0a87a06500fa0fe11663842aa": {
-   "wins": 1,
-   "losses": 31,
-   "net": 115803.06,
+  "0xc2e7800b5af46e6093872b177b7a5e7f0563be51": {
+   "wins": 24,
+   "losses": 1,
+   "net": 1606178.48,
    "cats": {
-    "otras": {
-     "wins": 1,
-     "losses": 22
-    },
     "deportes": {
-     "wins": 0,
-     "losses": 9
+     "wins": 16,
+     "losses": 1
+    },
+    "otras": {
+     "wins": 8,
+     "losses": 0
     }
    },
-   "at": 1788960948
+   "at": 1788976232
   },
-  "0xabb89972b21b304c1bed2bf26f35c8741ac9bba3": {
-   "wins": 82,
-   "losses": 6,
-   "net": 9224.51,
+  "0x29b52d98ac9ef9414b04164246c95bc63d74cc6c": {
+   "wins": 11,
+   "losses": 0,
+   "net": 128422.19,
    "cats": {
     "deportes": {
-     "wins": 71,
-     "losses": 3
-    },
-    "otras": {
      "wins": 11,
-     "losses": 3
+     "losses": 0
     }
    },
    "at": 1788967923
+  },
+  "0xb1ca909e848cc24ec4e220ce1c453bc290c51705": {
+   "wins": 3,
+   "losses": 15,
+   "net": 848851.6,
+   "cats": {
+    "otras": {
+     "wins": 1,
+     "losses": 7
+    },
+    "politica": {
+     "wins": 2,
+     "losses": 8
+    }
+   },
+   "at": 1788966656
   },
   "0x04d5524a0a5af2eca6e39e03defc261d42fe66d8": {
    "wins": 8,
@@ -2607,45 +2369,53 @@
    },
    "at": 1788974305
   },
-  "0x29b52d98ac9ef9414b04164246c95bc63d74cc6c": {
-   "wins": 11,
-   "losses": 0,
-   "net": 128422.19,
+  "0x224a89dbe0db0d6124b335edabd15b3f877da3d5": {
+   "wins": 30,
+   "losses": 168,
+   "net": 280102.11,
    "cats": {
     "deportes": {
-     "wins": 11,
-     "losses": 0
+     "wins": 21,
+     "losses": 97
+    },
+    "otras": {
+     "wins": 9,
+     "losses": 71
     }
    },
-   "at": 1788967923
+   "at": 1788960948
   },
-  "0x21064fd320bfd5a86f8c92a94d3209edf4154dea": {
-   "wins": 0,
-   "losses": 24,
-   "net": 69151.18,
+  "0x39d3c773be30fcc73161fc6768f46d563a779ef0": {
+   "wins": 4,
+   "losses": 10,
+   "net": 1804.62,
    "cats": {
     "otras": {
-     "wins": 0,
-     "losses": 15
+     "wins": 3,
+     "losses": 6
     },
     "deportes": {
-     "wins": 0,
-     "losses": 9
+     "wins": 1,
+     "losses": 4
     }
    },
-   "at": 1788964748
+   "at": 1788971094
   },
-  "0xd3b034d7bfb2473fb252d0414646d9786bac329e": {
-   "wins": 20,
-   "losses": 5,
-   "net": 77662.55,
+  "0x2c335066fe58fe9237c3d3dc7b275c2a034a0563": {
+   "wins": 22,
+   "losses": 237,
+   "net": 6441105.18,
    "cats": {
     "deportes": {
-     "wins": 20,
-     "losses": 5
+     "wins": 13,
+     "losses": 187
+    },
+    "otras": {
+     "wins": 9,
+     "losses": 50
     }
    },
-   "at": 1788962218
+   "at": 1788961585
   },
   "0xf68a281980f8c13828e84e147e3822381d6e5b1b": {
    "wins": 7,
@@ -2663,18 +2433,6 @@
    },
    "at": 1788964748
   },
-  "0x397062018dfb77e855608fe23223592bc82c44ce": {
-   "wins": 8,
-   "losses": 12,
-   "net": 420389.28,
-   "cats": {
-    "deportes": {
-     "wins": 8,
-     "losses": 12
-    }
-   },
-   "at": 1788960948
-  },
   "0x73e3fec494611d73c170cb2f23850fd998b21be9": {
    "wins": 5,
    "losses": 66,
@@ -2687,41 +2445,19 @@
    },
    "at": 1788960948
   },
-  "0x0346afae2603313d2bbee96b628536c8cbe352a5": {
-   "wins": 11,
-   "losses": 267,
-   "net": 225298.49,
-   "cats": {
-    "otras": {
-     "wins": 4,
-     "losses": 149
-    },
-    "deportes": {
-     "wins": 7,
-     "losses": 118
-    }
-   },
-   "at": 1788976872
+  "0x51698a47f840a242abc2ca0351371c7ffac41842": {
+   "wins": 0,
+   "losses": 0,
+   "net": 657305.69,
+   "cats": {},
+   "at": 1788974305
   },
-  "0x4f1d5ae26fc31472966e951af3183308736d8de2": {
-   "wins": 1,
-   "losses": 53,
-   "net": 1021.72,
-   "cats": {
-    "cripto": {
-     "wins": 1,
-     "losses": 0
-    },
-    "otras": {
-     "wins": 0,
-     "losses": 31
-    },
-    "politica": {
-     "wins": 0,
-     "losses": 22
-    }
-   },
-   "at": 1788972389
+  "0x821dab0565ebf5b327f51db06223fdcfe01acf16": {
+   "wins": 0,
+   "losses": 0,
+   "net": 616485.56,
+   "cats": {},
+   "at": 1788975592
   }
  },
  "sourceStats": {
@@ -2732,9 +2468,9 @@
    "suppressed": false
   },
   "whale": {
-   "n": 964,
-   "wins": 585,
-   "avgRoi": 0.04,
+   "n": 981,
+   "wins": 602,
+   "avgRoi": 0.043,
    "suppressed": false
   }
  },
@@ -15073,6 +14809,210 @@
    "entryPrice": 0.8554,
    "roi": 0.169,
    "resolvedAt": "2026-09-09T16:13:51+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.82,
+   "roi": 0.22,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.82,
+   "roi": 0.22,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.82,
+   "roi": 0.22,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.82,
+   "roi": 0.22,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.8188,
+   "roi": 0.221,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.81,
+   "roi": 0.235,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.81,
+   "roi": 0.235,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.81,
+   "roi": 0.235,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.8,
+   "roi": 0.25,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.8,
+   "roi": 0.25,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.8,
+   "roi": 0.25,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.8,
+   "roi": 0.25,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.8,
+   "roi": 0.25,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.8,
+   "roi": 0.25,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.79,
+   "roi": 0.266,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.78,
+   "roi": 0.282,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
+   "won": true,
+   "source": "whale"
+  },
+  {
+   "id": "0x8ea79f7ed54ab0da2f106b7ea998a39e6784cc3a4ae639599684ccc1c0ef4b74:0",
+   "title": "Will VfB Stuttgart win on 2026-09-09?",
+   "outcome": "Yes",
+   "eventSlug": "ucl-stu-vf-2026-09-09",
+   "numTraders": 1,
+   "entryPrice": 0.78,
+   "roi": 0.282,
+   "resolvedAt": "2026-09-09T19:04:44+00:00",
    "won": true,
    "source": "whale"
   }
