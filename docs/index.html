@@ -314,7 +314,11 @@ const NOMBRE_FUENTE = {
   'especialistas_por_acierto': '🎯 por acierto', 'especialistas_por_ventaja': '🎯 por ventaja',
   'whale': '🐋 whales', 'investigacion': '🔬 todas las detectadas',
   'entrada': '⚡ compras nuevas', 'entrada:ventaja+': '⚡ de traders con ventaja',
-  'entrada:2+': '⚡ 2+ traders en 24 h'};
+  'entrada:2+': '⚡ 2+ traders en 24 h',
+  'coincidencia:previa': '⏳ antes del partido', 'coincidencia:directo': '🔴 en directo',
+  'coincidencia:sin_hora': '📅 sin hora (largo plazo)',
+  'entrada:previa': '⚡⏳ antes del partido', 'entrada:directo': '⚡🔴 en directo',
+  'entrada:sin_hora': '⚡📅 sin hora'};
 const DESC_FUENTE = {
   'investigacion': 'Todas las señales detectadas, alertadas o no, con entrada en la detección + coste. Solo para estudiar; no decide nada.',
   'entrada': 'Investigación: cada compra nueva (≥ $1.000) de un top trader, medida al precio del escaneo en que se vio + coste. Una por mercado y día. No se notifica.',
@@ -324,8 +328,10 @@ const DESC_FUENTE = {
 function renderSources() {
   const st = datos.sourceStats ?? {};
   const orden = ['coincidencia', 'coincidencia:amplio', 'coincidencia:especialistas',
+    'coincidencia:previa', 'coincidencia:directo', 'coincidencia:sin_hora',
     'especialistas_por_acierto', 'especialistas_por_ventaja', 'whale', 'investigacion',
-    'entrada', 'entrada:ventaja+', 'entrada:2+'];
+    'entrada', 'entrada:ventaja+', 'entrada:2+', 'entrada:previa', 'entrada:directo',
+    'entrada:sin_hora'];
   const entradas = orden.filter(k => st[k]?.n).map(k => [k, st[k]]);
   const cont = el('fuentes');
   cont.hidden = !entradas.length;
@@ -393,6 +399,8 @@ function renderSignals() {
         ${s.avgCatWinRate != null ? `<span title="acierto medio de estos traders en mercados de ${esc(s.cat)} (30d): un buen historial general dice poco fuera de su especialidad">en ${esc(s.cat)} <b>${pct(s.avgCatWinRate)}</b></span>` : ''}
         ${s.edgeEst != null ? `<span title="Media de la ventaja de estos traders frente al precio que pagaron (encogida si tienen poca muestra). Heurística SIN VALIDAR: se registra para comprobar con el histórico si predice algo.">ventaja estimada <b>${signo(s.edgeEst)}</b></span>` : ''}
         ${s.recentEntrants ? `<span title="traders que compraron en este mercado en las últimas 24 h">entradas 24 h <b>${s.recentEntrants}/${s.numTraders}</b></span>` : ''}
+        ${s.phase === 'previa' ? `<span title="El partido empieza el ${new Date(s.gameStart).toLocaleString('es-ES')}: con la información de antes del partido, 10 min de retraso pesan poco">⏳ <b>antes del partido</b></span>`
+          : s.phase === 'directo' ? `<span title="Partido en curso: el precio se mueve en minutos y llegar 10 min tarde puede cambiarlo todo">🔴 <b>en directo</b></span>` : ''}
         <span>detectada <b>${new Date(s.firstSeen).toLocaleDateString('es-ES')}</b></span>
       </div>
       ${s.stale ? `<div class="aviso-stale">⚠️ descartada: el precio difiere ${Math.abs(Math.round(deriva * 100))} pp de la entrada media (límite ±${Math.round((datos.params.maxPriceDrift ?? 0.15) * 100)}) — la tesis de entrada ya no es la actual</div>` : ''}
@@ -496,6 +504,16 @@ function pintaHistorial(hs, detId, listId, titulo, campoRoi = 'roi') {
   el(listId).innerHTML = hs.slice().reverse().slice(0, 300).map(h => filaHistorial(h, campoRoi)).join('');
 }
 
+// el historico antiguo vive en su propio archivo (no cuenta en ninguna
+// metrica); se carga una vez, en segundo plano, solo para listarlo
+let legacyHist = [];
+async function cargarLegacy() {
+  try {
+    const r = await fetch('history_legacy.json', {cache: 'force-cache'});
+    if (r.ok) { legacyHist = await r.json(); if (datos) renderHistory(); }
+  } catch (e) {}
+}
+
 function renderHistory() {
   const hist = (datos.history ?? []).filter(h => h.payout !== null || h.legacy);
   const fiable = hist.filter(h => !h.legacy);
@@ -505,12 +523,12 @@ function renderHistory() {
   pintaHistorial(coinc.filter(h => !(h.alerted && h.roi != null) && h.roiDetect != null),
                  'historial-inv', 'historial-inv-lista', '🔬 Detectadas no alertadas (investigación)',
                  'roiDetect');
-  pintaHistorial(hist.filter(h => h.legacy && esCoincidencia(h)), 'historial-legacy',
+  pintaHistorial(legacyHist.filter(esCoincidencia), 'historial-legacy',
                  'historial-legacy-lista', '⚠️ Histórico antiguo, no fiable');
   pintaHistorial(fiable.filter(h => h.source === 'whale'),
                  'historial-whales', 'historial-whales-lista',
                  'Histórico de compras whale resueltas (ROI de seguidor)');
-  pintaHistorial(hist.filter(h => h.legacy && h.source === 'whale'), 'historial-whales-legacy',
+  pintaHistorial(legacyHist.filter(h => h.source === 'whale'), 'historial-whales-legacy',
                  'historial-whales-legacy-lista', '⚠️ Whales medidas con el método antiguo');
 }
 
@@ -547,6 +565,7 @@ document.querySelectorAll('.tabs button').forEach(btn =>
   el(id).addEventListener('input', renderSignals));
 cargar();
 cargarBacktest();
+cargarLegacy();
 setInterval(cargar, 60000);
 </script>
 </body>

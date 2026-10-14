@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 import scanner
-from scanner import (deliver, detect_entries, drop_hedges, fetch_activity, oracle_due, parse_time,
+from scanner import (deliver, detect_entries, drop_hedges, fetch_market_meta, phase, fetch_activity, oracle_due, parse_time,
                      position_sizes)
 from scanner import (alertable, annotate_win_rates, categoria, detect_signals,
                      detect_whales, enrich_whales, entry_price, entry_timing,
@@ -378,6 +378,19 @@ def test_drop_hedges_cleans_both_sides():
     assert [e["id"] for e in drop_hedges([a, b, otra])] == ["0xc:0", "0xd:0"]
     c = dict(base, id="0xc:1", usd=3000.0)          # 2x: cobertura, fuera las dos
     assert drop_hedges([a, c]) == []
+
+
+def test_phase_and_market_meta():
+    assert phase("2026-10-14T18:00:00+00:00", "2026-10-14T17:00:00+00:00") == "previa"
+    assert phase("2026-10-14T18:00:00+00:00", "2026-10-14T18:30:00+00:00") == "directo"
+    assert phase(None, "2026-10-14T18:30:00+00:00") == "sin_hora"
+    fake = [{"conditionId": "0xs", "gameStartTime": "2026-10-14 18:00:00+00"},
+            {"conditionId": "0xp"}]                      # politica: sin hora
+    got = fetch_market_meta(["0xs", "0xp"], fetch=lambda url: fake)
+    assert got == {"0xs": "2026-10-14T18:00:00+00:00"}
+    def roto(url):
+        raise OSError("caido")
+    assert fetch_market_meta(["0xs"], fetch=roto) == {}
 
 
 def test_oracle_due():

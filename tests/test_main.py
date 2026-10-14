@@ -30,6 +30,7 @@ class FakeApi:
     def __init__(self):
         self.positions = {}
         self.resolved = {}
+        self.starts = {"0xA": "2099-01-01 18:00:00+00"}  # partido aun por empezar
         self.calls = []
 
     def __call__(self, url, retries=3):
@@ -45,6 +46,9 @@ class FakeApi:
             return []
         if "/book" in url:
             return {"asks": [{"price": "0.47", "size": "100000"}]}
+        if "gamma-api" in url and "closed=true" not in url:   # metadatos (hora de inicio)
+            return [{"conditionId": c, "gameStartTime": g}
+                    for c, g in self.starts.items() if f"condition_ids={c}" in url]
         if "gamma-api" in url:
             return [{"conditionId": c, "closed": True, "outcomePrices": json.dumps(p)}
                     for c, p in self.resolved.items() if f"condition_ids={c}" in url]
@@ -81,9 +85,11 @@ def test_full_lifecycle_on_real_state():
         d = run_scan(api, path, sent, ok=False)
 
         assert d["schema"] == 2
-        # el historico viejo se conserva entero, marcado legacy, y no cuenta
-        assert len(d["history"]) >= len(viejo.get("history", []))
-        assert all(h.get("legacy") for h in d["history"][:len(viejo.get("history", []))])
+        # el historico viejo se conserva entero, pero en su propio archivo
+        legacy = json.loads((tmp / "history_legacy.json").read_text(encoding="utf-8"))
+        n_viejo = len([h for h in viejo.get("history", [])])
+        assert len(legacy) == n_viejo and all(h.get("legacy") for h in legacy)
+        assert not any(h.get("legacy") for h in d["history"])
         assert d["sourceStats"]["coincidencia"]["n"] == 0
         a = d["tracked"]["0xA:0"]
         assert a["alerted"] and a["entryPrice"] == 0.47 and a["entrySource"] == "libro"
@@ -92,6 +98,8 @@ def test_full_lifecycle_on_real_state():
         assert "0xB:1" not in d["tracked"]
         assert len(sent) == 1 and "Mercado 0xA" in sent[0] and "entrada real 0.47" in sent[0]
         assert a["delivered"] is False and len(d["outbox"]) == 1
+        # hora de inicio: alertada ANTES del partido
+        assert a["gameStart"] == "2099-01-01T18:00:00+00:00" and a["phaseAtAlert"] == "previa"
         ent = json.loads((tmp / "entries.json").read_text(encoding="utf-8"))
         assert ent["pending"] == [] and "0xw0" in ent["sizes"]   # 1a foto: sin compras
 
@@ -141,6 +149,7 @@ def test_full_lifecycle_on_real_state():
         st = d["sourceStats"]
         assert st["coincidencia"]["n"] == 2
         assert st["coincidencia:amplio"]["n"] == 1 and st["coincidencia:amplio"]["avgRoi"] == -1.0
+        assert st["coincidencia:previa"]["n"] == 1                 # 0xA, antes del partido
         assert st["coincidencia:especialistas"]["n"] == 1
         assert st["coincidencia:especialistas"]["wins"] == 1
         assert d["paper"]["bets"] == 1 and d["paper"]["pnl"] == -100.0  # solo la enviada

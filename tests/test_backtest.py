@@ -79,9 +79,23 @@ def test_walk_forward_measures_out_of_sample():
         res[cid] = [1.0, 0.0] if gana else [0.0, 1.0]
     wf = walk_forward(load_series(snaps), res, split_ts=6000)
     e = wf["elegida"]
-    assert wf["combinaciones"] == 45 and e["rules"]["max_price"] < 0.85
+    assert wf["combinaciones"] == 135 and e["rules"]["max_price"] < 0.85
     assert e["train"]["avgRoi"] > 1 and e["test"]["avgRoi"] == -1.0   # se cae fuera de muestra
     assert wf["reglasActuales"]["test"]["n"] == 60
+
+
+def test_groups_by_game_phase():
+    rows = replay([(1000, {"signals": [sig("0xa:0", 0.5, eventSlug="e1")]}),
+                   (1000, {"signals": [sig("0xb:0", 0.5, eventSlug="e2")]}),
+                   (1000, {"signals": [sig("0xc:0", 0.5, eventSlug="e3")]})])
+    evaluate(rows, {
+        "0xa": {"payouts": [1.0, 0.0], "gameStart": "1970-01-01T01:00:00+00:00"},  # empieza despues
+        "0xb": {"payouts": [0.0, 1.0], "gameStart": "1970-01-01T00:00:01+00:00"},  # ya empezado
+        "0xc": {"payouts": [1.0, 0.0]}})                                          # sin hora
+    g, _ = group_stats(rows)
+    assert g["alertadas:previa"]["n"] == 1 and g["alertadas:previa"]["wins"] == 1
+    assert g["alertadas:directo"]["n"] == 1 and g["alertadas:directo"]["wins"] == 0
+    assert g["alertadas:sin_hora"]["n"] == 1
 
 
 def test_alertable_snapshot_rules():

@@ -426,10 +426,16 @@ detectadas, descartadas al nacer, favoritos), la **sensibilidad del ROI al coste
 entrada** (0 a 3 céntimos), la cartera simulada (ordenada por la hora real de cierre de
 gamma cuando existe) y una fila por señal.
 
+**Antes del partido o en directo.** Gamma da la hora de inicio de los mercados deportivos
+(`gameStartTime`), también de los ya cerrados. Cada alerta se clasifica en `previa`
+(alertada antes de empezar), `directo` (ya empezado, donde 10 minutos de retraso pesan
+mucho) o `sin_hora` (política, cripto, largo plazo). En vivo se guarda en cada señal y
+compra nueva; en el backtest se reconstruye para todo el histórico.
+
 **Validación fuera de la muestra (`walkForward`).** Ajustar filtros mirando el mismo
 resultado que se quiere predecir siempre encuentra algo "rentable" por azar. Por eso el
-backtest prueba 45 combinaciones de reglas (deriva máxima, precio máximo, traders
-mínimos) **solo con la primera mitad del periodo**, elige la mejor, y la mide **solo con
+backtest prueba 135 combinaciones de reglas (deriva máxima, precio máximo, traders
+mínimos y fase del partido) **solo con la primera mitad del periodo**, elige la mejor, y la mide **solo con
 la segunda mitad**. Si la regla tenía ventaja real, debe seguir ganando en la prueba;
 si no, se cae. Se publica también el resultado de las reglas actuales en esa misma
 segunda mitad.
@@ -592,6 +598,7 @@ polymarket-smart-money/
 │   ├── index.html        # la web (HTML + JS vanilla)
 │   ├── signals.json      # estado vivo, seguimiento e histórico (lo escribe el cron)
 │   ├── entries.json      # compras nuevas de top traders: foto de tamaños, pendientes y resueltas
+│   ├── history_legacy.json  # histórico anterior a la fase 6 (sesgado, no cuenta en métricas)
 │   ├── backtest.json     # resultado del último replay
 │   └── img/              # capturas de este README
 ├── tests/
@@ -611,7 +618,7 @@ polymarket-smart-money/
 | `updatedAt`, `params`, `migratedAt` | Último escaneo, parámetros y fecha del cambio de método |
 | `signals` | Señales cualificadas ahora: mercado, traders, precios, `tier`, `stale`, `edgeEst`, `recentEntrants`, `alerted` |
 | `tracked` | Señales en seguimiento hasta que su mercado liquide: detección, alerta y precio de entrada |
-| `history` | Resueltas: `payout`, `won`, `roi` (alerta), `roiDetect` (investigación), `legacy` si es del método antiguo |
+| `history` | Resueltas: `payout`, `won`, `roi` (alerta), `roiDetect` (investigación), `phaseAtAlert` (previa / directo / sin hora). El histórico antiguo vive aparte en `history_legacy.json` |
 | `sourceStats` | Por grupo: n, aciertos, acierto implícito, ROI, IC95, veredicto, silenciada |
 | `paper` | Cartera simulada: PnL, caída máxima, capital inmovilizado, curva |
 | `whales`, `whalesPending` | Whales recientes para la web, y todas las pendientes de medir |
