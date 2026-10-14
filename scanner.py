@@ -638,16 +638,6 @@ def trader_edge(t, cat):
     return shrunk_edge(e.get("sum", 0), e.get("n", 0))
 
 
-def is_loser(t):
-    """Perdedor conocido: neto negativo en dolares si se conoce el PnL, o mala
-    tasa de acierto cuando no. Un neto positivo basta para NO serlo aunque
-    acierte poco (cazador de longshots rentable)."""
-    if t.get("net") is not None:
-        return t["net"] <= 0
-    r = win_rate(t)
-    return r is not None and r < WHALE_MIN_WINRATE
-
-
 def activity_fetcher(fetch=None):
     """Lector de /activity con cache por escaneo: el track record y el momento
     de entrada de una senal leen el mismo feed, sin pedirlo dos veces."""
