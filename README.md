@@ -477,7 +477,7 @@ tramos (0,01-0,10 … 0,90-0,99). Si el sesgo existe, los tramos altos darán RO
 y los bajos negativo. Universo: los mercados que tienen los wallets vigilados, no todo
 Polymarket.
 
-**A · Cuotas de casas.** Cada 6 h (configurable) descarga de
+**A · Cuotas de casas.** Cada 8 h (configurable) descarga de
 [The Odds API](https://the-odds-api.com) las cuotas 1X2 de Pinnacle y Betfair para los
 deportes de `ODDS_SPORTS`, les quita el margen y las compara con los mercados deportivos
 de corto plazo de Polymarket ("Will X win on FECHA?" y "X vs. Y"; hándicaps y totales no).
@@ -572,9 +572,9 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
 | `ENTRY_MIN_USD` | `1000` | Dinero añadido mínimo para registrar una compra nueva |
 | `BIAS_DAYS` | `7` | Estrategia B: solo mercados que terminan en estos días o menos |
 | `ODDS_API_KEY` | sin definir | Estrategia A: clave de The Odds API (secret) |
-| `ODDS_SPORTS` | `soccer_epl,soccer_spain_la_liga,basketball_nba` | Estrategia A: deportes a comparar |
+| `ODDS_SPORTS` | `soccer_uefa_champs_league,soccer_uefa_europa_league,soccer_epl,soccer_spain_la_liga,americanfootball_nfl` | Estrategia A: deportes a comparar (los que aparecen en las carteras vigiladas) |
 | `ODDS_BOOKMAKERS` | `pinnacle,betfair_ex_eu` | Estrategia A: casas de referencia, por orden de preferencia |
-| `ODDS_EVERY_MIN` | `360` | Estrategia A: minutos entre consultas de cuotas (cuida el cupo gratuito) |
+| `ODDS_EVERY_MIN` | `480` | Estrategia A: minutos entre consultas (5 deportes x 3 al día ≈ 450 peticiones al mes) |
 | `ODDS_MIN_EDGE` | `0.03` | Estrategia A: ventaja mínima tras coste para registrar |
 | `SOURCE_MIN_SAMPLE` | `20` | Resueltas necesarias para juzgar una fuente |
 | `WHALE_MIN_USD` | `50000` | Importe mínimo de una compra whale |

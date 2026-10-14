@@ -105,13 +105,17 @@ def price_bias_bets(univ, seen, now, entry_cost, days=BIAS_DAYS):
 # ----------------------------------------- A · cuotas de casas afiladas
 
 ODDS_API_KEY = os.getenv("ODDS_API_KEY", "")
+# competiciones cuyos mercados aparecen de verdad en las carteras vigiladas
+# (el 14-10-2026 eran sobre todo partidos europeos de Champions/Europa League
+# y NFL; con solo Premier/LaLiga/NBA no se emparejaba ninguno)
 ODDS_SPORTS = [s.strip() for s in os.getenv(
-    "ODDS_SPORTS", "soccer_epl,soccer_spain_la_liga,basketball_nba").split(",") if s.strip()]
+    "ODDS_SPORTS", "soccer_uefa_champs_league,soccer_uefa_europa_league,soccer_epl,"
+    "soccer_spain_la_liga,americanfootball_nfl").split(",") if s.strip()]
 ODDS_BOOKMAKERS = [b.strip() for b in os.getenv(
     "ODDS_BOOKMAKERS", "pinnacle,betfair_ex_eu").split(",") if b.strip()]
-# el plan gratuito de The Odds API da pocas peticiones al mes: por defecto se
-# consultan las cuotas cada 6 h (3 deportes x 4 al dia = ~360 al mes)
-ODDS_EVERY_MIN = int(os.getenv("ODDS_EVERY_MIN", "360"))
+# el plan gratuito de The Odds API da pocas peticiones al mes (~500): por
+# defecto cada 8 h -> 5 deportes x 3 al dia x 30 = ~450 al mes
+ODDS_EVERY_MIN = int(os.getenv("ODDS_EVERY_MIN", "480"))
 ODDS_MIN_EDGE = float(os.getenv("ODDS_MIN_EDGE", "0.03"))
 ODDS_URL = ("https://api.the-odds-api.com/v4/sports/{sport}/odds/?apiKey={key}"
             "&regions=eu&markets=h2h&oddsFormat=decimal&bookmakers={books}")
@@ -205,6 +209,7 @@ def odds_due(state, now, every_min=ODDS_EVERY_MIN):
     last = state.get("lastAt")
     # sin diagnostico guardado (estado de una version anterior): consultar ya
     return (not last or "candidatos" not in state
+            or state.get("sports") != ODDS_SPORTS  # lista de deportes cambiada
             or datetime.fromisoformat(now) - datetime.fromisoformat(last)
             >= timedelta(minutes=every_min))
 
@@ -268,6 +273,7 @@ def run(univ, state, now, entry_cost, fetch):
         nuevas += nuevas_a
         # diagnostico: distinguir "no hay partidos comunes" de "no hay ventaja"
         odds.update({"lastAt": now, "events": len(eventos), "errors": errores,
+                     "sports": ODDS_SPORTS,
                      "discrepancies": disc, **diag,
                      "status": f"{len(eventos)} partidos de {len(ODDS_SPORTS)} deportes; "
                                f"{diag['candidatos']} mercados de Polymarket a 3 días o menos, "
