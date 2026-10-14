@@ -90,10 +90,20 @@ def test_full_lifecycle_on_real_state():
         assert "0xB:1" not in d["tracked"]
         assert len(sent) == 1 and "Mercado 0xA" in sent[0] and "entrada real 0.47" in sent[0]
 
-        # escaneo 2: misma senal -> NO se re-alerta
+        # escaneo 2: misma senal -> NO se re-alerta; y 3 especialistas nuevos
+        # en 0xE se alertan EN SOMBRA (nivel fuera de ALERT_TIERS por defecto)
+        for w in WALLETS[:3]:
+            api.positions[w].append(position("0xE", 0, 2000, 0.4, avg=0.38))
+        scanner_tracks = json.loads(path.read_text(encoding="utf-8"))
+        for w in WALLETS[:3]:  # historial probado alto -> especialistas
+            scanner_tracks["trackRecords"][w] = {"wins": 9, "losses": 1, "net": 1.0,
+                                                 "at": 4102444800}
+        path.write_text(json.dumps(scanner_tracks), encoding="utf-8")
         sent.clear()
         d = run_scan(api, path, sent)
         assert sent == [] and d["tracked"]["0xA:0"]["entryPrice"] == 0.47
+        e = d["tracked"]["0xE:0"]
+        assert e["tier"] == "especialistas" and e["alerted"] and e["sent"] is False
 
         # escaneo 3: va perdiendo, sus posiciones bajan de $500 y la senal
         # DESAPARECE. Antes eso borraba la perdida del historico.

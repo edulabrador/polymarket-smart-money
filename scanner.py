@@ -63,6 +63,13 @@ PAPER_STAKE = float(os.getenv("PAPER_STAKE", "100"))
 # filtro opcional por ventaja estimada (edgeEst, sin validar aun): si se
 # define, solo se alertan senales con edgeEst >= MIN_EDGE. Por defecto no filtra.
 MIN_EDGE = float(os.environ["MIN_EDGE"]) if os.getenv("MIN_EDGE") else None
+# niveles que se ENVIAN por Telegram. Los demas se alertan "en sombra": se
+# registran con su precio de entrada y se mide su ROI, pero no se envian.
+# Por defecto solo consenso amplio: el backtest por replay (jul-oct 2026) dio
+# a especialistas ROI -6% sobre 194 alertas resueltas (acierto 55% con un
+# precio que ya implicaba 57%). Si el historico en vivo les da la razon, se
+# activan con ALERT_TIERS=amplio,especialistas.
+ALERT_TIERS = {t.strip() for t in os.getenv("ALERT_TIERS", "amplio").split(",") if t.strip()}
 # un trader "entro hace poco" si su ultima compra en ese mercado es de las
 # ultimas RECENT_ENTRY_HOURS horas (vs. posiciones viejas que solo siguen ahi)
 RECENT_ENTRY_HOURS = 24
@@ -327,21 +334,22 @@ def track_signals(tracked, signals, now):
         if t["alerted"]:
             s["alertedAt"] = t["alertedAt"]
             s["entryPrice"] = t["entryPrice"]
+            s["sent"] = t.get("sent")
     return nuevos
 
 
 def mark_alerted(t, s, price, source, now, sent):
     """Registra la alerta de una senal: el precio al que entraria el seguidor
     en ese momento es la base de su ROI. `sent` dice si de verdad salio por
-    Telegram (un gate silenciado alerta 'en sombra' para poder seguir midiendo
-    y reactivarse con datos)."""
+    Telegram: un nivel fuera de ALERT_TIERS o un gate silenciado alerta 'en
+    sombra', para seguir midiendo y poder reactivarse con datos."""
     t.update({"alerted": True, "alertedAt": now, "alertPrice": s["curPrice"],
               "entryPrice": price, "entrySource": source, "sent": sent,
               "tierAtAlert": s.get("tier"), "numTradersAtAlert": s["numTraders"],
               "edgeEst": s.get("edgeEst"), "pEst": s.get("pEst"),
               "recentEntrants": s.get("recentEntrants"),
               "lastEntryTs": s.get("lastEntryTs")})
-    s.update({"alerted": True, "alertedAt": now, "entryPrice": price})
+    s.update({"alerted": True, "alertedAt": now, "entryPrice": price, "sent": sent})
 
 
 def resolve_tracked(tracked, resolutions, now, active_ids=()):
@@ -1036,7 +1044,8 @@ def main():
         if not quiere:
             continue
         price, source = entry_price(s.get("asset"), s["curPrice"])
-        sent = paga("coincidencia") and paga(f"coincidencia:{s.get('tier')}")
+        sent = (s.get("tier") in ALERT_TIERS and paga("coincidencia")
+                and paga(f"coincidencia:{s.get('tier')}"))
         mark_alerted(t, s, price, source, now, sent)
         if sent:
             alerts.append(s)
@@ -1090,7 +1099,8 @@ def main():
                    "maxPositionsPerTrader": MAX_POSITIONS_PER_TRADER,
                    "whaleMinUsd": WHALE_MIN_USD, "maxAlertPrice": MAX_ALERT_PRICE,
                    "entryCost": ENTRY_COST, "paperStake": PAPER_STAKE,
-                   "minEdge": MIN_EDGE, "sourceMinSample": SOURCE_MIN_SAMPLE},
+                   "minEdge": MIN_EDGE, "sourceMinSample": SOURCE_MIN_SAMPLE,
+                   "alertTiers": sorted(ALERT_TIERS)},
         "migratedAt": doc.get("migratedAt"),
         "signals": signals,
         "tracked": tracked,
@@ -1121,7 +1131,7 @@ def main():
     bots = len(positions_by_trader) - len(scannable)
     sombra = sum(1 for s in signals if s.get("alertedAt") == now) - len(alerts)
     print(f"{len(signals)} senales ({stale_count} stale), {len(nuevos)} nuevas, "
-          f"{len(alerts)} alertadas{f' (+{sombra} en sombra por gate)' if sombra else ''} | "
+          f"{len(alerts)} alertadas{f' (+{sombra} en sombra)' if sombra else ''} | "
           f"{len(tracked)} en seguimiento | {len(new_whales)}/{detected} whales "
           f"con historial ganador | {bots} wallets excluidos por bot | "
           f"{len(resolved)} senales y {len(resolved_wh)} whales resueltas")

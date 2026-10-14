@@ -13,7 +13,7 @@ para saber, con datos y no con intuición, si seguirlas da dinero.
 
 📊 **Web en vivo: [edulabrador.github.io/polymarket-smart-money](https://edulabrador.github.io/polymarket-smart-money/)**
 
-![Pestaña principal de la web: métricas, ROI por fuente y filtros](docs/img/web-coincidencias.png)
+![Pestaña principal: alertas en seguimiento, ROI por alerta y resultado del backtest](docs/img/web-coincidencias.png)
 
 > ⚠️ Herramienta de análisis de datos públicos. **No apuesta, no ejecuta órdenes y no
 > es consejo financiero.** Lee la sección [Limitaciones](#-limitaciones-y-riesgos)
@@ -60,7 +60,9 @@ pagan se silencian solas.
 
 ## 📈 Resultados: qué se sabe y qué no
 
-> **Estado honesto (octubre de 2026): la rentabilidad todavía no está demostrada.**
+> **Estado honesto (octubre de 2026): con las reglas actuales, seguir las alertas NO ha
+> sido rentable.** El backtest por replay de julio a octubre da un ROI de **−3 %** por
+> alerta: los top traders aciertan casi exactamente lo que ya dice el precio.
 
 Hasta el 14 de octubre de 2026 la web mostraba un **95 % de acierto y +40 % de ROI**.
 Una auditoría del código y de las 10.900 versiones guardadas de `signals.json` mostró
@@ -78,6 +80,38 @@ que esas cifras estaban **infladas por un sesgo de supervivencia**:
 Todo eso está corregido (ver [Cómo se mide la rentabilidad](#-cómo-se-mide-la-rentabilidad)).
 El histórico antiguo se conserva marcado como `legacy`, visible aparte en la web, y
 **no cuenta en ninguna métrica**.
+
+### Backtest por replay (15-07-2026 a 14-10-2026)
+
+Reglas actuales aplicadas a las 10.920 versiones guardadas; resultado según el oráculo
+de gamma; entrada = precio guardado + 1 céntimo. 383 señales, 356 resueltas, 27 pendientes.
+
+| Grupo | Resueltas | Acierto | El precio implicaba | ROI medio | IC95 | Veredicto |
+|---|---:|---:|---:|---:|---|---|
+| **Todas las alertas** | 212 | 55,7 % | 56,1 % | **−3,2 %** | −16 % a +10 % | pierde |
+| Alertas, entrando 5-10 min tarde | 212 | 55,7 % | 56,1 % | −3,3 % | −22 % a +15 % | pierde |
+| 🎯 Especialistas (3-4 traders) | 194 | 55,2 % | 56,7 % | **−6,1 %** | −19 % a +7 % | pierde |
+| 👥 Consenso amplio (5 o más) | 18 | 61,1 % | 49,0 % | +29 % | −39 % a +97 % | sin muestra |
+| Todas las detectadas | 356 | 68,8 % | 67,4 % | −2,6 % | −11 % a +6 % | pierde |
+
+Cartera simulada: 212 apuestas de 100 $ → **−669 $**, con una caída máxima de 1.996 $.
+Sin ningún coste de entrada el ROI seguiría en −1,2 %.
+
+Lectura:
+
+- **No hay ventaja medible.** Coincidir con los top traders acierta lo mismo que el
+  precio de mercado. Su beneficio en el leaderboard no se traslada a quien les copia
+  minutos u horas después.
+- **Por eso las alertas de especialistas no se envían por defecto** (`ALERT_TIERS=amplio`):
+  se registran en sombra y se sigue midiendo su ROI en vivo.
+- **El consenso amplio da +29 %, pero con 18 casos** el intervalo va de −39 % a +97 %. Es
+  compatible con no tener ninguna ventaja. Es lo único que se sigue enviando, y el
+  histórico en vivo dirá si se sostiene.
+- Cuidado con buscar el subgrupo que "sí funciona" en estos mismos datos: con suficientes
+  cortes alguno sale positivo por azar. Cualquier filtro nuevo debe validarse en datos
+  posteriores.
+
+### Dos fuentes de verdad
 
 Desde la corrección hay dos fuentes de verdad, ambas en la web:
 
@@ -385,7 +419,7 @@ Lee `signals.json` y `backtest.json` y se adapta a tema claro/oscuro y a móvil.
 - Históricos: alertas resueltas; detectadas no alertadas (investigación); e histórico
   antiguo, marcado como no fiable.
 
-![Detalle de una señal de especialistas y el histórico de coincidencias resueltas](docs/img/web-senal.png)
+![Detalle de una señal descartada y el histórico antiguo, marcado como no fiable](docs/img/web-senal.png)
 
 **🐋 Compras whale:** compras grandes filtradas con el PnL y acierto del comprador, y el
 histórico de whales resueltas con ROI de seguidor.
@@ -400,16 +434,18 @@ histórico de whales resueltas con ROI de seguidor.
 
 **Telegram solo avisa de coincidencias.** Recibirás:
 
-- 🚨 Alertas nuevas (frescas y con precio < 0,90), de **los dos niveles**: consenso amplio
-  y 🎯 especialistas. Incluyen el precio de entrada real, las entradas recientes y la
-  ventaja estimada.
+- 🚨 Alertas nuevas (frescas y con precio < 0,90) de los niveles de `ALERT_TIERS`. Por
+  defecto **solo consenso amplio**: el backtest dio ROI negativo a los especialistas, que
+  se alertan en sombra (registradas y medidas, sin enviar). Para recibirlas también:
+  `ALERT_TIERS=amplio,especialistas`. Incluyen el precio de entrada real, las entradas
+  recientes y la ventaja estimada.
 - 🏁 La resolución de **las alertas que recibiste**, con su ROI. Las señales que nunca se
   te avisaron ya no generan mensajes de resolución.
 - 📊 El hito de muestra suficiente (20 resueltas) de cada grupo, con IC95 y veredicto.
 
 **Varios destinatarios:** `TELEGRAM_CHAT_ID` admite varios ids separados por comas. Para
-umbrales distintos por persona usa `TELEGRAM_RECIPIENTS` (JSON). Sin `minUsers` recibes
-todas las alertas; con `minUsers: 5` solo las de consenso amplio:
+umbrales distintos por persona usa `TELEGRAM_RECIPIENTS` (JSON). `minUsers` filtra por
+número de traders dentro de las alertas que se envían:
 
 ```json
 [
@@ -438,6 +474,7 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
 | `MAX_ALERT_PRICE` | `0.9` | Precio máximo para alertar (fuera casi-certezas) |
 | `ENTRY_COST` | `0.01` | Coste de entrada (spread + deslizamiento) cuando no hay libro |
 | `PAPER_STAKE` | `100` | Apuesta de la cartera simulada y tamaño con que se lee el libro |
+| `ALERT_TIERS` | `amplio` | Niveles que se envían por Telegram; el resto se alerta en sombra |
 | `MIN_EDGE` | sin definir | Si se define, solo alerta señales con `edgeEst ≥ MIN_EDGE` |
 | `SOURCE_MIN_SAMPLE` | `20` | Resueltas necesarias para juzgar una fuente |
 | `WHALE_MIN_USD` | `50000` | Importe mínimo de una compra whale |
@@ -548,8 +585,8 @@ Todas públicas y sin autenticación (detalle en [NOTES.md](NOTES.md)):
 
 ## ⚠️ Limitaciones y riesgos
 
-- **Muestra.** La rentabilidad no se puede afirmar hasta que haya muestra suficiente y
-  el IC95 lo respalde. Mercados del mismo evento no son independientes, así que el IC
+- **Sin ventaja demostrada.** El backtest da ROI negativo con las reglas actuales. El
+  histórico en vivo solo cambiará esa conclusión si acumula muestra y el IC95 lo respalda. Mercados del mismo evento no son independientes, así que el IC
   puede ser algo optimista.
 - **Latencia.** Hasta 5 minutos entre que se forma la señal y la alerta, más lo que
   tardes tú. En partidos en directo el precio se mueve rápido: la variante "con retraso"

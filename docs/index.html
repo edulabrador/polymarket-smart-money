@@ -367,7 +367,9 @@ function renderSignals() {
            target="_blank" rel="noopener">${esc(s.title)}</a>
         <span class="pastilla">${esc(s.outcome)}</span>
         ${s.tier === 'especialistas' ? `<span class="esp-badge" title="menos de ${datos.params.minUsers ?? 5} traders, pero con acierto 30d probado alto: señal temprana de especialistas, no simple coincidencia numérica">🎯 especialistas</span>` : ''}
-        ${s.alerted ? `<span class="alert-badge" title="Alertada el ${new Date(s.alertedAt).toLocaleString('es-ES')}; su ROI se medirá con esta entrada">🔔 alertada a ${pct(s.entryPrice)}</span>` : ''}
+        ${s.alerted ? (s.sent === false
+          ? `<span class="pastilla" title="Alertada en sombra el ${new Date(s.alertedAt).toLocaleString('es-ES')}: no se envió por Telegram (nivel no activado o fuente silenciada), pero su ROI se mide con esta entrada">👻 en sombra a ${pct(s.entryPrice)}</span>`
+          : `<span class="alert-badge" title="Alertada el ${new Date(s.alertedAt).toLocaleString('es-ES')}; su ROI se medirá con esta entrada">🔔 alertada a ${pct(s.entryPrice)}</span>`) : ''}
       </div>
       <div class="datos">
         <span>entrada <b>${pct(s.avgEntryPrice)}</b> → ahora <b>${pct(s.curPrice)}</b>
@@ -465,7 +467,7 @@ function filaHistorial(h, campoRoi = 'roi') {
   const entrada = h.entryPrice != null && campoRoi === 'roi' ? ` · entrada ${pct(h.entryPrice)}` : '';
   return `<li>${estado}
      — ${esc(h.title)} [${esc(h.outcome)}]${h.source === 'whale' ? '' : ` · ${h.numTraders} traders`}${h.tier === 'especialistas' ? ' 🎯' : ''}${entrada}${r != null ? ` · <b class="${r >= 0 ? 'acierto' : 'fallo'}">ROI ${signo(r)}</b>` : ''}
-     · resuelta ${new Date(h.resolvedAt).toLocaleDateString('es-ES')}${h.sent === false ? ' · (en sombra: fuente silenciada)' : ''}</li>`;
+     · resuelta ${new Date(h.resolvedAt).toLocaleDateString('es-ES')}${h.sent === false ? ' · (en sombra: no enviada)' : ''}</li>`;
 }
 
 function pintaHistorial(hs, detId, listId, titulo, campoRoi = 'roi') {
