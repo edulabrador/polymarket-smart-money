@@ -203,8 +203,10 @@ def match_market(p, events):
 
 def odds_due(state, now, every_min=ODDS_EVERY_MIN):
     last = state.get("lastAt")
-    return not last or datetime.fromisoformat(now) - datetime.fromisoformat(last) >= timedelta(
-        minutes=every_min)
+    # sin diagnostico guardado (estado de una version anterior): consultar ya
+    return (not last or "candidatos" not in state
+            or datetime.fromisoformat(now) - datetime.fromisoformat(last)
+            >= timedelta(minutes=every_min))
 
 
 def fetch_odds(fetch, key=ODDS_API_KEY, sports=ODDS_SPORTS, books=ODDS_BOOKMAKERS):
@@ -226,12 +228,15 @@ def odds_bets(univ, events, seen, now, entry_cost, min_edge=ODDS_MIN_EDGE, days=
     el contrario) si la ventaja tras coste es >= min_edge; una vez por mercado."""
     today = now[:10]
     nuevas, discrepancias = [], []
+    diag = {"candidatos": 0, "emparejados": 0}
     for cond, p in univ.items():
         if not short_term(p.get("endDate"), today, days):
             continue
+        diag["candidatos"] += 1
         r = match_market(p, events)
         if not r:
             continue
+        diag["emparejados"] += 1
         fair, book, ev = r
         cur = p["curPrice"]
         lados = [(p["outcomeIndex"], cur, fair), (1 - p["outcomeIndex"], 1 - cur, 1 - fair)]
@@ -246,7 +251,7 @@ def odds_bets(univ, events, seen, now, entry_cost, min_edge=ODDS_MIN_EDGE, days=
                 seen[cond] = now
                 nuevas.append(d)
     discrepancias.sort(key=lambda d: -d["edge"])
-    return nuevas, discrepancias[:30]
+    return nuevas, discrepancias[:30], diag
 
 
 def run(univ, state, now, entry_cost, fetch):
@@ -259,11 +264,14 @@ def run(univ, state, now, entry_cost, fetch):
         odds.update({"status": "sin clave: define el secret ODDS_API_KEY (The Odds API)"})
     elif odds_due(odds, now):
         eventos, errores = fetch_odds(fetch)
-        nuevas_a, disc = odds_bets(univ, eventos, seen, now, entry_cost)
+        nuevas_a, disc, diag = odds_bets(univ, eventos, seen, now, entry_cost)
         nuevas += nuevas_a
+        # diagnostico: distinguir "no hay partidos comunes" de "no hay ventaja"
         odds.update({"lastAt": now, "events": len(eventos), "errors": errores,
-                     "discrepancies": disc,
+                     "discrepancies": disc, **diag,
                      "status": f"{len(eventos)} partidos de {len(ODDS_SPORTS)} deportes; "
+                               f"{diag['candidatos']} mercados de Polymarket a 3 días o menos, "
+                               f"{diag['emparejados']} emparejados con un partido; "
                                f"{len(disc)} discrepancias >= {ODDS_MIN_EDGE:.0%}"})
     state["seen"], state["odds"] = seen, odds
     return nuevas
