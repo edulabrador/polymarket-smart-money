@@ -129,3 +129,22 @@ polymarket-smart-money/
 ├── requirements.txt        # requests, pytest
 └── .github/workflows/scan.yml
 ```
+
+## Fase 6 — Medición fiable (octubre 2026)
+
+Una auditoría del historial de git (10.900 versiones de `signals.json`) mostró que
+el histórico en vivo tenía **sesgo de supervivencia**: una señal solo recibía
+veredicto si seguía activa justo antes de resolver, y las perdedoras desaparecían
+antes porque sus posiciones caían por debajo de `MIN_POSITION_USD`. De 383 señales
+solo 58 tenían resultado (95 % de acierto aparente) y solo 5 se habían notificado.
+
+Decisiones:
+- **El veredicto lo da siempre el oráculo** (gamma, solo precios finales 1/0 o 50-50),
+  nunca las posiciones de los traders. Cada señal se sigue (`tracked`) hasta que su
+  mercado liquida.
+- **Se mide lo que se alerta**: ROI solo de alertas, al precio de entrada real (libro
+  del CLOB o precio + `ENTRY_COST`), con IC95 y veredicto. Lo demás es investigación.
+- **Backtest por replay del historial de git**: aplica las reglas actuales a lo que el
+  escáner vio en cada momento. El backtest anterior elegía traders con el leaderboard
+  de hoy (mira el futuro) y no tenía precio de entrada.
+- El histórico antiguo se conserva como `legacy` y no cuenta en ninguna métrica.
