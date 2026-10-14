@@ -20,7 +20,8 @@ def position(cond, idx, value, cur, avg=0.45, asset="tok"):
     return {"conditionId": cond, "outcomeIndex": idx, "outcome": ["Yes", "No"][idx],
             "title": f"Mercado {cond}", "slug": cond, "eventSlug": f"ev-{cond}",
             "endDate": "2026-12-31", "curPrice": cur, "currentValue": value,
-            "avgPrice": avg, "redeemable": False, "asset": asset, "initialValue": value}
+            "avgPrice": avg, "redeemable": False, "asset": asset, "initialValue": value,
+            "size": round(value / cur, 2)}
 
 
 class FakeApi:
@@ -50,10 +51,10 @@ class FakeApi:
         raise AssertionError(f"URL inesperada {url}")
 
 
-def run_scan(api, path, sent):
+def run_scan(api, path, sent, ok=True):
     scanner.get_json = api
     scanner.SIGNALS_PATH = path
-    scanner.send_telegram = lambda text, chat: sent.append(text)
+    scanner.send_telegram = lambda text, chat: (sent.append(text), ok)[1]
     scanner.time.sleep = lambda _: None
     scanner.main()
     return json.loads(path.read_text(encoding="utf-8"))
@@ -76,7 +77,8 @@ def test_full_lifecycle_on_real_state():
             api.positions[w] = [position("0xA", 0, 2000, 0.5)]
         for w in WALLETS[:4]:
             api.positions[w].append(position("0xB", 1, 2000, 0.8))
-        d = run_scan(api, path, sent)
+        # Telegram CAIDO en el primer aviso: no se pierde, queda en cola
+        d = run_scan(api, path, sent, ok=False)
 
         assert d["schema"] == 2
         # el historico viejo se conserva entero, marcado legacy, y no cuenta
@@ -89,8 +91,12 @@ def test_full_lifecycle_on_real_state():
         # 0xB tiene 4 traders sin acierto probado: no cualifica, no se sigue
         assert "0xB:1" not in d["tracked"]
         assert len(sent) == 1 and "Mercado 0xA" in sent[0] and "entrada real 0.47" in sent[0]
+        assert a["delivered"] is False and len(d["outbox"]) == 1
+        ent = json.loads((tmp / "entries.json").read_text(encoding="utf-8"))
+        assert ent["pending"] == [] and "0xw0" in ent["sizes"]   # 1a foto: sin compras
 
-        # escaneo 2: misma senal -> NO se re-alerta; y 3 especialistas nuevos
+        # escaneo 2 (Telegram vuelve): se reintenta la cola; misma senal -> NO
+        # se re-alerta; y 3 especialistas nuevos
         # en 0xE se alertan EN SOMBRA (nivel fuera de ALERT_TIERS por defecto)
         for w in WALLETS[:3]:
             api.positions[w].append(position("0xE", 0, 2000, 0.4, avg=0.38))
@@ -101,7 +107,13 @@ def test_full_lifecycle_on_real_state():
         path.write_text(json.dumps(scanner_tracks), encoding="utf-8")
         sent.clear()
         d = run_scan(api, path, sent)
-        assert sent == [] and d["tracked"]["0xA:0"]["entryPrice"] == 0.47
+        assert len(sent) == 1 and "Mercado 0xA" in sent[0] and d["outbox"] == []
+        assert d["tracked"]["0xA:0"]["entryPrice"] == 0.47
+        # 3 top traders compraron 0xE desde el escaneo anterior: UNA compra
+        # registrada con los 3 wallets, para medir su ROI con el oraculo
+        ent = json.loads((tmp / "entries.json").read_text(encoding="utf-8"))
+        assert [e["id"] for e in ent["pending"]] == ["0xE:0"]
+        assert len(ent["pending"][0]["wallets"]) == 3
         e = d["tracked"]["0xE:0"]
         assert e["tier"] == "especialistas" and e["alerted"] and e["sent"] is False
 
@@ -112,17 +124,30 @@ def test_full_lifecycle_on_real_state():
         d = run_scan(api, path, sent)
         assert d["signals"] == [] and "0xA:0" in d["tracked"]  # sigue en seguimiento
 
-        # escaneo 4: el mercado liquida a favor de "No": se registra la PERDIDA
+        # escaneo 4: el mercado liquida a favor de "No": se registra la PERDIDA;
+        # 0xE liquida a favor de "Yes": la compra registrada gana
         api.resolved["0xA"] = ["0", "1"]
+        api.resolved["0xE"] = ["1", "0"]
+        for e in ent["pending"]:  # fecha de fin ya pasada: toca consultar el oraculo
+            e["endDate"] = "2026-01-01"
+        (tmp / "entries.json").write_text(json.dumps(ent), encoding="utf-8")
         sent.clear()
         d = run_scan(api, path, sent)
         h = [x for x in d["history"] if x.get("id") == "0xA:0" and not x.get("legacy")]
         assert len(h) == 1 and h[0]["won"] is False and h[0]["roi"] == -1.0
         assert "0xA:0" not in d["tracked"]
-        st = d["sourceStats"]["coincidencia"]
-        assert st["n"] == 1 and st["avgRoi"] == -1.0
-        assert d["paper"]["bets"] == 1 and d["paper"]["pnl"] == -100.0
+        # el ROI de alertas incluye las de sombra (0xE, especialistas, gana);
+        # por nivel: amplio pierde la de 0xA, especialistas gana la de 0xE
+        st = d["sourceStats"]
+        assert st["coincidencia"]["n"] == 2
+        assert st["coincidencia:amplio"]["n"] == 1 and st["coincidencia:amplio"]["avgRoi"] == -1.0
+        assert st["coincidencia:especialistas"]["n"] == 1
+        assert st["coincidencia:especialistas"]["wins"] == 1
+        assert d["paper"]["bets"] == 1 and d["paper"]["pnl"] == -100.0  # solo la enviada
         assert len(sent) == 1 and "perdio" in sent[0] and "ROI -100%" in sent[0]
+        ent = json.loads((tmp / "entries.json").read_text(encoding="utf-8"))
+        assert ent["pending"] == [] and ent["resolved"][0]["won"]
+        assert d["sourceStats"]["entrada"]["n"] == 1
     finally:
         (scanner.get_json, scanner.SIGNALS_PATH, scanner.send_telegram,
          scanner.time.sleep) = originals

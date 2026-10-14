@@ -83,6 +83,9 @@ El histórico antiguo se conserva marcado como `legacy`, visible aparte en la we
 
 ### Backtest por replay (15-07-2026 a 14-10-2026)
 
+> Esta tabla es una foto del 14-10-2026. Las cifras al día están en la web y en
+> `docs/backtest.json`, que se regeneran cada lunes.
+
 Reglas actuales aplicadas a las 10.920 versiones guardadas; resultado según el oráculo
 de gamma; entrada = precio guardado + 1 céntimo. 383 señales, 356 resueltas, 27 pendientes.
 
@@ -346,13 +349,38 @@ La última columna es la clave: **una fuente solo es rentable si acierta más qu
 precio al que entra.** Cada grupo de alertas se publica con:
 
 - `hitRate` frente a `avgEntry`: acierto real frente al implícito en el precio.
-- `avgRoi` con su **IC95** (`media ± 1,96·σ/√n`) y la mediana.
+- `avgRoi` con su **IC95 robusto por evento** y la mediana. Ganador, hándicap y
+  más/menos de un mismo partido no son apuestas independientes: el intervalo se calcula
+  agrupando por evento (`eventSlug`), lo que lo ensancha cuando hay varias apuestas del
+  mismo partido. Se publica también cuántos eventos distintos hay (`events`).
 - **Veredicto:** *sin muestra* (< 20), *pierde* (media < 0), *no concluyente* (el IC
   incluye el 0) o *rentable* (todo el IC por encima de 0).
 
 Hay grupos separados para **todas las alertas**, **por nivel** (amplio, especialistas),
-**whales** y **investigación** (todas las detectadas, alertadas o no, con entrada en la
-detección). Investigación sirve para estudiar filtros, nunca decide nada.
+**especialistas por criterio** (acierto o ventaja), **whales**, **investigación** (todas
+las detectadas, con entrada en la detección) y **compras nuevas** (ver abajo). Los de
+investigación sirven para estudiar, nunca deciden nada.
+
+**Whales.** Cada whale que pasa el filtro entra en `whalesPending` y se mide cuando su
+mercado liquida, aunque ya no se muestre en la web (que enseña las 400 más recientes).
+Así las de mercados largos también cuentan. Sin fecha de fin conocida, se consulta el
+oráculo una vez por hora; caducan sin medirse pasados 400 días.
+
+### Compras nuevas de los top traders (investigación)
+
+La hipótesis con más posibilidades de dar ventaja es **entrar cuando ellos entran**, no
+cuando una posición lleva días abierta. Cada escaneo compara el tamaño (en acciones, no
+en valor) de las posiciones de cada top trader con el escaneo anterior:
+
+- Una posición nueva o que crece un 20 % o más con al menos `ENTRY_MIN_USD` (1.000 $)
+  añadidos, a precio < 0,90, es una **compra nueva**.
+- Se registra una por mercado y lado cada 24 h; si otro top trader entra en el mismo, se
+  suma a la misma compra (`entrada:2+`).
+- Se mide con el oráculo al precio del escaneo + coste, igual que todo lo demás, en
+  `docs/entries.json`. **No se notifica**: primero hay que ver si paga.
+
+Los grupos `entrada`, `entrada:ventaja+` (de traders con ventaja positiva frente al
+precio) y `entrada:2+` aparecen en el panel de fuentes cuando hay resueltas.
 
 ### Cartera simulada
 
@@ -391,7 +419,16 @@ el escáner vio en cada momento:
 
 Publica en `docs/backtest.json` los grupos (alertadas, con retraso, por nivel,
 detectadas, descartadas al nacer, favoritos), la **sensibilidad del ROI al coste de
-entrada** (0 a 3 céntimos), la cartera simulada y una fila por señal.
+entrada** (0 a 3 céntimos), la cartera simulada (ordenada por la hora real de cierre de
+gamma cuando existe) y una fila por señal.
+
+**Validación fuera de la muestra (`walkForward`).** Ajustar filtros mirando el mismo
+resultado que se quiere predecir siempre encuentra algo "rentable" por azar. Por eso el
+backtest prueba 45 combinaciones de reglas (deriva máxima, precio máximo, traders
+mínimos) **solo con la primera mitad del periodo**, elige la mejor, y la mide **solo con
+la segunda mitad**. Si la regla tenía ventaja real, debe seguir ganando en la prueba;
+si no, se cae. Se publica también el resultado de las reglas actuales en esa misma
+segunda mitad.
 
 **Por qué es fiable y el anterior no:** el backtest antiguo elegía a los traders con el
 leaderboard de *hoy* (ya seleccionado por cuánto ganaron en ese periodo) y reconstruía
@@ -441,6 +478,10 @@ histórico de whales resueltas con ROI de seguidor.
   recientes y la ventaja estimada.
 - 🏁 La resolución de **las alertas que recibiste**, con su ROI. Las señales que nunca se
   te avisaron ya no generan mensajes de resolución.
+
+Si Telegram falla (red, token, límite de mensajes), el aviso **no se pierde ni tumba el
+escaneo**: queda en una cola (`outbox`) que se reintenta en cada escaneo durante una
+hora, y cada alerta guarda si llegó (`delivered`).
 - 📊 El hito de muestra suficiente (20 resueltas) de cada grupo, con IC95 y veredicto.
 
 **Varios destinatarios:** `TELEGRAM_CHAT_ID` admite varios ids separados por comas. Para
@@ -476,6 +517,8 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
 | `PAPER_STAKE` | `100` | Apuesta de la cartera simulada y tamaño con que se lee el libro |
 | `ALERT_TIERS` | `amplio` | Niveles que se envían por Telegram; el resto se alerta en sombra |
 | `MIN_EDGE` | sin definir | Si se define, solo alerta señales con `edgeEst ≥ MIN_EDGE` |
+| `SPECIALIST_MIN_EDGE` | `0.02` | Ventaja mínima para cualificar como especialistas por ventaja |
+| `ENTRY_MIN_USD` | `1000` | Dinero añadido mínimo para registrar una compra nueva |
 | `SOURCE_MIN_SAMPLE` | `20` | Resueltas necesarias para juzgar una fuente |
 | `WHALE_MIN_USD` | `50000` | Importe mínimo de una compra whale |
 | `LONGSHOT_MAX_PRICE` | `0.3` | Precio máximo para la etiqueta 🕵 LONGSHOT |
@@ -544,6 +587,7 @@ polymarket-smart-money/
 ├── docs/                 # lo que sirve GitHub Pages
 │   ├── index.html        # la web (HTML + JS vanilla)
 │   ├── signals.json      # estado vivo, seguimiento e histórico (lo escribe el cron)
+│   ├── entries.json      # compras nuevas de top traders: foto de tamaños, pendientes y resueltas
 │   ├── backtest.json     # resultado del último replay
 │   └── img/              # capturas de este README
 ├── tests/
@@ -566,7 +610,9 @@ polymarket-smart-money/
 | `history` | Resueltas: `payout`, `won`, `roi` (alerta), `roiDetect` (investigación), `legacy` si es del método antiguo |
 | `sourceStats` | Por grupo: n, aciertos, acierto implícito, ROI, IC95, veredicto, silenciada |
 | `paper` | Cartera simulada: PnL, caída máxima, capital inmovilizado, curva |
-| `whales`, `trackRecords` | Compras whale vivas y caché (6 h) del historial de cada wallet |
+| `whales`, `whalesPending` | Whales recientes para la web, y todas las pendientes de medir |
+| `outbox` | Avisos de Telegram que fallaron y se reintentan |
+| `trackRecords` | Caché (6 h) del historial de cada wallet |
 
 ### APIs de Polymarket utilizadas
 
@@ -592,8 +638,11 @@ Todas públicas y sin autenticación (detalle en [NOTES.md](NOTES.md)):
   tardes tú. En partidos en directo el precio se mueve rápido: la variante "con retraso"
   del backtest da una idea del coste.
 - **Selección de traders.** El leaderboard de 30 días mezcla habilidad y suerte. La
-  ventaja frente al precio y el encogimiento lo mitigan, pero el historial de
-  `/activity` se limita a 500 eventos por wallet.
+  ventaja frente al precio y el encogimiento lo mitigan. `/activity` se pagina hasta
+  cubrir los 30 días, con un máximo de 3.000 eventos por wallet.
+- **Compras nuevas cada 5 minutos.** Se detectan comparando escaneos, así que se ven
+  entre 0 y 5 minutos después de producirse. Para medir si "entrar en caliente" paga es
+  suficiente; para operar en directo haría falta algo más rápido.
 - **Ventaja estimada sin validar.** `edgeEst` es una heurística; no filtra nada salvo
   que definas `MIN_EDGE`, y solo deberías hacerlo si el histórico demuestra que sirve.
 - **API no oficial ni versionada.** Si Polymarket cambia un endpoint, `scan` falla
@@ -621,6 +670,9 @@ Plan completo y decisiones de diseño en [PLAN.md](PLAN.md).
   con precio de libro, IC95 y veredicto, cartera simulada, backtest por replay, alertas
   de especialistas, ventaja frente al precio, momento de entrada, escaneo cada 5 min y
   CI con prueba en seco
+- ✅ Fase 7: avisos de Telegram con cola de reintento, rebase seguro en los workflows,
+  IC robusto por evento, todas las whales medidas, `/activity` paginado, especialistas
+  por ventaja, validación fuera de la muestra en el backtest y registro de compras nuevas
 
 Repos consultados como inspiración:
 

@@ -37,10 +37,15 @@ jobs:
               echo "fallo $fails/3"
               if [ $fails -ge 3 ]; then exit 1; fi
             fi
-            git add docs/signals.json
+            git add docs/
             git commit -m "scan: actualiza signals.json" || true
-            git pull --rebase || true
-            git push || true
+            # un rebase que choca NO se puede dejar a medias: bloquearia todos
+            # los commits siguientes sin que nadie se entere
+            if ! git pull --rebase; then
+              git rebase --abort || true
+              echo "::warning::git pull --rebase fallo; se reintenta en la siguiente vuelta"
+            fi
+            git push || echo "::warning::git push fallo; se reintenta en la siguiente vuelta"
             espera=$(( SCAN_EVERY_MIN * 60 - ($(date +%s) - t0) ))
             if [ $espera -gt 0 ]; then sleep $espera; fi
           done

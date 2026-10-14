@@ -13,34 +13,58 @@ def roi(payout, entry):
     return round(payout / entry - 1, 4)
 
 
-def summarize(rows, roi_key="roi", entry_key="entryPrice"):
+def summarize(rows, roi_key="roi", entry_key="entryPrice", cluster_key="eventSlug"):
     """Resumen de un grupo de apuestas resueltas.
 
     - hitRate frente a avgEntry: el precio de entrada es la probabilidad que
       el mercado daba; acertar MAS que eso es la unica ventaja real.
-    - avgRoi con su intervalo de confianza al 95% (aprox. normal). Con menos
-      de 2 apuestas no hay intervalo. Si el IC incluye el 0, el resultado no
-      es concluyente aunque la media sea positiva.
+    - avgRoi con su intervalo de confianza al 95%. Si el IC incluye el 0, el
+      resultado no es concluyente aunque la media sea positiva.
+    - El IC es ROBUSTO POR EVENTO (cluster_key): ganador, handicap y mas/menos
+      de un mismo partido no son apuestas independientes; tratarlas como tales
+      estrecha el intervalo de forma enganosa. Con menos de 2 eventos no hay IC.
     """
     rows = [r for r in rows if r.get(roi_key) is not None]
     n = len(rows)
     if not n:
-        return {"n": 0, "wins": 0, "hitRate": None, "avgEntry": None,
+        return {"n": 0, "events": 0, "wins": 0, "hitRate": None, "avgEntry": None,
                 "avgRoi": None, "medianRoi": None, "ci95": None}
     rois = [r[roi_key] for r in rows]
     wins = sum(1 for r in rows if r.get("won"))
     mean = sum(rois) / n
+    # varianza robusta por cluster de la media: sum_g (S_g - n_g*media)^2 / n^2,
+    # con correccion G/(G-1). Con un evento por apuesta equivale a la clasica.
+    clusters = {}
+    for i, r in enumerate(rows):
+        k = r.get(cluster_key) or f"_fila{i}"
+        s = clusters.setdefault(k, [0.0, 0])
+        s[0] += r[roi_key]
+        s[1] += 1
+    g = len(clusters)
     ci = None
-    if n >= 2:
-        sd = math.sqrt(sum((x - mean) ** 2 for x in rois) / (n - 1))
-        half = 1.96 * sd / math.sqrt(n)
+    if g >= 2:
+        var = sum((s - c * mean) ** 2 for s, c in clusters.values()) / n ** 2 * g / (g - 1)
+        half = 1.96 * math.sqrt(var)
         ci = [round(mean - half, 4), round(mean + half, 4)]
     srt = sorted(rois)
     med = srt[n // 2] if n % 2 else (srt[n // 2 - 1] + srt[n // 2]) / 2
     entries = [r[entry_key] for r in rows if r.get(entry_key) is not None]
-    return {"n": n, "wins": wins, "hitRate": round(wins / n, 4),
+    return {"n": n, "events": g, "wins": wins, "hitRate": round(wins / n, 4),
             "avgEntry": round(sum(entries) / len(entries), 4) if entries else None,
             "avgRoi": round(mean, 4), "medianRoi": round(med, 4), "ci95": ci}
+
+
+def first_per(rows, key="id"):
+    """Una fila por `key` (la primera): varias compras del mismo mercado y lado
+    no son apuestas independientes."""
+    seen, out = set(), []
+    for r in rows:
+        k = r.get(key)
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(r)
+    return out
 
 
 def verdict(s, min_sample):
