@@ -17,6 +17,7 @@ jobs:
           python tests/test_scanner.py
           python tests/test_backtest.py
           python tests/test_main.py
+          python tests/test_strategies.py
       # prueba en seco contra la API real (Actions no esta bloqueado): lee el
       # estado real, escribe en /tmp y no envia nada por Telegram
       - name: escaneo en seco contra Polymarket

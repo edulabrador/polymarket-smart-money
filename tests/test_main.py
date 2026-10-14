@@ -86,9 +86,11 @@ def test_full_lifecycle_on_real_state():
 
         assert d["schema"] == 2
         # el historico viejo se conserva entero, pero en su propio archivo
-        legacy = json.loads((tmp / "history_legacy.json").read_text(encoding="utf-8"))
-        n_viejo = len([h for h in viejo.get("history", [])])
-        assert len(legacy) == n_viejo and all(h.get("legacy") for h in legacy)
+        n_legacy = sum(1 for h in viejo.get("history", []) if h.get("legacy")
+                       or viejo.get("schema") != 2)
+        if n_legacy:  # estado anterior a la separacion: se mueve al archivo aparte
+            legacy = json.loads((tmp / "history_legacy.json").read_text(encoding="utf-8"))
+            assert len(legacy) == n_legacy and all(h.get("legacy") for h in legacy)
         assert not any(h.get("legacy") for h in d["history"])
         assert d["sourceStats"]["coincidencia"]["n"] == 0
         a = d["tracked"]["0xA:0"]
