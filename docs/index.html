@@ -120,6 +120,14 @@
   .alert-badge { background: var(--ok); color: var(--card); border-radius: 999px;
     padding: .05rem .5rem; font-size: .72rem; font-weight: 700; }
   .legacy { opacity: .75; }
+  table.datos-t { width: 100%; border-collapse: collapse; font-size: .84rem;
+    background: var(--card); border: 1px solid var(--borde); border-radius: .7rem; overflow: hidden;
+    margin-bottom: 1rem; }
+  .datos-t th, .datos-t td { padding: .45rem .6rem; text-align: left; border-bottom: 1px solid var(--borde); }
+  .datos-t th { color: var(--sutil); font-weight: 600; font-size: .76rem; }
+  .datos-t td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tabla-scroll { overflow-x: auto; }
+  h3 { font-size: .98rem; margin: 1.6rem 0 .6rem; }
   .nota { color: var(--sutil); font-size: .85rem; background: var(--card);
     border: 1px solid var(--borde); border-radius: .7rem; padding: .6rem .9rem;
     margin: 0 0 1rem; line-height: 1.5; }
@@ -131,8 +139,10 @@
   <div class="sub" id="meta">Cargando…</div>
 
   <nav class="tabs" id="tabs" hidden>
-    <button data-tab="coincidencias" class="active">👥 Coincidencias</button>
+    <button data-tab="coincidencias" class="active">🧠 Smart money</button>
     <button data-tab="whales" id="tab-btn-whales">🐋 Compras whale</button>
+    <button data-tab="sesgos">📐 Sesgos de precio</button>
+    <button data-tab="cuotas">📊 Cuotas de casas</button>
   </nav>
 
   <section id="tab-coincidencias" class="tab">
@@ -187,6 +197,14 @@
         solo para estudiar qué filtros funcionan. No cuentan en el ROI de las alertas.</p>
       <ul id="historial-inv-lista"></ul>
     </details>
+    <h3>⚡ Compras nuevas de top traders <span style="font-weight:400;color:var(--sutil);font-size:.8rem">(investigación, no se notifica)</span></h3>
+    <p class="nota">Cada vez que un top trader <b>abre o amplía</b> una posición (≥ $1.000) se registra
+      al precio de ese momento y se mide con el oráculo cuando el mercado liquida. Es la idea
+      original del proyecto llevada a "entrar cuando ellos entran", en vez de copiar posiciones
+      que llevan días abiertas. Coberturas (comprar ambos lados) excluidas.</p>
+    <div id="compras-fuentes" class="tiles"></div>
+    <div class="tabla-scroll"><table class="datos-t" id="compras-wallets" hidden></table></div>
+    <div id="compras-lista"></div>
     <details id="historial-legacy" hidden class="legacy">
       <summary></summary>
       <p class="nota">⚠️ Histórico anterior al seguimiento persistente. <b>No es fiable</b>:
@@ -218,8 +236,29 @@
     </details>
   </section>
 
-  <footer>Escáner de coincidencias de top traders (con compras whale medidas
-    como fuente secundaria) ·
+  <section id="tab-sesgos" class="tab" hidden>
+    <p class="nota">📐 <b>Sesgo favorito-longshot.</b> En muchos mercados de apuestas lo improbable
+      se paga de más y lo casi seguro de menos. Para comprobar si pasa en Polymarket, cada mercado
+      de corto plazo (≤ 7 días) que ve el escáner se registra <b>una vez</b> con su precio, y al
+      liquidar se mide el ROI de haberlo comprado. Si el sesgo existe, los tramos altos darán ROI
+      positivo y los bajos negativo. Todo en sombra: no se notifica nada.</p>
+    <div class="tabla-scroll"><table class="datos-t" id="sesgos-tabla"></table></div>
+    <p class="nota" id="sesgos-estado"></p>
+  </section>
+
+  <section id="tab-cuotas" class="tab" hidden>
+    <p class="nota">📊 <b>Cuotas de casas afiladas.</b> En deportes, Pinnacle y el exchange de
+      Betfair son la referencia más eficiente. Si Polymarket da a un resultado bastante menos
+      probabilidad que ellas (sin su margen), comprar ahí tiene ventaja esperada, sin depender de
+      quién apueste. Cada discrepancia ≥ 3 puntos tras coste se registra en sombra y se mide.</p>
+    <p class="nota" id="cuotas-estado"></p>
+    <div class="tabla-scroll"><table class="datos-t" id="cuotas-stats"></table></div>
+    <h3>Discrepancias actuales</h3>
+    <div class="tabla-scroll"><table class="datos-t" id="cuotas-tabla"></table></div>
+  </section>
+
+  <footer>Escáner de smart money de Polymarket, con estrategias alternativas medidas en
+    sombra ·
     <a href="https://github.com/edulabrador/polymarket-smart-money"
        target="_blank" rel="noopener">código en GitHub</a> · no es consejo financiero</footer>
 </div>
@@ -318,7 +357,7 @@ const NOMBRE_FUENTE = {
   'coincidencia:previa': '⏳ antes del partido', 'coincidencia:directo': '🔴 en directo',
   'coincidencia:sin_hora': '📅 sin hora (largo plazo)',
   'entrada:previa': '⚡⏳ antes del partido', 'entrada:directo': '⚡🔴 en directo',
-  'entrada:sin_hora': '⚡📅 sin hora'};
+  'entrada:sin_hora': '⚡📅 sin hora', 'entrada:historial+': '⚡ wallets con historial propio +'};
 const DESC_FUENTE = {
   'investigacion': 'Todas las señales detectadas, alertadas o no, con entrada en la detección + coste. Solo para estudiar; no decide nada.',
   'entrada': 'Investigación: cada compra nueva (≥ $1.000) de un top trader, medida al precio del escaneo en que se vio + coste. Una por mercado y día. No se notifica.',
@@ -329,9 +368,7 @@ function renderSources() {
   const st = datos.sourceStats ?? {};
   const orden = ['coincidencia', 'coincidencia:amplio', 'coincidencia:especialistas',
     'coincidencia:previa', 'coincidencia:directo', 'coincidencia:sin_hora',
-    'especialistas_por_acierto', 'especialistas_por_ventaja', 'whale', 'investigacion',
-    'entrada', 'entrada:ventaja+', 'entrada:2+', 'entrada:previa', 'entrada:directo',
-    'entrada:sin_hora'];
+    'especialistas_por_acierto', 'especialistas_por_ventaja', 'whale', 'investigacion'];
   const entradas = orden.filter(k => st[k]?.n).map(k => [k, st[k]]);
   const cont = el('fuentes');
   cont.hidden = !entradas.length;
@@ -450,6 +487,80 @@ function renderWhales() {
   if (btn) btn.onclick = () => { verTodasWhales = true; renderWhales(); };
 }
 
+// fila de estadisticas comun a todas las estrategias
+const filaStats = (nombre, s, desc = '') => s?.n ? `<tr title="${esc(desc)}">
+  <td>${esc(nombre)}</td><td class="num">${s.n}</td>
+  <td class="num">${Math.round(s.hitRate * 100)}% <span style="color:var(--sutil)">vs ${Math.round(s.avgEntry * 100)}%</span></td>
+  <td class="num"><b class="${s.avgRoi >= 0 ? 'deriva-ok' : 'deriva-mal'}">${signo(s.avgRoi)}</b></td>
+  <td class="num" style="color:var(--sutil)">${s.ci95 ? `${signo(s.ci95[0])} a ${signo(s.ci95[1])}` : '—'}</td>
+  <td class="num" style="color:var(--sutil)" title="ROI de la 1ª y la 2ª mitad por fecha: si solo gana en una, probablemente fue azar">${s.halves ? `${signo(s.halves[0])} / ${signo(s.halves[1])}` : '—'}</td>
+  <td>${tagV(s.verdict)}</td></tr>`
+  : `<tr><td>${esc(nombre)}</td><td class="num">0</td><td colspan="5" style="color:var(--sutil)">aún sin resueltas</td></tr>`;
+const cabeceraStats = `<tr><th>Grupo</th><th class="num">Resueltas</th><th class="num">Acierto vs implícito</th>
+  <th class="num">ROI</th><th class="num">IC95</th><th class="num">1ª / 2ª mitad</th><th>Veredicto</th></tr>`;
+
+let compras = null, estrategias = null;
+async function cargarExtra() {
+  try {
+    const [a, b] = await Promise.all([fetch('entries.json', {cache: 'no-store'}),
+                                      fetch('strategies.json', {cache: 'no-store'})]);
+    if (a.ok) compras = await a.json();
+    if (b.ok) estrategias = await b.json();
+  } catch (e) {}
+  renderCompras(); renderSesgos(); renderCuotas();
+}
+
+function renderCompras() {
+  const st = datos?.sourceStats ?? {};
+  const grupos = ['entrada', 'entrada:historial+', 'entrada:2+', 'entrada:ventaja+',
+                  'entrada:previa', 'entrada:directo', 'entrada:sin_hora'];
+  el('compras-fuentes').innerHTML = `<div class="tabla-scroll" style="grid-column:1/-1"><table class="datos-t">${cabeceraStats}${
+    grupos.map(k => filaStats(NOMBRE_FUENTE[k] || k, st[k])).join('')}</table></div>`;
+  const ws = datos?.entryWallets ?? [];
+  const t = el('compras-wallets');
+  t.hidden = !ws.length;
+  t.innerHTML = `<tr><th>Wallet (historial propio medido)</th><th class="num">Compras resueltas</th>
+    <th class="num">Aciertos</th><th class="num">ROI medio</th></tr>` + ws.map(w => `<tr>
+    <td><a href="https://polymarket.com/profile/${encodeURIComponent(w.wallet)}" target="_blank" rel="noopener">${esc(nombre(w.name, w.wallet))}</a></td>
+    <td class="num">${w.n}</td><td class="num">${w.wins}</td>
+    <td class="num"><b class="${w.roi >= 0 ? 'deriva-ok' : 'deriva-mal'}">${signo(w.roi)}</b></td></tr>`).join('');
+  const pend = (compras?.pending ?? []).slice().reverse().slice(0, 20);
+  el('compras-lista').innerHTML = pend.length ? `<p class="nota" style="margin-top:.6rem">Últimas compras registradas (${(compras?.pending ?? []).length} pendientes de liquidar):</p>` +
+    pend.map(e => `<div class="whale"><span class="whale-usd">${usd(e.usd)}</span>
+      <a href="https://polymarket.com/event/${encodeURIComponent(e.eventSlug)}" target="_blank" rel="noopener">${esc(e.title)}</a>
+      <span class="pastilla">${esc(e.outcome)}</span> @ ${pct(e.price)} · ${e.wallets.length} trader${e.wallets.length > 1 ? 's' : ''}
+      ${e.phase === 'previa' ? ' · ⏳ previa' : e.phase === 'directo' ? ' · 🔴 directo' : ''}
+      · ${new Date(e.at).toLocaleString('es-ES')}</div>`).join('')
+    : '<p class="nota">Aún no hay compras registradas.</p>';
+}
+
+function renderSesgos() {
+  const st = datos?.sourceStats ?? {};
+  const tramos = ['0.01-0.10', '0.10-0.30', '0.30-0.70', '0.70-0.90', '0.90-0.99'];
+  el('sesgos-tabla').innerHTML = cabeceraStats + filaStats('Todos los tramos', st['sesgo']) +
+    tramos.map(t => filaStats(`Precio ${t.replace('-', ' a ')}`, st[`sesgo:${t}`])).join('');
+  const pend = (estrategias?.pending ?? []).filter(e => e.source === 'sesgo').length;
+  el('sesgos-estado').textContent = `${pend} mercados registrados pendientes de liquidar. ` +
+    'Universo: los mercados que tienen en cartera los wallets vigilados (no todo Polymarket).';
+}
+
+function renderCuotas() {
+  const st = datos?.sourceStats ?? {};
+  const o = estrategias?.odds ?? {};
+  el('cuotas-estado').innerHTML = `Estado: <b>${esc(o.status || 'aún sin ejecutar')}</b>` +
+    (o.lastAt ? ` · última consulta ${new Date(o.lastAt).toLocaleString('es-ES')}` : '') +
+    ((o.errors ?? []).length ? ` · errores: ${esc(o.errors.join('; '))}` : '');
+  el('cuotas-stats').innerHTML = cabeceraStats + filaStats('Todas', st['cuotas']) +
+    filaStats('Ventaja 5%+', st['cuotas:ventaja 5%+']) + filaStats('Ventaja 3-5%', st['cuotas:ventaja 3-5%']);
+  const disc = o.discrepancies ?? [];
+  el('cuotas-tabla').innerHTML = disc.length ? `<tr><th>Mercado</th><th>Lado</th><th class="num">Polymarket</th>
+    <th class="num">Casas (justa)</th><th class="num">Ventaja</th><th>Casa</th></tr>` + disc.map(d => `<tr>
+    <td><a href="https://polymarket.com/event/${encodeURIComponent(d.eventSlug)}" target="_blank" rel="noopener">${esc(d.title)}</a></td>
+    <td>${esc(d.outcome)}</td><td class="num">${pct(d.price)}</td><td class="num">${pct(d.fair)}</td>
+    <td class="num"><b class="deriva-ok">+${Math.round(d.edge * 100)} pp</b></td><td>${esc(d.book)}</td></tr>`).join('')
+    : '<tr><td style="color:var(--sutil)">Sin discrepancias en la última consulta.</td></tr>';
+}
+
 async function cargarBacktest() {
   try {
     const r = await fetch('backtest.json', {cache: 'no-store'});
@@ -545,6 +656,7 @@ async function cargar() {
     renderSignals();
     renderWhales();
     renderHistory();
+    renderCompras(); renderSesgos(); renderCuotas();
     el('tabs').hidden = false;
     el('filtros').hidden = false;
   } catch (e) {
@@ -566,6 +678,8 @@ document.querySelectorAll('.tabs button').forEach(btn =>
 cargar();
 cargarBacktest();
 cargarLegacy();
+cargarExtra();
+setInterval(cargarExtra, 300000);
 setInterval(cargar, 60000);
 </script>
 </body>

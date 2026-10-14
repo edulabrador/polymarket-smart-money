@@ -14,6 +14,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 
 import metrics
+import strategies
 
 TOP_N = int(os.getenv("TOP_N", "50"))
 MIN_USERS = int(os.getenv("MIN_USERS", "5"))
@@ -61,6 +62,7 @@ ENTRIES_PATH_NAME = "entries.json"
 # historico antiguo (sesgado, no cuenta en metricas): se guarda una vez aparte
 # para no reescribir ~640 KB en cada commit ni re-leerlo en cada version del replay
 LEGACY_PATH_NAME = "history_legacy.json"
+STRATEGIES_PATH_NAME = "strategies.json"  # banco de pruebas: estrategias B y A
 # especialistas por VENTAJA frente al precio (alternativa a la tasa de acierto)
 SPECIALIST_MIN_EDGE = float(os.getenv("SPECIALIST_MIN_EDGE", "0.02"))
 OUTBOX_TTL_MIN = 60  # un aviso de Telegram que falla se reintenta durante 1 h
@@ -489,8 +491,25 @@ def position_sizes(positions_by_trader):
             for w, info in positions_by_trader.items()}
 
 
+def wallet_entry_stats(resolved):
+    """{wallet: {"n", "wins", "roi"}} del ROI medido de SUS compras nuevas ya
+    resueltas. Es un historial propio y posterior a su eleccion: elegir
+    traders por esto es elegir fuera de la muestra, no por su PnL del mes."""
+    acc = {}
+    for e in resolved:
+        if e.get("roi") is None:
+            continue
+        for w in e.get("wallets") or []:
+            a = acc.setdefault(w, {"n": 0, "wins": 0, "sum": 0.0})
+            a["n"] += 1
+            a["wins"] += 1 if e.get("won") else 0
+            a["sum"] += e["roi"]
+    return {w: {"n": a["n"], "wins": a["wins"], "roi": round(a["sum"] / a["n"], 4)}
+            for w, a in acc.items()}
+
+
 def detect_entries(prev_sizes, positions_by_trader, tracks, now, pending,
-                   min_usd=ENTRY_MIN_USD, max_price=MAX_ALERT_PRICE):
+                   min_usd=ENTRY_MIN_USD, max_price=MAX_ALERT_PRICE, wallet_stats=None):
     """Compras nuevas desde el escaneo anterior: posicion nueva o que crece
     >= 20% con >= min_usd anadidos, a precio < max_price. Solo para wallets
     que ya estaban en la foto anterior (uno que entra al top no "compra" todo
@@ -547,7 +566,9 @@ def detect_entries(prev_sizes, positions_by_trader, tracks, now, pending,
                  "cat": cat, "at": now, "price": cur,
                  "entryPrice": round(min(cur + ENTRY_COST, 0.999), 4),
                  "usd": round(usd, 2), "wallets": [w],
-                 "traderEdge": trader_edge(tr, cat), "traderWinRate": win_rate(tr) if tr else None}
+                 "traderEdge": trader_edge(tr, cat), "traderWinRate": win_rate(tr) if tr else None,
+                 # historial propio MEDIDO de este wallet hasta ahora (sin mirar el futuro)
+                 "walletPrior": (wallet_stats or {}).get(w)}
             reciente[sid] = e
             pending.append(e)
             nuevas.append(e)
@@ -600,7 +621,11 @@ def resolve_pending(pending, resolutions, now, source, expire_before=None,
                 "won": p >= 0.999, "roi": metrics.roi(p, e["entryPrice"]),
                 "numTraders": len(e.get("wallets") or [1]), "traderEdge": e.get("traderEdge"),
                 "phase": e.get("phase"), "gameStart": e.get("gameStart"),
-                "resolvedAt": now, "source": source, "v": SCHEMA})
+                "resolvedAt": now, "source": source or e.get("source"), "v": SCHEMA,
+                # datos propios de cada estrategia (nivel de precio, cuota de
+                # referencia, wallets, historial previo del wallet...)
+                **{k: e[k] for k in ("tag", "wallets", "walletPrior", "fair", "book", "edge")
+                   if k in e}})
             continue
         end = (e.get("endDate") or "")[:10]
         if (end and expire_before and end < expire_before) or (
@@ -613,7 +638,10 @@ def resolve_pending(pending, resolutions, now, source, expire_before=None,
     return kept, out, caducadas
 
 
-def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=()):
+WALLET_PRIOR_MIN = 5  # compras resueltas minimas para fiarse del historial de un wallet
+
+
+def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=(), strategy_rows=()):
     """Rendimiento real por fuente sobre el historico FIABLE (formato v2; el
     historico anterior queda marcado `legacy` y no cuenta):
 
@@ -642,6 +670,13 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=()):
         elif h.get("source") == "whale":
             groups["whale"].append(h)
     groups["whale"] = metrics.first_per(groups["whale"])
+    # estrategias del banco de pruebas (B sesgo de precio, A cuotas de casas)
+    for r in strategy_rows:
+        if r.get("payout") is None:
+            continue
+        groups.setdefault(r["source"], []).append(r)
+        if r.get("tag"):
+            groups.setdefault(f'{r["source"]}:{r["tag"]}', []).append(r)
     # compras nuevas de top traders (investigacion): todas, de traders con
     # ventaja probada, y en las que entraron 2 o mas top traders en 24 h
     ent = [e for e in entries if e.get("payout") is not None]
@@ -649,6 +684,10 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=()):
         groups["entrada"] = ent
         groups["entrada:ventaja+"] = [e for e in ent if (e.get("traderEdge") or 0) > 0]
         groups["entrada:2+"] = [e for e in ent if e.get("numTraders", 1) >= 2]
+        # de wallets cuyo historial PROPIO medido (antes de esa compra) era positivo
+        groups["entrada:historial+"] = [
+            e for e in ent if (e.get("walletPrior") or {}).get("n", 0) >= WALLET_PRIOR_MIN
+            and e["walletPrior"]["roi"] > 0]
         for f in ("previa", "directo", "sin_hora"):
             g = [e for e in ent if e.get("phase") == f]
             if g:
@@ -657,8 +696,10 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=()):
     for key, rows in groups.items():
         s = metrics.summarize(rows)
         s["verdict"] = metrics.verdict(s, min_sample)
-        s["suppressed"] = (key != "investigacion" and not key.startswith("entrada")
-                           and s["n"] >= min_sample and s["avgRoi"] < 0)
+        investigacion = (key == "investigacion" or key.startswith(("entrada", "sesgo", "cuotas")))
+        s["suppressed"] = not investigacion and s["n"] >= min_sample and s["avgRoi"] < 0
+        if investigacion and s["n"]:
+            s["halves"] = metrics.halves(rows)
         out[key] = s
     return out
 
@@ -1358,18 +1399,30 @@ def main():
     ent_doc = (json.loads(entries_src.read_text(encoding="utf-8"))
                if entries_src.exists() else {})
     ent_pending, ent_resolved = drop_hedges(ent_doc.get("pending", [])), ent_doc.get("resolved", [])
-    nuevas_compras = detect_entries(ent_doc.get("sizes", {}), scannable, tracks, now, ent_pending)
+    nuevas_compras = detect_entries(ent_doc.get("sizes", {}), scannable, tracks, now, ent_pending,
+                                    wallet_stats=wallet_entry_stats(ent_resolved))
     if nuevas_compras:
         inicios_ent = fetch_market_meta([e["conditionId"] for e in nuevas_compras])
         for e in nuevas_compras:
             e["gameStart"] = inicios_ent.get(e["conditionId"])
             e["phase"] = phase(e["gameStart"], e["at"])
 
+    # banco de pruebas: B (sesgo de precio) y A (cuotas de casas), en sombra
+    strat_src = SIGNALS_PATH.parent / STRATEGIES_PATH_NAME
+    strat_path = (pathlib.Path(DRY_RUN_PATH).with_name("strategies.dry.json") if DRY_RUN
+                  else strat_src)
+    strat = strategies.load(strat_src)
+    strat_pending, strat_resolved = strat.get("pending", []), strat.get("resolved", [])
+    nuevas_estrategia = strategies.run(strategies.universe(positions_by_trader), strat, now,
+                                       ENTRY_COST, get_json)
+    strat_pending += nuevas_estrategia
+
     # oraculo unico (gamma) para senales seguidas, whales y compras: el
     # veredicto nunca depende de que alguien siga dentro del mercado
     due = ([t["conditionId"] for t in tracked.values() if needs_oracle(t, active_ids, today)]
            + [w["conditionId"] for w in whales_pending if oracle_due(w, now_ts, today)]
-           + [e["conditionId"] for e in ent_pending if oracle_due(e, now_ts, today)])
+           + [e["conditionId"] for e in ent_pending if oracle_due(e, now_ts, today)]
+           + [e["conditionId"] for e in strat_pending if oracle_due(e, now_ts, today)])
     resolutions = fetch_market_resolutions(due)
     queried = set(due)
     resolved = resolve_tracked(tracked, resolutions, now, active_ids)
@@ -1381,11 +1434,15 @@ def main():
         ent_pending, resolutions, now, "entrada", expire_before=expire_before, now_ts=now_ts,
         queried=queried)
     ent_resolved += resolved_ent
+    strat_pending, resolved_strat, cad_strat = resolve_pending(
+        strat_pending, resolutions, now, None, expire_before=expire_before, now_ts=now_ts,
+        queried=queried)
+    strat_resolved += resolved_strat
     # la lista de la web solo pierde las whales cuyo mercado ya liquido
     whales = [w for w in all_whales if w.get("conditionId") not in resolutions][:WHALES_KEEP]
     last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
     history += resolved + resolved_wh
-    stats = source_stats(history, entries=ent_resolved)
+    stats = source_stats(history, entries=ent_resolved, strategy_rows=strat_resolved)
     # cartera simulada = lo que te llega por Telegram (alertas enviadas, no
     # las de sombra): "si hubiera apostado en cada aviso que recibi"
     paper = metrics.paper_ledger(
@@ -1449,8 +1506,15 @@ def main():
         "paper": paper,
         "announcedSamples": sorted(announced),
         "outbox": outbox,
+        # traders por su historial PROPIO medido de compras nuevas (los 30 con mas)
+        "entryWallets": sorted(
+            ({"wallet": w, "name": positions_by_trader.get(w, {}).get("name", ""), **st}
+             for w, st in wallet_entry_stats(ent_resolved).items()),
+            key=lambda x: (-x["n"], -x["roi"]))[:30],
         "history": history,
     }, indent=1), encoding="utf-8")
+    strat.update({"updatedAt": now, "pending": strat_pending, "resolved": strat_resolved})
+    strategies.save(strat_path, strat)
     entries_path.write_text(json.dumps({
         "updatedAt": now,
         "sizes": position_sizes(scannable),
@@ -1469,7 +1533,10 @@ def main():
           f"{len(nuevas_compras)} compras nuevas, {len(ent_pending)} pendientes, "
           f"{len(resolved_ent)} resueltas | caducadas sin liquidar: "
           f"{cad_wh} whales, {cad_ent} compras | {len(outbox)} avisos en cola | "
-          f"hora de inicio: {len(inicios) if sin_meta else 0}/{len(sin_meta)} senales nuevas")
+          f"hora de inicio: {len(inicios) if sin_meta else 0}/{len(sin_meta)} senales nuevas | "
+          f"estrategias: {len(nuevas_estrategia)} apuestas nuevas en sombra, "
+          f"{len(strat_pending)} pendientes, {len(resolved_strat)} resueltas, "
+          f"{cad_strat} caducadas | cuotas: {strat.get('odds', {}).get('status', '')}")
     for k, st in sorted(stats.items()):
         if st["n"]:
             marca = " [SILENCIADA: pierde dinero]" if st["suppressed"] else ""

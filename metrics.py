@@ -67,6 +67,19 @@ def first_per(rows, key="id"):
     return out
 
 
+def halves(rows, roi_key="roi", time_key="alertedAt"):
+    """ROI medio de la primera y la segunda mitad (por fecha) de las apuestas.
+    Para una estrategia nueva es la prueba fuera de muestra en vivo: si solo
+    gana en una mitad, lo mas probable es que fuera azar."""
+    rows = sorted((r for r in rows if r.get(roi_key) is not None),
+                  key=lambda r: r.get(time_key) or "")
+    if len(rows) < 4:
+        return None
+    mid = len(rows) // 2
+    media = lambda g: round(sum(r[roi_key] for r in g) / len(g), 4)
+    return [media(rows[:mid]), media(rows[mid:])]
+
+
 def verdict(s, min_sample):
     """Lectura honesta de un resumen: solo es 'rentable' si TODO el intervalo
     de confianza esta por encima de 0."""

@@ -30,6 +30,7 @@ para saber, con datos y no con intuición, si seguirlas da dinero.
 - [Fuente secundaria: compras whale](#-fuente-secundaria-compras-whale)
 - [Cómo se mide la rentabilidad](#-cómo-se-mide-la-rentabilidad)
 - [Backtest por replay](#-backtest-por-replay)
+- [Tres estrategias en una herramienta](#-tres-estrategias-en-una-herramienta)
 - [La web](#-la-web)
 - [Notificaciones por Telegram](#-notificaciones-por-telegram)
 - [Configuración](#%EF%B8%8F-configuración)
@@ -449,6 +450,46 @@ hora de resolución aproximada.
 
 ---
 
+## 🧪 Tres estrategias en una herramienta
+
+Ya que el escáner recorre Polymarket cada 10 minutos, se aprovecha para probar tres
+ideas de negocio distintas **con la misma vara de medir** (oráculo, ROI al precio de
+entrada, IC95 por evento y comparación primera mitad / segunda mitad). Es un **banco de
+pruebas**: cada estrategia registra sus apuestas en sombra, sin enviar nada, y solo
+debería pasar a Telegram cuando sus datos demuestren que gana fuera de la muestra.
+
+| Pestaña | Estrategia | Idea | Estado |
+|---|---|---|---|
+| 🧠 Smart money | **C** (la del proyecto) | Seguir a los top traders: coincidencias y, sobre todo, **compras nuevas** en el momento en que entran | Coincidencias: sin ventaja en el backtest. Compras nuevas: midiendo desde el 14-10-2026 |
+| 📐 Sesgos de precio | **B** | Sesgo favorito-longshot: ¿se pagan de más los improbables y de menos los casi seguros? | Midiendo |
+| 📊 Cuotas de casas | **A** | Comprar cuando Polymarket da bastante menos probabilidad que Pinnacle o Betfair | Necesita `ODDS_API_KEY` |
+
+**C · Smart money (prioridad).** Además de las coincidencias, registra cada compra nueva
+de un top trader (sin coberturas) y la mide. Para elegir a quién seguir usa su
+**historial propio medido**: el ROI de sus compras anteriores ya resueltas, calculado solo
+con lo que había antes de cada compra (`entrada:historial+`, a partir de 5 resueltas).
+Eso es elegir traders fuera de la muestra, no por el beneficio del mes. La tabla de
+wallets de la pestaña muestra ese historial.
+
+**B · Sesgos de precio.** Cada mercado de corto plazo (que termina en 7 días o menos) que
+aparece en las carteras vigiladas se registra **una vez** con su precio y se mide por
+tramos (0,01-0,10 … 0,90-0,99). Si el sesgo existe, los tramos altos darán ROI positivo
+y los bajos negativo. Universo: los mercados que tienen los wallets vigilados, no todo
+Polymarket.
+
+**A · Cuotas de casas.** Cada 6 h (configurable) descarga de
+[The Odds API](https://the-odds-api.com) las cuotas 1X2 de Pinnacle y Betfair para los
+deportes de `ODDS_SPORTS`, les quita el margen y las compara con los mercados deportivos
+de corto plazo de Polymarket ("Will X win on FECHA?" y "X vs. Y"; hándicaps y totales no).
+Si Polymarket infravalora un lado en `ODDS_MIN_EDGE` (3 puntos) o más tras coste, se
+registra en sombra. Para activarla: crea una cuenta en The Odds API (tiene plan gratuito
+con un límite mensual de peticiones) y añade la clave como secret `ODDS_API_KEY` en
+*Settings → Secrets and variables → Actions*. La clave nunca se escribe en los JSON
+públicos. Los nombres de equipo se emparejan de forma conservadora (todos los tokens del
+nombre corto deben estar en el largo): prefiere no comparar a comparar mal.
+
+---
+
 ## 🖥 La web
 
 Página estática (HTML + JavaScript sin frameworks) servida desde `docs/` con GitHub Pages.
@@ -529,6 +570,12 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
 | `MIN_EDGE` | sin definir | Si se define, solo alerta señales con `edgeEst ≥ MIN_EDGE` |
 | `SPECIALIST_MIN_EDGE` | `0.02` | Ventaja mínima para cualificar como especialistas por ventaja |
 | `ENTRY_MIN_USD` | `1000` | Dinero añadido mínimo para registrar una compra nueva |
+| `BIAS_DAYS` | `7` | Estrategia B: solo mercados que terminan en estos días o menos |
+| `ODDS_API_KEY` | sin definir | Estrategia A: clave de The Odds API (secret) |
+| `ODDS_SPORTS` | `soccer_epl,soccer_spain_la_liga,basketball_nba` | Estrategia A: deportes a comparar |
+| `ODDS_BOOKMAKERS` | `pinnacle,betfair_ex_eu` | Estrategia A: casas de referencia, por orden de preferencia |
+| `ODDS_EVERY_MIN` | `360` | Estrategia A: minutos entre consultas de cuotas (cuida el cupo gratuito) |
+| `ODDS_MIN_EDGE` | `0.03` | Estrategia A: ventaja mínima tras coste para registrar |
 | `SOURCE_MIN_SAMPLE` | `20` | Resueltas necesarias para juzgar una fuente |
 | `WHALE_MIN_USD` | `50000` | Importe mínimo de una compra whale |
 | `LONGSHOT_MAX_PRICE` | `0.3` | Precio máximo para la etiqueta 🕵 LONGSHOT |
@@ -592,6 +639,7 @@ Para ver la web en local: `python -m http.server -d docs` y abre `http://localho
 polymarket-smart-money/
 ├── scanner.py            # escaneo: APIs, señales, seguimiento, alertas, whales, Telegram
 ├── metrics.py            # ROI, IC95, veredicto y cartera simulada (vivo y backtest)
+├── strategies.py         # estrategias B (sesgo de precio) y A (cuotas de casas)
 ├── backtest.py           # replay del historial de git con el oráculo
 ├── probe.py              # verificación de endpoints (genera NOTES.md y fixtures)
 ├── docs/                 # lo que sirve GitHub Pages
@@ -599,12 +647,14 @@ polymarket-smart-money/
 │   ├── signals.json      # estado vivo, seguimiento e histórico (lo escribe el cron)
 │   ├── entries.json      # compras nuevas de top traders: foto de tamaños, pendientes y resueltas
 │   ├── history_legacy.json  # histórico anterior a la fase 6 (sesgado, no cuenta en métricas)
+│   ├── strategies.json   # banco de pruebas: apuestas en sombra de B y A, y estado de cuotas
 │   ├── backtest.json     # resultado del último replay
 │   └── img/              # capturas de este README
 ├── tests/
 │   ├── test_scanner.py   # unidades del escáner
 │   ├── test_backtest.py  # replay y métricas
 │   ├── test_main.py      # ciclo completo simulado (migración, alerta, pérdida, oráculo)
+│   ├── test_strategies.py # estrategias B y A
 │   └── fixtures/         # respuestas reales de la API
 ├── .github/workflows/    # scan, backtest, test, probe
 ├── PLAN.md               # plan de desarrollo y decisiones
