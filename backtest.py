@@ -38,7 +38,7 @@ from datetime import datetime, timezone
 import metrics
 from scanner import (ENTRY_COST, MAX_ALERT_PRICE, MIN_EDGE, MIN_USERS, PAPER_STAKE,
                      SIGNALS_PATH, SOURCE_MIN_SAMPLE, categoria,
-                     fetch_market_resolutions)
+                     fetch_market_resolutions, phase)
 
 REPO = pathlib.Path(__file__).resolve().parent
 OUT = SIGNALS_PATH.parent / "backtest.json"
@@ -164,12 +164,14 @@ def evaluate(rows, resolutions, cost=ENTRY_COST):
         p = pays[r["outcomeIndex"]]
         r.update({"status": "resuelta", "payout": p, "won": p >= 0.999,
                   "closedAt": res.get("closedAt") if isinstance(res, dict) else None,
+                  "gameStart": res.get("gameStart") if isinstance(res, dict) else None,
                   "roiDetect": metrics.roi(p, min(r["detectPrice"] + cost, 0.999))})
         if r["alerted"]:
             delayed = r.get("alertPriceDelayed", r["alertPrice"])
             r["entryPrice"] = round(min(r["alertPrice"] + cost, 0.999), 4)
             r["roi"] = metrics.roi(p, r["entryPrice"])
             r["roiDelayed"] = metrics.roi(p, min(delayed + cost, 0.999))
+            r["phase"] = phase(r["gameStart"], iso(r["alertTs"]))
     return rows
 
 
@@ -194,6 +196,9 @@ def group_stats(rows):
     }
     for tier in ("amplio", "especialistas"):
         groups[f"alertadas:{tier}"] = [r for r in al if r.get("tierAtAlert") == tier]
+    # antes del partido / en directo / sin hora de inicio (no deportivo)
+    for f in ("previa", "directo", "sin_hora"):
+        groups[f"alertadas:{f}"] = [r for r in al if r.get("phase") == f]
     for by in ("acierto", "ventaja"):  # solo existe en versiones recientes
         g = [r for r in al if by in (r.get("specialistBy") or [])]
         if g:
@@ -209,7 +214,9 @@ def group_stats(rows):
 # rejilla de reglas para la validacion fuera de la muestra
 GRID = {"max_drift": [0.05, 0.10, 0.15, 0.25, 1.0],
         "max_price": [0.7, 0.8, 0.9],
-        "min_traders": [3, 4, 5]}
+        "min_traders": [3, 4, 5],
+        # todas / solo antes del partido / todo menos directo
+        "phases": [None, ("previa",), ("previa", "sin_hora")]}
 WF_MIN_TRAIN = 30  # alertas resueltas minimas en la mitad de ajuste
 
 
@@ -225,9 +232,12 @@ def walk_forward(series, resolutions, split_ts):
             for m in GRID["min_traders"]:
                 rules = {"max_drift": d, "max_price": p, "min_traders": m}
                 al = alerted_rows(evaluate(replay(series, rules), resolutions))
-                train = metrics.summarize([r for r in al if r["alertTs"] < split_ts])
-                test = metrics.summarize([r for r in al if r["alertTs"] >= split_ts])
-                resultados.append({"rules": rules, "train": train, "test": test})
+                for ph in GRID["phases"]:
+                    sel = [r for r in al if ph is None or r.get("phase") in ph]
+                    train = metrics.summarize([r for r in sel if r["alertTs"] < split_ts])
+                    test = metrics.summarize([r for r in sel if r["alertTs"] >= split_ts])
+                    resultados.append({"rules": {**rules, "phases": list(ph) if ph else None},
+                                       "train": train, "test": test})
     validas = [x for x in resultados if x["train"]["n"] >= WF_MIN_TRAIN]
     actual_al = alerted_rows(evaluate(replay(series), resolutions))
     actual = {"train": metrics.summarize([r for r in actual_al if r["alertTs"] < split_ts]),
@@ -258,7 +268,8 @@ def main():
     keep = ("id", "title", "outcome", "eventSlug", "cat", "firstTs", "detectPrice",
             "tierAtDetection", "staleAtDetection", "maxTraders", "alerted", "alertTs",
             "alertPrice", "alertPriceDelayed", "tierAtAlert", "entryPrice", "status",
-            "payout", "won", "roi", "roiDelayed", "roiDetect", "lastTs", "closedAt")
+            "payout", "won", "roi", "roiDelayed", "roiDetect", "lastTs", "closedAt",
+            "gameStart", "phase")
     out = {
         "ranAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "method": "replay-git",
@@ -271,7 +282,8 @@ def main():
                    "alertadas": sum(1 for r in rows if r["alerted"]),
                    "resueltas": sum(1 for r in rows if r.get("status") == "resuelta"),
                    "pendientes": sum(1 for r in rows if r.get("status") == "pendiente"),
-                   "conHoraDeCierre": sum(1 for r in rows if r.get("closedAt"))},
+                   "conHoraDeCierre": sum(1 for r in rows if r.get("closedAt")),
+                   "conHoraDeInicio": sum(1 for r in rows if r.get("gameStart"))},
         "groups": groups,
         "costSensitivity": sens,
         "paper": paper,
@@ -298,7 +310,8 @@ def main():
     c = out["counts"]
     print(f"replay de {len(snaps)} versiones ({out['period']['from']} a {out['period']['to']}): "
           f"{c['senales']} senales, {c['alertadas']} alertadas, {c['resueltas']} resueltas "
-          f"({c['conHoraDeCierre']} con hora de cierre), {c['pendientes']} pendientes")
+          f"({c['conHoraDeCierre']} con hora de cierre, {c['conHoraDeInicio']} con hora de inicio), "
+          f"{c['pendientes']} pendientes")
     for k in groups:
         print(linea(k))
     print(f"  cartera simulada (${PAPER_STAKE:.0f}/apuesta): {paper['bets']} apuestas, "

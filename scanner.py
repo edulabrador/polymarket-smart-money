@@ -58,6 +58,9 @@ ORACLE_RECHECK_S = 50 * 60  # una pendiente sin fecha de fin se re-consulta cada
 # es >= ENTRY_MIN_USD. Se mide su ROI con el oraculo, como el resto.
 ENTRY_MIN_USD = float(os.getenv("ENTRY_MIN_USD", "1000"))
 ENTRIES_PATH_NAME = "entries.json"
+# historico antiguo (sesgado, no cuenta en metricas): se guarda una vez aparte
+# para no reescribir ~640 KB en cada commit ni re-leerlo en cada version del replay
+LEGACY_PATH_NAME = "history_legacy.json"
 # especialistas por VENTAJA frente al precio (alternativa a la tasa de acierto)
 SPECIALIST_MIN_EDGE = float(os.getenv("SPECIALIST_MIN_EDGE", "0.02"))
 OUTBOX_TTL_MIN = 60  # un aviso de Telegram que falla se reintenta durante 1 h
@@ -122,6 +125,8 @@ MARKETS_URL = "https://gamma-api.polymarket.com/markets?closed=true&limit=100&{i
 # libro de ordenes publico del CLOB: el precio al que de verdad compraria un
 # seguidor (ask), no el precio medio que da /positions
 BOOK_URL = "https://clob.polymarket.com/book?token_id={token}"
+# metadatos de mercados ABIERTOS (hora de inicio del partido): sin filtro closed
+META_URL = "https://gamma-api.polymarket.com/markets?limit=100&{ids}"
 
 
 class FetchError(RuntimeError):
@@ -319,13 +324,45 @@ def fetch_market_resolutions(condition_ids, fetch=None, chunk=40, with_time=Fals
             if cid and pays:
                 out[cid] = pays if not with_time else {
                     "payouts": pays,
-                    "closedAt": parse_time(m.get("closedTime") or m.get("umaEndDate"))}
+                    "closedAt": parse_time(m.get("closedTime") or m.get("umaEndDate")),
+                    "gameStart": parse_time(m.get("gameStartTime"))}
     return out
 
 
 # --------------------------------------------------------------------------
 # Seguimiento persistente de senales (base del historico fiable)
 # --------------------------------------------------------------------------
+
+def fetch_market_meta(condition_ids, fetch=None, chunk=40):
+    """{conditionId: hora de inicio del partido (iso)} de los mercados que la
+    tienen (deportes y esports; gamma `gameStartTime`). Los que no la tienen
+    (politica, cripto, largo plazo) no aparecen. Tolerante a fallos."""
+    fetch = fetch or get_json
+    out = {}
+    ids = [c for c in dict.fromkeys(condition_ids) if c]
+    for i in range(0, len(ids), chunk):
+        q = "&".join(f"condition_ids={c}" for c in ids[i:i + chunk])
+        try:
+            markets = fetch(META_URL.format(ids=q)) or []
+        except Exception:
+            continue
+        for m in markets:
+            cid = m.get("conditionId") or m.get("condition_id")
+            gs = parse_time(m.get("gameStartTime"))
+            if cid and gs:
+                out[cid] = gs
+    return out
+
+
+def phase(game_start, at):
+    """'previa' si se alerto/compro antes de empezar el partido, 'directo' si
+    ya habia empezado, 'sin_hora' si el mercado no tiene hora de inicio (no
+    deportivo o de largo plazo). En directo el precio se mueve en minutos y 10
+    de retraso pesan mucho; antes del partido la informacion dura horas."""
+    if not game_start or not at:
+        return "sin_hora"
+    return "previa" if at < game_start else "directo"
+
 
 def alertable(s, min_edge=MIN_EDGE):
     """Una senal se alerta si es fresca (precio aun cerca de la entrada de los
@@ -385,6 +422,7 @@ def mark_alerted(t, s, price, source, now, sent):
               "entryPrice": price, "entrySource": source, "sent": sent,
               "tierAtAlert": s.get("tier"), "numTradersAtAlert": s["numTraders"],
               "specialistByAtAlert": s.get("specialistBy"),
+              "gameStart": t.get("gameStart"), "phaseAtAlert": phase(t.get("gameStart"), now),
               "edgeEst": s.get("edgeEst"), "pEst": s.get("pEst"),
               "recentEntrants": s.get("recentEntrants"),
               "lastEntryTs": s.get("lastEntryTs")})
@@ -411,7 +449,8 @@ def resolve_tracked(tracked, resolutions, now, active_ids=()):
             "tierAtDetection", "staleAtDetection", "maxTraders", "alerted", "alertedAt",
             "alertPrice", "entryPrice", "entrySource", "sent", "tierAtAlert",
             "numTradersAtAlert", "edgeEst", "pEst", "recentEntrants", "seeded",
-            "specialistBy", "specialistByAtAlert", "delivered")}
+            "specialistBy", "specialistByAtAlert", "delivered", "gameStart",
+            "phaseAtAlert")}
         h.update({"source": "coincidencia", "numTraders": t.get("maxTraders"),
                   "tier": t.get("tierAtAlert") or t.get("tier") or t.get("tierAtDetection"),
                   "resolvedAt": now, "v": SCHEMA})
@@ -560,6 +599,7 @@ def resolve_pending(pending, resolutions, now, source, expire_before=None,
                 "alertedAt": e.get("at"), "entryPrice": e["entryPrice"], "payout": p,
                 "won": p >= 0.999, "roi": metrics.roi(p, e["entryPrice"]),
                 "numTraders": len(e.get("wallets") or [1]), "traderEdge": e.get("traderEdge"),
+                "phase": e.get("phase"), "gameStart": e.get("gameStart"),
                 "resolvedAt": now, "source": source, "v": SCHEMA})
             continue
         end = (e.get("endDate") or "")[:10]
@@ -597,6 +637,8 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=()):
                 groups.setdefault(f"coincidencia:{h.get('tier') or '?'}", []).append(h)
                 for by in h.get("specialistByAtAlert") or []:
                     groups.setdefault(f"especialistas_por_{by}", []).append(h)
+                if h.get("phaseAtAlert"):
+                    groups.setdefault(f"coincidencia:{h['phaseAtAlert']}", []).append(h)
         elif h.get("source") == "whale":
             groups["whale"].append(h)
     groups["whale"] = metrics.first_per(groups["whale"])
@@ -607,6 +649,10 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=()):
         groups["entrada"] = ent
         groups["entrada:ventaja+"] = [e for e in ent if (e.get("traderEdge") or 0) > 0]
         groups["entrada:2+"] = [e for e in ent if e.get("numTraders", 1) >= 2]
+        for f in ("previa", "directo", "sin_hora"):
+            g = [e for e in ent if e.get("phase") == f]
+            if g:
+                groups[f"entrada:{f}"] = g
     out = {}
     for key, rows in groups.items():
         s = metrics.summarize(rows)
@@ -1216,6 +1262,17 @@ def main():
     first_run = not doc  # sin estado previo: fijar marcas sin avisar
     doc = migrate(doc, now)
     history, tracked = doc.get("history", []), doc.get("tracked", {})
+    # el historico antiguo sale de signals.json a su propio archivo (una vez)
+    legacy = [h for h in history if h.get("legacy")]
+    if legacy:
+        legacy_src = SIGNALS_PATH.parent / LEGACY_PATH_NAME
+        legacy_path = (pathlib.Path(DRY_RUN_PATH).with_name("history_legacy.dry.json")
+                       if DRY_RUN else legacy_src)
+        previo = (json.loads(legacy_src.read_text(encoding="utf-8"))
+                  if legacy_src.exists() else [])
+        legacy_path.write_text(json.dumps(previo + legacy, separators=(",", ":")),
+                               encoding="utf-8")
+        history = [h for h in history if not h.get("legacy")]
 
     # segunda fuente: compras individuales gigantes (feed global de trades)
     try:
@@ -1237,6 +1294,14 @@ def main():
     signals = qualify_signals(signals)
     nuevos = set(track_signals(tracked, signals, now))
     active_ids = {s["id"] for s in signals}
+    # hora de inicio del partido (una consulta por senal nueva, no por escaneo)
+    sin_meta = [tracked[i]["conditionId"] for i in nuevos]
+    inicios = fetch_market_meta(sin_meta) if sin_meta else {}
+    for i in nuevos:
+        tracked[i]["gameStart"] = inicios.get(tracked[i]["conditionId"])
+    for s in signals:
+        s["gameStart"] = tracked[s["id"]].get("gameStart")
+        s["phase"] = phase(s["gameStart"], now)
 
     # estadisticas ANTES de alertar: el gate decide con lo ya resuelto
     stats = source_stats(history)
@@ -1294,6 +1359,11 @@ def main():
                if entries_src.exists() else {})
     ent_pending, ent_resolved = drop_hedges(ent_doc.get("pending", [])), ent_doc.get("resolved", [])
     nuevas_compras = detect_entries(ent_doc.get("sizes", {}), scannable, tracks, now, ent_pending)
+    if nuevas_compras:
+        inicios_ent = fetch_market_meta([e["conditionId"] for e in nuevas_compras])
+        for e in nuevas_compras:
+            e["gameStart"] = inicios_ent.get(e["conditionId"])
+            e["phase"] = phase(e["gameStart"], e["at"])
 
     # oraculo unico (gamma) para senales seguidas, whales y compras: el
     # veredicto nunca depende de que alguien siga dentro del mercado
@@ -1398,7 +1468,8 @@ def main():
           f"{len(resolved)} senales y {len(resolved_wh)} whales resueltas | "
           f"{len(nuevas_compras)} compras nuevas, {len(ent_pending)} pendientes, "
           f"{len(resolved_ent)} resueltas | caducadas sin liquidar: "
-          f"{cad_wh} whales, {cad_ent} compras | {len(outbox)} avisos en cola")
+          f"{cad_wh} whales, {cad_ent} compras | {len(outbox)} avisos en cola | "
+          f"hora de inicio: {len(inicios) if sin_meta else 0}/{len(sin_meta)} senales nuevas")
     for k, st in sorted(stats.items()):
         if st["n"]:
             marca = " [SILENCIADA: pierde dinero]" if st["suppressed"] else ""
