@@ -84,16 +84,17 @@ def test_odds_bets_picks_undervalued_side_once():
     # Polymarket da 0.40 a que gana Arsenal; las casas, 0.50 -> ventaja 0.09 tras coste
     u = {"0xa": pos("0xa", 0.40, title="Will Arsenal FC win on 2026-10-15?")}
     seen = {}
-    nuevas, disc = st.odds_bets(u, [ev], seen, NOW, entry_cost=0.01, min_edge=0.03)
+    nuevas, disc, diag = st.odds_bets(u, [ev], seen, NOW, entry_cost=0.01, min_edge=0.03)
+    assert diag == {"candidatos": 1, "emparejados": 1}
     assert len(nuevas) == 1 and nuevas[0]["outcomeIndex"] == 0
     assert nuevas[0]["edge"] == 0.09 and nuevas[0]["fair"] == 0.5 and nuevas[0]["book"] == "pinnacle"
     assert nuevas[0]["tag"] == "ventaja 5%+" and nuevas[0]["source"] == "cuotas"
     # segunda pasada: sigue como discrepancia en la web, pero no se re-apuesta
-    nuevas2, disc2 = st.odds_bets(u, [ev], seen, NOW, entry_cost=0.01, min_edge=0.03)
+    nuevas2, disc2, _ = st.odds_bets(u, [ev], seen, NOW, entry_cost=0.01, min_edge=0.03)
     assert nuevas2 == [] and len(disc2) == 1
     # Polymarket sobrevalora a Arsenal (0.60): la apuesta es el "No"
     u2 = {"0xb": pos("0xb", 0.60, title="Will Arsenal FC win on 2026-10-15?")}
-    n3, _ = st.odds_bets(u2, [ev], {}, NOW, entry_cost=0.01, min_edge=0.03)
+    n3, _, _ = st.odds_bets(u2, [ev], {}, NOW, entry_cost=0.01, min_edge=0.03)
     assert n3[0]["outcomeIndex"] == 1 and n3[0]["outcome"] == "No"
 
 
