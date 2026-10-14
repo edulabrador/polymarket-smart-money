@@ -92,12 +92,14 @@ de gamma; entrada = precio guardado + 1 céntimo. 383 señales, 356 resueltas, 2
 | Grupo | Resueltas | Acierto | El precio implicaba | ROI medio | IC95 | Veredicto |
 |---|---:|---:|---:|---:|---|---|
 | **Todas las alertas** | 212 | 55,7 % | 56,1 % | **−3,2 %** | −16 % a +10 % | pierde |
-| Alertas, entrando 5-10 min tarde | 212 | 55,7 % | 56,1 % | −3,3 % | −22 % a +15 % | pierde |
+| Alertas, entrando 5-10 min tarde | 212 | 55,7 % | 56,1 % | −3,3 % | −21 % a +15 % | pierde |
 | 🎯 Especialistas (3-4 traders) | 194 | 55,2 % | 56,7 % | **−6,1 %** | −19 % a +7 % | pierde |
-| 👥 Consenso amplio (5 o más) | 18 | 61,1 % | 49,0 % | +29 % | −39 % a +97 % | sin muestra |
-| Todas las detectadas | 356 | 68,8 % | 67,4 % | −2,6 % | −11 % a +6 % | pierde |
+| 👥 Consenso amplio (5 o más) | 18 | 61,1 % | 49,0 % | +29 % | −38 % a +96 % | sin muestra |
+| Todas las detectadas | 356 | 68,8 % | 67,4 % | −2,6 % | −11 % a +5 % | pierde |
 
-Cartera simulada: 212 apuestas de 100 $ → **−669 $**, con una caída máxima de 1.996 $.
+Intervalos robustos por evento (212 alertas en 180 eventos distintos). Cartera simulada:
+212 apuestas de 100 $ → **−669 $**, con una caída máxima de 2.001 $ y hasta 1.300 $
+inmovilizados a la vez.
 Sin ningún coste de entrada el ROI seguiría en −1,2 %.
 
 Lectura:
@@ -110,9 +112,11 @@ Lectura:
 - **El consenso amplio da +29 %, pero con 18 casos** el intervalo va de −39 % a +97 %. Es
   compatible con no tener ninguna ventaja. Es lo único que se sigue enviando, y el
   histórico en vivo dirá si se sostiene.
-- Cuidado con buscar el subgrupo que "sí funciona" en estos mismos datos: con suficientes
-  cortes alguno sale positivo por azar. Cualquier filtro nuevo debe validarse en datos
-  posteriores.
+- **Validación fuera de la muestra:** se probaron 45 combinaciones de reglas con la
+  primera mitad (hasta el 30-08-2026). La mejor dio **+17,7 %** (31 alertas); aplicada a
+  la segunda mitad dio **−18,2 %** (38 alertas). Las reglas actuales pasan de +3,5 % a
+  **−11,8 %**. Lo que parecía funcionar en una mitad era azar: no hay un ajuste de
+  filtros que rescate esta señal.
 
 ### Dos fuentes de verdad
 
