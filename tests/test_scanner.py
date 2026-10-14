@@ -7,12 +7,14 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 import scanner
+from scanner import (deliver, detect_entries, fetch_activity, oracle_due, parse_time,
+                     position_sizes)
 from scanner import (alertable, annotate_win_rates, categoria, detect_signals,
                      detect_whales, enrich_whales, entry_price, entry_timing,
                      fetch_market_resolutions, fill_price, final_payouts,
                      for_recipient, format_message, format_resolved,
                      format_sample_reached, format_whales, mark_alerted, migrate,
-                     qualify_signals, recipients, resolve_tracked, resolve_whales,
+                     qualify_signals, recipients, resolve_tracked, resolve_pending,
                      shrunk_edge, source_stats, track_record, track_signals,
                      update_track_records, whale_notifiable)
 
@@ -339,24 +341,133 @@ def test_annotate_category_win_rates():
     assert s["avgCatWinRate"] == 0.9      # media de los que tienen muestra
 
 
-def test_resolve_whales_roi_and_pending():
-    whales = [
-        {"conditionId": "0xW", "outcomeIndex": 1, "price": 0.25, "followPrice": 0.27,
-         "title": "M", "outcome": "No", "eventSlug": "e", "timestamp": 1},  # gana
-        {"conditionId": "0xL", "outcomeIndex": 0, "price": 0.6, "title": "M2",
-         "outcome": "Yes", "eventSlug": "e2", "timestamp": 1},             # pierde
-        {"conditionId": "0xOpen", "outcomeIndex": 0, "price": 0.5, "title": "M3",
-         "outcome": "Yes", "eventSlug": "e3", "timestamp": 1},             # sin liquidar
+def test_resolve_pending_whales_and_entries():
+    pend = [
+        {"id": "0xW:1", "conditionId": "0xW", "outcomeIndex": 1, "entryPrice": 0.27,
+         "title": "M", "outcome": "No", "eventSlug": "e", "at": "T0", "ts": 1000},
+        {"id": "0xL:0", "conditionId": "0xL", "outcomeIndex": 0, "entryPrice": 0.61,
+         "title": "M2", "outcome": "Yes", "eventSlug": "e2", "at": "T0", "ts": 1000},
+        {"id": "0xO:0", "conditionId": "0xO", "outcomeIndex": 0, "entryPrice": 0.5,
+         "title": "M3", "outcome": "Yes", "eventSlug": "e3", "at": "T0", "ts": 1000},
+        {"id": "0xV:0", "conditionId": "0xV", "outcomeIndex": 0, "entryPrice": 0.5,
+         "title": "vieja", "outcome": "Yes", "eventSlug": "e4", "at": "T0", "ts": 5},
     ]
-    kept, res = resolve_whales(whales, {"0xW": [0.0, 1.0], "0xL": [0.0, 1.0]}, "T")
-    assert [w["conditionId"] for w in kept] == ["0xOpen"]
+    kept, res, cad = resolve_pending(pend, {"0xW": [0.0, 1.0], "0xL": [0.0, 1.0]}, "T", "whale",
+                                     max_age_ts=100, now_ts=9999, queried={"0xO", "0xW", "0xL"})
+    assert [e["id"] for e in kept] == ["0xO:0"] and cad == 1   # 0xV: demasiado vieja
+    assert kept[0]["chk"] == 9999                               # consultada: hora apuntada
     by = {r["id"]: r for r in res}
-    # entrada = precio del SEGUIDOR (0.27), no el de la whale (0.25)
+    # entrada = precio del SEGUIDOR (0.27), no el de la whale
     assert by["0xW:1"]["won"] and by["0xW:1"]["roi"] == round(1 / 0.27 - 1, 4)
-    assert by["0xW:1"]["whalePrice"] == 0.25
-    # sin followPrice (whale antigua): precio de la whale + coste de entrada
-    assert by["0xL:0"]["entryPrice"] == 0.61 and by["0xL:0"]["roi"] == -1.0
-    assert all(r["source"] == "whale" for r in res)
+    assert by["0xL:0"]["roi"] == -1.0 and all(r["source"] == "whale" for r in res)
+    # no consultada en este escaneo: NO se le apunta hora (si no, nunca tocaria)
+    limpia = {k: v for k, v in pend[2].items() if k != "chk"}
+    kept, _, _ = resolve_pending([limpia], {}, "T", "whale", now_ts=9999, queried=set())
+    assert "chk" not in kept[0]
+    # compras con fecha: caducan 45 dias despues sin liquidar
+    e = dict(pend[2], endDate="2026-01-01")
+    _, _, cad = resolve_pending([e], {}, "T", "entrada", expire_before="2026-08-01")
+    assert cad == 1
+
+
+def test_oracle_due():
+    assert oracle_due({"endDate": "2026-10-01"}, 0, "2026-10-14")
+    assert not oracle_due({"endDate": "2026-12-01"}, 0, "2026-10-14")
+    assert oracle_due({"chk": 0}, 3600, "2026-10-14")              # sin fecha: cada hora
+    assert not oracle_due({"chk": 3000}, 3600, "2026-10-14")
+
+
+def test_parse_time_gamma_formats():
+    assert parse_time("2026-09-10 03:12:45+00") == "2026-09-10T03:12:45+00:00"
+    assert parse_time("2026-09-10T03:12:45Z") == "2026-09-10T03:12:45+00:00"
+    assert parse_time("2026-09-10") == "2026-09-10T00:00:00+00:00"
+    assert parse_time("basura") is None and parse_time(None) is None
+
+
+def test_fetch_activity_paginates_until_window():
+    paginas = {0: [{"timestamp": 1000 - i, "transactionHash": f"a{i}"} for i in range(500)],
+               500: [{"timestamp": 400 - i, "transactionHash": f"b{i}"} for i in range(500)],
+               1000: [{"timestamp": 1, "transactionHash": "c"}]}
+    pedidas = []
+    def fetch(url):
+        off = int(url.split("offset=")[1])
+        pedidas.append(off)
+        return paginas.get(off, [])
+    # la 2a pagina ya baja de since_ts=300: no hace falta la 3a
+    out = fetch_activity("0x", since_ts=300, fetch=fetch)
+    assert pedidas == [0, 500] and len(out) == 1000
+    # si la API ignora el offset y repite la pagina, se detecta y se para
+    pedidas.clear()
+    repetida = lambda url: (pedidas.append(1), paginas[0])[1]
+    assert len(fetch_activity("0x", since_ts=0, fetch=repetida)) == 500 and len(pedidas) == 2
+
+
+def test_deliver_queues_failures_and_retries():
+    original = scanner.send_telegram
+    respuestas = {"ok": True, "caido": False}
+    scanner.send_telegram = lambda text, chat: respuestas[chat]
+    try:
+        cola, ent = deliver([("ok", "a", ["s1"]), ("caido", "a", ["s1"]), ("caido", "b", ["s2"])],
+                            [], "2026-10-14T10:00:00+00:00")
+        assert ent == {"s1": True, "s2": False}                 # s1 llego a alguien
+        assert [m["text"] for m in cola] == ["a", "b"]          # lo fallido, a la cola
+        # siguiente escaneo: Telegram vuelve -> la cola se vacia
+        respuestas["caido"] = True
+        cola2, _ = deliver([], cola, "2026-10-14T10:05:00+00:00")
+        assert cola2 == []
+        # pasada 1 h sin poder entregar, se descarta (no se acumula para siempre)
+        respuestas["caido"] = False
+        cola3, _ = deliver([], cola, "2026-10-14T11:30:00+00:00")
+        assert cola3 == []
+    finally:
+        scanner.send_telegram = original
+
+
+def test_send_telegram_never_raises():
+    original_token, original_urlopen = scanner.TELEGRAM_TOKEN, scanner.urllib.request.urlopen
+    scanner.TELEGRAM_TOKEN = "x"
+    def caido(req, timeout):
+        raise OSError("telegram caido")
+    scanner.urllib.request.urlopen = caido
+    try:
+        assert scanner.send_telegram("hola", "1") is False
+    finally:
+        scanner.TELEGRAM_TOKEN, scanner.urllib.request.urlopen = original_token, original_urlopen
+    assert scanner.send_telegram("hola", "") is None            # sin destino: se omite
+
+
+def test_detect_entries_new_and_growing_positions():
+    def p(cond, size, cur=0.5, **kw):
+        return dict(pos(cond=cond, curPrice=cur), size=size, **kw)
+    prev = position_sizes({"0xa": {"positions": [p("0xold", 1000), p("0xgrow", 1000)]}})
+    assert prev == {"0xa": {"0xold:0": 1000, "0xgrow:0": 1000}}
+    now = "2026-10-14T10:00:00+00:00"
+    actual = {
+        "0xa": {"positions": [p("0xold", 1000), p("0xgrow", 5000), p("0xnew", 4000),
+                              p("0xpoco", 1100), p("0xfav", 5000, cur=0.95)]},
+        "0xnuevo_en_top": {"positions": [p("0xnew", 9000)]},     # sin foto previa: no cuenta
+    }
+    pending = []
+    tracks = {"0xa": {"wins": 6, "losses": 2, "edge": {"sum": 1.0, "n": 10}}}
+    nuevas = detect_entries(prev, actual, tracks, now, pending)
+    ids = sorted(e["id"] for e in nuevas)
+    # crece 5x (+$2000) y nueva (+$2000) cuentan; +10% no; favorito a 0.95 no
+    assert ids == ["0xgrow:0", "0xnew:0"] and pending == nuevas
+    e = next(x for x in nuevas if x["id"] == "0xnew:0")
+    assert e["entryPrice"] == 0.51 and e["usd"] == 2000.0 and e["traderEdge"] == 0.05
+    # otro top trader entra en el mismo mercado en < 24 h: se suma, no se duplica
+    prev2 = {"0xa": {}, "0xb": {}}
+    otra = detect_entries(prev2, {"0xb": {"positions": [p("0xnew", 4000)]}}, {}, now, pending)
+    assert otra == [] and e["wallets"] == ["0xa", "0xb"]
+
+
+def test_qualify_marks_specialist_criteria():
+    s = {"id": "x", "numTraders": 3, "avgWinRate": 0.4, "avgCatWinRate": None, "edgeEst": 0.05}
+    out = qualify_signals([s])
+    assert out[0]["tier"] == "especialistas" and out[0]["specialistBy"] == ["ventaja"]
+    s2 = dict(s, avgWinRate=0.7)
+    assert qualify_signals([s2])[0]["specialistBy"] == ["acierto", "ventaja"]
+    assert qualify_signals([dict(s, edgeEst=0.0)]) == []
 
 
 def test_fetch_market_resolutions_parses_gamma():
@@ -408,6 +519,13 @@ def test_source_stats_suppresses_losing_source():
     assert s["avgRoi"] == 0.5 and s["ci95"][0] > 0 and s["verdict"] == "rentable"
     mix = [h(roi=1.0)] * 11 + [h(payout=0.0, won=False, roi=-1.0)] * 9
     assert source_stats(mix, min_sample=20)["coincidencia"]["verdict"] == "no concluyente"
+    # compras nuevas: grupos de investigacion, nunca silencian nada
+    ent = [{"id": f"e{i}", "payout": 0.0, "won": False, "roi": -1.0, "entryPrice": 0.5,
+            "traderEdge": 0.1 if i < 3 else None, "numTraders": 2 if i == 0 else 1,
+            "eventSlug": f"ev{i}"} for i in range(25)]
+    st = source_stats([], min_sample=20, entries=ent)
+    assert st["entrada"]["n"] == 25 and st["entrada"]["suppressed"] is False
+    assert st["entrada:ventaja+"]["n"] == 3 and st["entrada:2+"]["n"] == 1
 
 
 def test_format_sample_reached():

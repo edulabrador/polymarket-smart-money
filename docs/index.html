@@ -310,19 +310,32 @@ function renderTiles() {
 
 const NOMBRE_FUENTE = {
   'coincidencia': '🔔 alertas', 'coincidencia:amplio': '👥 amplio',
-  'coincidencia:especialistas': '🎯 especialistas', 'whale': '🐋 whales',
-  'investigacion': '🔬 todas las detectadas'};
+  'coincidencia:especialistas': '🎯 especialistas',
+  'especialistas_por_acierto': '🎯 por acierto', 'especialistas_por_ventaja': '🎯 por ventaja',
+  'whale': '🐋 whales', 'investigacion': '🔬 todas las detectadas',
+  'entrada': '⚡ compras nuevas', 'entrada:ventaja+': '⚡ de traders con ventaja',
+  'entrada:2+': '⚡ 2+ traders en 24 h'};
+const DESC_FUENTE = {
+  'investigacion': 'Todas las señales detectadas, alertadas o no, con entrada en la detección + coste. Solo para estudiar; no decide nada.',
+  'entrada': 'Investigación: cada compra nueva (≥ $1.000) de un top trader, medida al precio del escaneo en que se vio + coste. Una por mercado y día. No se notifica.',
+  'entrada:ventaja+': 'Compras nuevas de traders con ventaja positiva frente al precio que pagan.',
+  'entrada:2+': 'Compras nuevas en las que entraron 2 o más top traders en 24 h.',
+};
 function renderSources() {
   const st = datos.sourceStats ?? {};
-  const orden = ['coincidencia', 'coincidencia:amplio', 'coincidencia:especialistas', 'whale', 'investigacion'];
+  const orden = ['coincidencia', 'coincidencia:amplio', 'coincidencia:especialistas',
+    'especialistas_por_acierto', 'especialistas_por_ventaja', 'whale', 'investigacion',
+    'entrada', 'entrada:ventaja+', 'entrada:2+'];
   const entradas = orden.filter(k => st[k]?.n).map(k => [k, st[k]]);
   const cont = el('fuentes');
   cont.hidden = !entradas.length;
   cont.innerHTML = entradas.map(([src, s]) => {
     const clase = s.avgRoi >= 0 ? 'deriva-ok' : 'deriva-mal';
-    const inv = src === 'investigacion';
+    const base = `ROI medio real sobre ${s.n} resueltas en ${s.events ?? s.n} eventos, al precio de entrada del seguidor. ` +
+      `Acierto ${Math.round(s.hitRate * 100)}% frente a ${Math.round(s.avgEntry * 100)}% que implicaba el precio. ` +
+      'El intervalo trata como una sola apuesta los mercados de un mismo evento.';
     return `<div class="fuente${s.suppressed ? ' silenciada' : ''}"
-      title="${inv ? 'Todas las señales detectadas, alertadas o no, con entrada en la detección + coste. Solo para estudiar; no decide nada.' : 'ROI medio real sobre ' + s.n + ' resueltas, al precio de entrada del seguidor. Acierto ' + Math.round(s.hitRate * 100) + '% frente a ' + Math.round(s.avgEntry * 100) + '% que implicaba el precio.'}${s.suppressed ? ' Pierde dinero: deja de avisar por Telegram hasta que vuelva a positivo.' : ''}">
+      title="${DESC_FUENTE[src] ? DESC_FUENTE[src] + ' ' : ''}${base}${s.suppressed ? ' Pierde dinero: deja de avisar por Telegram hasta que vuelva a positivo.' : ''}">
       ${esc(NOMBRE_FUENTE[src] || src)}: <b class="${clase}">ROI ${signo(s.avgRoi)}</b>
       <span style="color:var(--sutil)">${ic(s.ci95)} · ${s.wins}/${s.n}</span>${tagV(s.verdict)}${s.suppressed ? '<span class="tag">silenciada</span>' : ''}</div>`;
   }).join('');
@@ -455,7 +468,11 @@ async function cargarBacktest() {
       `el escáner vio en cada momento; resultado según el oráculo de gamma.\n\n` +
       ['alertadas', 'alertadas_con_retraso', 'alertadas:amplio', 'alertadas:especialistas', 'detectadas',
        'descartadas_al_nacer'].map(linea).join('\n') +
-      `\n\nSensibilidad al coste de entrada: ${sens}\n${b.counts.pendientes} señales aún sin liquidar.`;
+      `\n\nSensibilidad al coste de entrada: ${sens}\n${b.counts.pendientes} señales aún sin liquidar.` +
+      (b.walkForward?.elegida ? `\n\nFuera de muestra (ajuste antes del ${new Date(b.walkForward.split).toLocaleDateString('es-ES')}, ` +
+        `prueba después): de ${b.walkForward.combinaciones} reglas, la mejor en el ajuste dio ` +
+        `${signo(b.walkForward.elegida.train.avgRoi)} y en la prueba ${b.walkForward.elegida.test.n ? signo(b.walkForward.elegida.test.avgRoi) : 'sin datos'}. ` +
+        `Las reglas actuales: ${b.walkForward.reglasActuales.test.n ? signo(b.walkForward.reglasActuales.test.avgRoi) : 'sin datos'} en la prueba.` : '');
     el('tile-backtest').hidden = false;
   } catch (e) {}
 }

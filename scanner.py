@@ -46,7 +46,21 @@ WHALE_MIN_TRACK = int(os.getenv("WHALE_MIN_TRACK", "5"))
 TRACK_WINDOW_DAYS = 30
 TRACK_TTL_S = 6 * 3600  # el track record por wallet se recalcula cada 6 h
 TRACK_MIN_USD = 100.0   # canjes/perdidas menores son ruido
-WHALES_KEEP = 400  # whales vivas que se guardan (web + medicion de su ROI al resolver)
+WHALES_KEEP = 400  # whales recientes que se muestran en la web
+# la medicion del ROI de las whales va aparte (whalesPending) y no se recorta:
+# si se midieran solo las que caben en la web, las de mercados largos saldrian
+# de la lista antes de liquidar y el ROI quedaria sesgado a apuestas cortas.
+# Solo se descartan sin medir las que llevan mas de esto sin liquidar.
+WHALE_PENDING_DAYS = 400
+ORACLE_RECHECK_S = 50 * 60  # una pendiente sin fecha de fin se re-consulta cada ~hora
+# registro de COMPRAS NUEVAS de los top traders (investigacion, no se notifica):
+# una compra cuenta si la posicion es nueva o crece >= 20% y el dinero anadido
+# es >= ENTRY_MIN_USD. Se mide su ROI con el oraculo, como el resto.
+ENTRY_MIN_USD = float(os.getenv("ENTRY_MIN_USD", "1000"))
+ENTRIES_PATH_NAME = "entries.json"
+# especialistas por VENTAJA frente al precio (alternativa a la tasa de acierto)
+SPECIALIST_MIN_EDGE = float(os.getenv("SPECIALIST_MIN_EDGE", "0.02"))
+OUTBOX_TTL_MIN = 60  # un aviso de Telegram que falla se reintenta durante 1 h
 # gate auto-corrector: una fuente con >= SOURCE_MIN_SAMPLE señales resueltas y
 # ROI medio real negativo deja de notificar (sigue en la web, marcada). No es
 # una decision fija: si las señales nuevas resuelven en positivo, se reactiva.
@@ -98,7 +112,9 @@ TRADES_URL = ("https://data-api.polymarket.com/trades"
 # sin filtro de tipo: un solo fetch da los canjes (REDEEM = mercados ganados)
 # y el flujo de caja (compras/ventas) para el PnL neto real del wallet
 ACTIVITY_URL = ("https://data-api.polymarket.com/activity"
-                "?user={wallet}&limit=500")
+                "?user={wallet}&limit=500&offset={offset}")
+ACTIVITY_PAGE = 500
+ACTIVITY_MAX_PAGES = 6  # hasta 3.000 eventos por wallet
 # resolucion de mercados: gamma devuelve closed + outcomePrices (["1","0"]...),
 # el indice del precio "1" es el resultado ganador. Sirve para medir el ROI de
 # las whales, cuyos compradores no son del top 50 (no estan en position_index).
@@ -263,12 +279,31 @@ def final_payouts(market):
     return None
 
 
-def fetch_market_resolutions(condition_ids, fetch=None, chunk=40):
+def parse_time(x):
+    """ISO normalizado de las fechas de gamma ('2026-09-10 03:12:45+00', con Z,
+    o solo fecha). None si no se entiende."""
+    if not x or not isinstance(x, str):
+        return None
+    t = x.strip().replace(" ", "T").replace("Z", "+00:00")
+    if re.search(r"[+-]\d\d$", t):
+        t += ":00"
+    try:
+        d = datetime.fromisoformat(t)
+    except ValueError:
+        return None
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=timezone.utc)
+    return d.astimezone(timezone.utc).isoformat(timespec="seconds")
+
+
+def fetch_market_resolutions(condition_ids, fetch=None, chunk=40, with_time=False):
     """{conditionId: [pago por resultado]} de los mercados YA liquidados de la
     lista (gamma: closed + outcomePrices). Es el oraculo UNICO del proyecto:
     da el veredicto de senales y whales sin depender de que nadie siga
     teniendo la posicion. Tolerante a fallos: un lote que falla se salta (se
-    reintenta en el siguiente escaneo)."""
+    reintenta en el siguiente escaneo). Con with_time devuelve
+    {conditionId: {"payouts": [...], "closedAt": iso o None}} (hora real de
+    cierre, para ordenar la cartera simulada del backtest)."""
     fetch = fetch or get_json
     out = {}
     ids = [c for c in dict.fromkeys(condition_ids) if c]  # unicos, sin vacios
@@ -282,7 +317,9 @@ def fetch_market_resolutions(condition_ids, fetch=None, chunk=40):
             cid = m.get("conditionId") or m.get("condition_id")
             pays = final_payouts(m)
             if cid and pays:
-                out[cid] = pays
+                out[cid] = pays if not with_time else {
+                    "payouts": pays,
+                    "closedAt": parse_time(m.get("closedTime") or m.get("umaEndDate"))}
     return out
 
 
@@ -327,6 +364,7 @@ def track_signals(tracked, signals, now):
         t["tier"] = s.get("tier")
         t["numTraders"] = s["numTraders"]
         t["maxTraders"] = max(t.get("maxTraders", 0), s["numTraders"])
+        t["specialistBy"] = sorted(set(t.get("specialistBy") or []) | set(s.get("specialistBy") or []))
         # datos para la web: cuando se vio por primera vez y a que precio
         s["firstSeen"] = t["firstSeen"]
         s["detectPrice"] = t["detectPrice"]
@@ -346,6 +384,7 @@ def mark_alerted(t, s, price, source, now, sent):
     t.update({"alerted": True, "alertedAt": now, "alertPrice": s["curPrice"],
               "entryPrice": price, "entrySource": source, "sent": sent,
               "tierAtAlert": s.get("tier"), "numTradersAtAlert": s["numTraders"],
+              "specialistByAtAlert": s.get("specialistBy"),
               "edgeEst": s.get("edgeEst"), "pEst": s.get("pEst"),
               "recentEntrants": s.get("recentEntrants"),
               "lastEntryTs": s.get("lastEntryTs")})
@@ -371,7 +410,8 @@ def resolve_tracked(tracked, resolutions, now, active_ids=()):
             "id", "title", "outcome", "eventSlug", "cat", "firstSeen", "detectPrice",
             "tierAtDetection", "staleAtDetection", "maxTraders", "alerted", "alertedAt",
             "alertPrice", "entryPrice", "entrySource", "sent", "tierAtAlert",
-            "numTradersAtAlert", "edgeEst", "pEst", "recentEntrants", "seeded")}
+            "numTradersAtAlert", "edgeEst", "pEst", "recentEntrants", "seeded",
+            "specialistBy", "specialistByAtAlert", "delivered")}
         h.update({"source": "coincidencia", "numTraders": t.get("maxTraders"),
                   "tier": t.get("tierAtAlert") or t.get("tier") or t.get("tierAtDetection"),
                   "resolvedAt": now, "v": SCHEMA})
@@ -397,7 +437,106 @@ def needs_oracle(t, active_ids, today):
     return t["id"] not in active_ids or (t.get("endDate") or "9999")[:10] <= today
 
 
-def source_stats(history, min_sample=SOURCE_MIN_SAMPLE):
+# --------------------------------------------------------------------------
+# Compras nuevas de los top traders (investigacion: via "entrar en caliente")
+# --------------------------------------------------------------------------
+
+def position_sizes(positions_by_trader):
+    """{wallet: {mercado:resultado: acciones}}: foto de tamanos para detectar
+    compras entre escaneos. Por ACCIONES, no por valor: una subida de precio
+    cambia el valor de una posicion sin que nadie haya comprado nada."""
+    return {w: {f'{p["conditionId"]}:{p["outcomeIndex"]}': round(p.get("size", 0), 2)
+                for p in info["positions"] if not p.get("redeemable")}
+            for w, info in positions_by_trader.items()}
+
+
+def detect_entries(prev_sizes, positions_by_trader, tracks, now, pending,
+                   min_usd=ENTRY_MIN_USD, max_price=MAX_ALERT_PRICE):
+    """Compras nuevas desde el escaneo anterior: posicion nueva o que crece
+    >= 20% con >= min_usd anadidos, a precio < max_price. Solo para wallets
+    que ya estaban en la foto anterior (uno que entra al top no "compra" todo
+    su historico de golpe). Una compra por mercado y lado cada 24 h: si otro
+    top trader entra en el mismo, se suma a `wallets` de la ya registrada.
+    Muta `pending` (lista de compras pendientes de medir) y devuelve las nuevas."""
+    reciente = {}
+    corte = (datetime.fromisoformat(now) - timedelta(hours=24)).isoformat(timespec="seconds")
+    for e in pending:
+        if e["at"] >= corte:
+            reciente[e["id"]] = e
+    nuevas = []
+    for w, info in positions_by_trader.items():
+        prev = prev_sizes.get(w)
+        if prev is None:
+            continue
+        for p in info["positions"]:
+            if p.get("redeemable"):
+                continue
+            sid = f'{p["conditionId"]}:{p["outcomeIndex"]}'
+            size, cur = p.get("size", 0), p.get("curPrice", 0)
+            antes = prev.get(sid, 0)
+            if size <= antes * 1.2 or (size - antes) * cur < min_usd or not 0 < cur < max_price:
+                continue
+            if sid in reciente:
+                if w not in reciente[sid]["wallets"]:
+                    reciente[sid]["wallets"].append(w)
+                continue
+            tr = tracks.get(w) or {}
+            cat = categoria(p.get("title", ""))
+            e = {"id": sid, "conditionId": p["conditionId"], "outcomeIndex": p["outcomeIndex"],
+                 "title": p.get("title", ""), "outcome": p.get("outcome", ""),
+                 "eventSlug": p.get("eventSlug", ""), "endDate": p.get("endDate", ""),
+                 "cat": cat, "at": now, "price": cur,
+                 "entryPrice": round(min(cur + ENTRY_COST, 0.999), 4),
+                 "usd": round((size - antes) * cur, 2), "wallets": [w],
+                 "traderEdge": trader_edge(tr, cat), "traderWinRate": win_rate(tr) if tr else None}
+            reciente[sid] = e
+            pending.append(e)
+            nuevas.append(e)
+    return nuevas
+
+
+def oracle_due(item, now_ts, today, key_end="endDate"):
+    """Toca consultar el oraculo para una pendiente si su fecha de fin ya
+    llego o, sin fecha conocida, si no se consulto en la ultima hora."""
+    end = (item.get(key_end) or "")[:10]
+    if end:
+        return end <= today
+    return now_ts - item.get("chk", 0) >= ORACLE_RECHECK_S
+
+
+def resolve_pending(pending, resolutions, now, source, expire_before=None,
+                    max_age_ts=None, now_ts=None, queried=()):
+    """Pendientes (compras nuevas o whales) cuyo mercado liquido -> filas de
+    historico con ROI a su precio de entrada. Devuelve (pendientes, resueltas,
+    caducadas). Caducan las de endDate anterior a expire_before o, sin
+    fecha, las mas viejas que max_age_ts. A las consultadas (`queried`) se
+    les apunta la hora para no re-consultarlas hasta ORACLE_RECHECK_S."""
+    kept, out, caducadas = [], [], 0
+    for e in pending:
+        pays = resolutions.get(e["conditionId"])
+        idx = e.get("outcomeIndex")
+        if pays is not None and isinstance(idx, int) and idx < len(pays):
+            p = pays[idx]
+            out.append({
+                "id": e["id"], "title": e["title"], "outcome": e["outcome"],
+                "eventSlug": e.get("eventSlug", ""), "cat": e.get("cat"),
+                "alertedAt": e.get("at"), "entryPrice": e["entryPrice"], "payout": p,
+                "won": p >= 0.999, "roi": metrics.roi(p, e["entryPrice"]),
+                "numTraders": len(e.get("wallets") or [1]), "traderEdge": e.get("traderEdge"),
+                "resolvedAt": now, "source": source, "v": SCHEMA})
+            continue
+        end = (e.get("endDate") or "")[:10]
+        if (end and expire_before and end < expire_before) or (
+                not end and max_age_ts and e.get("ts", now_ts or 0) < max_age_ts):
+            caducadas += 1
+            continue
+        if now_ts is not None and e["conditionId"] in queried:
+            e["chk"] = now_ts
+        kept.append(e)
+    return kept, out, caducadas
+
+
+def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=()):
     """Rendimiento real por fuente sobre el historico FIABLE (formato v2; el
     historico anterior queda marcado `legacy` y no cuenta):
 
@@ -412,7 +551,6 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE):
     (se sigue alertando en sombra y se reactiva sola si vuelve a positivo)."""
     reliable = [h for h in history if not h.get("legacy") and h.get("payout") is not None]
     groups = {"coincidencia": [], "investigacion": [], "whale": []}
-    seen_whale = set()
     for h in reliable:
         if h.get("source") == "coincidencia":
             groups["investigacion"].append({**h, "roi": h.get("roiDetect"),
@@ -420,15 +558,24 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE):
             if h.get("alerted") and h.get("roi") is not None and not h.get("seeded"):
                 groups["coincidencia"].append(h)
                 groups.setdefault(f"coincidencia:{h.get('tier') or '?'}", []).append(h)
-        elif h.get("source") == "whale" and h["id"] not in seen_whale:
-            seen_whale.add(h["id"])
+                for by in h.get("specialistByAtAlert") or []:
+                    groups.setdefault(f"especialistas_por_{by}", []).append(h)
+        elif h.get("source") == "whale":
             groups["whale"].append(h)
+    groups["whale"] = metrics.first_per(groups["whale"])
+    # compras nuevas de top traders (investigacion): todas, de traders con
+    # ventaja probada, y en las que entraron 2 o mas top traders en 24 h
+    ent = [e for e in entries if e.get("payout") is not None]
+    if ent:
+        groups["entrada"] = ent
+        groups["entrada:ventaja+"] = [e for e in ent if (e.get("traderEdge") or 0) > 0]
+        groups["entrada:2+"] = [e for e in ent if e.get("numTraders", 1) >= 2]
     out = {}
     for key, rows in groups.items():
         s = metrics.summarize(rows)
         s["verdict"] = metrics.verdict(s, min_sample)
-        s["suppressed"] = (key != "investigacion" and s["n"] >= min_sample
-                           and s["avgRoi"] < 0)
+        s["suppressed"] = (key != "investigacion" and not key.startswith("entrada")
+                           and s["n"] >= min_sample and s["avgRoi"] < 0)
         out[key] = s
     return out
 
@@ -500,33 +647,6 @@ def detect_whales(trades, last_ts, top_wallets, min_usd=WHALE_MIN_USD,
     return whales
 
 
-def resolve_whales(whales, resolutions, now):
-    """whales cuyo mercado ya liquido -> historico con su ROI real. La entrada
-    es `followPrice`: lo que pagaria un seguidor al verla (ask del libro o
-    precio de la whale + ENTRY_COST), no el precio de la propia whale, que
-    nadie que la siga puede conseguir. Devuelve (vivas, resueltas)."""
-    kept, resolved = [], []
-    for w in whales:
-        pays = resolutions.get(w.get("conditionId"))
-        idx = w.get("outcomeIndex")
-        if pays is None or not isinstance(idx, int) or idx >= len(pays):
-            kept.append(w)
-            continue
-        e = w.get("followPrice") or min((w.get("price") or 0.5) + ENTRY_COST, 0.999)
-        resolved.append({
-            "id": f'{w.get("conditionId", "")}:{idx}',
-            "title": w["title"], "outcome": w["outcome"],
-            "eventSlug": w.get("eventSlug", ""), "numTraders": 1,
-            "entryPrice": round(e, 4), "whalePrice": w.get("price"),
-            "payout": pays[idx], "won": pays[idx] >= 0.999,
-            "roi": metrics.roi(pays[idx], e), "legacy": bool(w.get("legacy")),
-            "alertedAt": datetime.fromtimestamp(w["timestamp"], tz=timezone.utc)
-                         .isoformat(timespec="seconds") if w.get("timestamp") else None,
-            "resolvedAt": now, "source": "whale", "v": SCHEMA,
-        })
-    return kept, resolved
-
-
 def categoria(titulo):
     """Categoria del mercado por palabras clave del titulo (la API no la
     expone). Mismo criterio que la heuristica de la web."""
@@ -546,6 +666,29 @@ def categoria(titulo):
     return "otras"
 
 
+def fetch_activity(wallet, since_ts=0, fetch=None):
+    """Feed /activity del wallet PAGINADO hasta cubrir la ventana (since_ts) o
+    ACTIVITY_MAX_PAGES paginas. Con una sola pagina de 500 eventos, en los
+    wallets mas activos la "ventana de 30 dias" eran en realidad unos dias.
+    Si la API ignorase el offset y repitiera la pagina, se detecta y se para."""
+    fetch = fetch or get_json
+    out, vistos = [], set()
+    for page in range(ACTIVITY_MAX_PAGES):
+        lote = fetch(ACTIVITY_URL.format(wallet=wallet, offset=page * ACTIVITY_PAGE)) or []
+        nuevos = []
+        for e in lote:
+            k = (e.get("transactionHash"), e.get("type"), e.get("conditionId"),
+                 e.get("outcomeIndex"), e.get("timestamp"), e.get("size"), e.get("usdcSize"))
+            if k not in vistos:
+                vistos.add(k)
+                nuevos.append(e)
+        out += nuevos
+        if (not nuevos or len(lote) < ACTIVITY_PAGE
+                or min(e.get("timestamp", 0) for e in lote) < since_ts):
+            break
+    return out
+
+
 def track_record(wallet, posiciones, since_ts, fetch=None):
     """Rendimiento del wallet en la ventana. Devuelve (wins, losses, net, cats, edge):
 
@@ -563,9 +706,8 @@ def track_record(wallet, posiciones, since_ts, fetch=None):
       habilidad que importa (la tasa de acierto premia apostar a favoritos).
       Tambien desglosada por categoria en cats[c]["edgeSum"/"edgeN"].
 
-    ponytail: /activity va limitado a 500 eventos; en wallets hiperactivos la
-    ventana efectiva se acorta. Suficiente como filtro de calidad; para PnL
-    exacto habria que paginar la actividad.
+    /activity se pagina hasta cubrir la ventana (maximo 3.000 eventos); en
+    los wallets mas activos del todo puede quedar algo corta.
     """
     fetch = fetch or get_json
     since_date = datetime.fromtimestamp(since_ts, tz=timezone.utc).strftime("%Y-%m-%d")
@@ -583,7 +725,7 @@ def track_record(wallet, posiciones, since_ts, fetch=None):
             edge["sum"] = round(edge["sum"] + e, 4)
             edge["n"] += 1
 
-    for e in fetch(ACTIVITY_URL.format(wallet=wallet)):
+    for e in fetch_activity(wallet, since_ts, fetch=fetch):
         if e.get("timestamp", 0) < since_ts:
             continue
         usd = e.get("usdcSize", 0) or 0
@@ -740,7 +882,8 @@ def entry_timing(s, activity, now_ts, hours=RECENT_ENTRY_HOURS):
     last, recent = None, 0
     for t in s["traders"]:
         try:
-            eventos = activity(ACTIVITY_URL.format(wallet=t["wallet"]))
+            eventos = fetch_activity(t["wallet"], now_ts - TRACK_WINDOW_DAYS * 86400,
+                                     fetch=activity)
         except Exception:
             continue
         compras = [e.get("timestamp", 0) for e in eventos
@@ -757,18 +900,18 @@ def entry_timing(s, activity, now_ts, hours=RECENT_ENTRY_HOURS):
 
 
 def qualify_signals(signals, min_broad=MIN_USERS, min_specialist=MIN_USERS_SPECIALIST,
-                    min_winrate=SPECIALIST_MIN_WINRATE):
+                    min_winrate=SPECIALIST_MIN_WINRATE, min_edge=SPECIALIST_MIN_EDGE):
     """Dos niveles de coincidencia (requiere annotate_win_rates ya aplicado):
 
-    - consenso amplio (>= min_broad traders): siempre señal. Comportamiento
-      original intacto — es la variante que la data muestra rentable.
-    - especialistas (>= min_specialist traders): señal SOLO si el acierto 30d
-      medio probado de esos traders es >= min_winrate (el de su categoria si
-      hay muestra, si no el global). Encuentra la señal antes sin bajar el
-      liston: pide gente que gana, no solo mas cuerpos.
+    - consenso amplio (>= min_broad traders): siempre señal.
+    - especialistas (>= min_specialist traders): si su acierto 30d medio
+      probado es >= min_winrate (el de su categoria si hay muestra, si no el
+      global) O si su ventaja estimada frente al precio es >= min_edge.
+      `specialistBy` dice por que criterio(s) cualifico, para medir cada uno
+      por separado: el backtest dio ROI -6% al criterio de acierto (que premia
+      apostar a favoritos), y la ventaja frente al precio es la alternativa.
 
-    Se descartan las coincidencias de 3-4 traders sin acierto probado alto:
-    poca gente y sin evidencia de que acierten es casi un coin-flip.
+    Se descartan las coincidencias de 3-4 traders sin ninguno de los dos.
     Una senal que cae de nivel entre escaneos sigue en seguimiento
     (track_signals) hasta que su mercado resuelve: no se pierde su veredicto.
     """
@@ -778,10 +921,15 @@ def qualify_signals(signals, min_broad=MIN_USERS, min_specialist=MIN_USERS_SPECI
         wr = s.get("avgCatWinRate")
         if wr is None:
             wr = s.get("avgWinRate")
-        specialist = (s["numTraders"] >= min_specialist
-                      and wr is not None and wr >= min_winrate)
-        if broad or specialist:
+        by = []
+        if s["numTraders"] >= min_specialist:
+            if wr is not None and wr >= min_winrate:
+                by.append("acierto")
+            if s.get("edgeEst") is not None and s["edgeEst"] >= min_edge:
+                by.append("ventaja")
+        if broad or by:
             s["tier"] = "amplio" if broad else "especialistas"
+            s["specialistBy"] = by
             out.append(s)
     return out
 
@@ -941,8 +1089,11 @@ def for_recipient(signals, r):
 
 
 def send_telegram(text, chat_id):
+    """True si Telegram acepto el mensaje, False si fallo (red, token, limite),
+    None si se omite a proposito (sin secrets o en prueba en seco). Nunca
+    lanza: un fallo de Telegram no debe tumbar el escaneo ni perder el estado."""
     if DRY_RUN or not (TELEGRAM_TOKEN and chat_id and text):
-        return  # sin secrets (p. ej. en local) o en prueba en seco: se omite
+        return None
     body = json.dumps({
         "chat_id": chat_id,
         "text": text,
@@ -951,7 +1102,38 @@ def send_telegram(text, chat_id):
     req = urllib.request.Request(
         f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
         data=body, headers={"Content-Type": "application/json"})
-    urllib.request.urlopen(req, timeout=30)
+    try:
+        urllib.request.urlopen(req, timeout=30)
+        return True
+    except Exception as exc:  # noqa: BLE001 - se registra y se reintenta
+        print(f"AVISO: Telegram no acepto el mensaje para {chat_id}: {exc}")
+        return False
+
+
+def deliver(messages, outbox, now):
+    """Envia `messages` [(chat_id, texto, ids)] y reintenta la cola `outbox`
+    de envios fallidos anteriores. Lo que falla vuelve a la cola, que se
+    reintenta cada escaneo durante OUTBOX_TTL_MIN. Devuelve (cola, entregados)
+    con entregados = {id: True/False/None} por alerta (None = sin envio)."""
+    cola, entregados = [], {}
+    limite = (datetime.fromisoformat(now) - timedelta(minutes=OUTBOX_TTL_MIN)).isoformat()
+    for m in outbox:
+        if m["at"] < limite:
+            print(f"AVISO: se descarta un aviso sin entregar desde {m['at']} para {m['chatId']}")
+        elif send_telegram(m["text"], m["chatId"]) is False:
+            cola.append(m)
+    for chat, texto, ids in messages:
+        ok = send_telegram(texto, chat)
+        if ok is False:
+            cola.append({"chatId": chat, "text": texto, "at": now})
+        for i in ids:  # entregada si llego a algun destinatario
+            if ok is True or entregados.get(i) is True:
+                entregados[i] = True
+            elif ok is False or entregados.get(i) is False:
+                entregados[i] = False
+            else:
+                entregados[i] = None
+    return cola, entregados
 
 
 def main():
@@ -1054,26 +1236,54 @@ def main():
     # sitio (ni la nueva ni las que ya estuvieran guardadas de antes)
     detected = len(new_whales)
     new_whales = [w for w in new_whales if whale_notifiable(w)]
+    whales_pending = doc.get("whalesPending", [])
     for w in new_whales:  # precio al que entraria un seguidor al verla
         w["followPrice"], w["followSource"] = entry_price(w.get("asset"), w["price"])
+        whales_pending.append({
+            "id": f'{w["conditionId"]}:{w["outcomeIndex"]}', "conditionId": w["conditionId"],
+            "outcomeIndex": w["outcomeIndex"], "title": w["title"], "outcome": w["outcome"],
+            "eventSlug": w.get("eventSlug", ""), "entryPrice": w["followPrice"],
+            "whalePrice": w["price"], "ts": w["timestamp"],
+            "at": datetime.fromtimestamp(w["timestamp"], tz=timezone.utc).isoformat(timespec="seconds")})
     prev_whales = [w for w in doc.get("whales", [])
                    if whale_notifiable(w) and w["price"] < MAX_ALERT_PRICE]
     all_whales = new_whales + prev_whales
 
-    # oraculo unico (gamma) para senales seguidas y whales: el veredicto ya no
-    # depende de que los traders sigan dentro del mercado
-    pending = [t["conditionId"] for t in tracked.values()
-               if needs_oracle(t, active_ids, today)]
-    resolutions = fetch_market_resolutions(pending + [w.get("conditionId") for w in all_whales])
+    # compras nuevas de los top traders desde el escaneo anterior (investigacion)
+    entries_src = SIGNALS_PATH.parent / ENTRIES_PATH_NAME
+    entries_path = (pathlib.Path(DRY_RUN_PATH).with_name("entries.dry.json") if DRY_RUN
+                    else entries_src)
+    ent_doc = (json.loads(entries_src.read_text(encoding="utf-8"))
+               if entries_src.exists() else {})
+    ent_pending, ent_resolved = ent_doc.get("pending", []), ent_doc.get("resolved", [])
+    nuevas_compras = detect_entries(ent_doc.get("sizes", {}), scannable, tracks, now, ent_pending)
+
+    # oraculo unico (gamma) para senales seguidas, whales y compras: el
+    # veredicto nunca depende de que alguien siga dentro del mercado
+    due = ([t["conditionId"] for t in tracked.values() if needs_oracle(t, active_ids, today)]
+           + [w["conditionId"] for w in whales_pending if oracle_due(w, now_ts, today)]
+           + [e["conditionId"] for e in ent_pending if oracle_due(e, now_ts, today)])
+    resolutions = fetch_market_resolutions(due)
+    queried = set(due)
     resolved = resolve_tracked(tracked, resolutions, now, active_ids)
-    all_whales, resolved_wh = resolve_whales(all_whales, resolutions, now)
-    whales = all_whales[:WHALES_KEEP]
+    expire_before = (datetime.fromisoformat(now) - timedelta(days=TRACK_EXPIRE_DAYS)).strftime("%Y-%m-%d")
+    whales_pending, resolved_wh, cad_wh = resolve_pending(
+        whales_pending, resolutions, now, "whale",
+        max_age_ts=now_ts - WHALE_PENDING_DAYS * 86400, now_ts=now_ts, queried=queried)
+    ent_pending, resolved_ent, cad_ent = resolve_pending(
+        ent_pending, resolutions, now, "entrada", expire_before=expire_before, now_ts=now_ts,
+        queried=queried)
+    ent_resolved += resolved_ent
+    # la lista de la web solo pierde las whales cuyo mercado ya liquido
+    whales = [w for w in all_whales if w.get("conditionId") not in resolutions][:WHALES_KEEP]
     last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
     history += resolved + resolved_wh
-    stats = source_stats(history)
+    stats = source_stats(history, entries=ent_resolved)
+    # cartera simulada = lo que te llega por Telegram (alertas enviadas, no
+    # las de sombra): "si hubiera apostado en cada aviso que recibi"
     paper = metrics.paper_ledger(
         [h for h in history if h.get("source") == "coincidencia" and not h.get("legacy")
-         and h.get("alerted") and not h.get("seeded")], PAPER_STAKE)
+         and h.get("alerted") and h.get("sent") and not h.get("seeded")], PAPER_STAKE)
 
     # se guarda el track record de todos los wallets vigentes (top + whales
     # visibles), perdedores incluidos: asi no se re-descargan en cada escaneo
@@ -1086,6 +1296,25 @@ def main():
                and st["n"] >= SOURCE_MIN_SAMPLE and k not in announced]
     announced |= set(reached)
 
+    # SOLO se notifican coincidencias por Telegram. Se envia ANTES de guardar
+    # para registrar si se entrego; lo que falla queda en cola y se reintenta.
+    resueltas_alertas = [h for h in resolved if h.get("alerted") and h.get("roi") is not None
+                         and h.get("sent")]
+    mensajes = []
+    for r in recipients():
+        mias = for_recipient(alerts, r)
+        if mias:
+            mensajes.append((r["chatId"], format_message(mias), [s["id"] for s in mias]))
+        if resueltas_alertas:
+            mensajes.append((r["chatId"], format_resolved(resueltas_alertas), []))
+        for k in reached:
+            if k.startswith("coincidencia"):
+                mensajes.append((r["chatId"], format_sample_reached(k, stats[k]), []))
+    outbox, entregados = deliver(mensajes, doc.get("outbox", []), now)
+    for sid, ok in entregados.items():
+        if sid in tracked:
+            tracked[sid]["delivered"] = ok
+
     out_path = pathlib.Path(DRY_RUN_PATH) if DRY_RUN else SIGNALS_PATH
     out_path.parent.mkdir(exist_ok=True)
     out_path.write_text(json.dumps({
@@ -1094,38 +1323,33 @@ def main():
         "params": {"topN": TOP_N, "minUsers": MIN_USERS,
                    "minUsersSpecialist": MIN_USERS_SPECIALIST,
                    "specialistMinWinRate": SPECIALIST_MIN_WINRATE,
+                   "specialistMinEdge": SPECIALIST_MIN_EDGE,
                    "minPositionUsd": MIN_POSITION_USD,
                    "maxPriceDrift": MAX_PRICE_DRIFT, "scanEveryMin": SCAN_EVERY_MIN,
                    "maxPositionsPerTrader": MAX_POSITIONS_PER_TRADER,
                    "whaleMinUsd": WHALE_MIN_USD, "maxAlertPrice": MAX_ALERT_PRICE,
                    "entryCost": ENTRY_COST, "paperStake": PAPER_STAKE,
                    "minEdge": MIN_EDGE, "sourceMinSample": SOURCE_MIN_SAMPLE,
-                   "alertTiers": sorted(ALERT_TIERS)},
+                   "alertTiers": sorted(ALERT_TIERS), "entryMinUsd": ENTRY_MIN_USD},
         "migratedAt": doc.get("migratedAt"),
         "signals": signals,
         "tracked": tracked,
         "whales": whales,
+        "whalesPending": whales_pending,
         "lastWhaleTs": last_whale_ts,
         "trackRecords": tracks,
         "sourceStats": stats,
         "paper": paper,
         "announcedSamples": sorted(announced),
+        "outbox": outbox,
         "history": history,
     }, indent=1), encoding="utf-8")
-
-    # SOLO se notifican coincidencias por Telegram. Las whales quedan en la web
-    # y se les mide el ROI con precio de seguidor, sin avisar.
-    resueltas_alertas = [h for h in resolved if h.get("alerted") and h.get("roi") is not None
-                         and h.get("sent")]
-    for r in recipients():
-        mias = for_recipient(alerts, r)
-        if mias:
-            send_telegram(format_message(mias), r["chatId"])
-        if resueltas_alertas:
-            send_telegram(format_resolved(resueltas_alertas), r["chatId"])
-        for k in reached:
-            if k.startswith("coincidencia"):
-                send_telegram(format_sample_reached(k, stats[k]), r["chatId"])
+    entries_path.write_text(json.dumps({
+        "updatedAt": now,
+        "sizes": position_sizes(scannable),
+        "pending": ent_pending,
+        "resolved": ent_resolved,
+    }, separators=(",", ":")), encoding="utf-8")
 
     stale_count = sum(1 for s in signals if s["stale"])
     bots = len(positions_by_trader) - len(scannable)
@@ -1134,11 +1358,14 @@ def main():
           f"{len(alerts)} alertadas{f' (+{sombra} en sombra)' if sombra else ''} | "
           f"{len(tracked)} en seguimiento | {len(new_whales)}/{detected} whales "
           f"con historial ganador | {bots} wallets excluidos por bot | "
-          f"{len(resolved)} senales y {len(resolved_wh)} whales resueltas")
+          f"{len(resolved)} senales y {len(resolved_wh)} whales resueltas | "
+          f"{len(nuevas_compras)} compras nuevas, {len(ent_pending)} pendientes, "
+          f"{len(resolved_ent)} resueltas | caducadas sin liquidar: "
+          f"{cad_wh} whales, {cad_ent} compras | {len(outbox)} avisos en cola")
     for k, st in sorted(stats.items()):
         if st["n"]:
             marca = " [SILENCIADA: pierde dinero]" if st["suppressed"] else ""
-            print(f"  {k}: n={st['n']} ROI medio {_pct(st['avgRoi'])} "
+            print(f"  {k}: n={st['n']} ({st['events']} eventos) ROI medio {_pct(st['avgRoi'])} "
                   f"IC95 {st['ci95']} -> {st['verdict']}{marca}")
     for s in signals:
         if s["id"] in nuevos:
