@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   schedule:
     # el cron solo relanza el bucle (GitHub lo estrangula sin problema);
-    # la cadencia real de escaneo la marca el sleep de dentro del job
+    # la cadencia real de escaneo la marca SCAN_EVERY_MIN dentro del job
     - cron: "17 */3 * * *"
 concurrency:
   group: scan
@@ -17,14 +17,19 @@ jobs:
     env:
       TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      SCAN_EVERY_MIN: "5"
     steps:
       - uses: actions/checkout@v6
-      - name: bucle de escaneo cada 10 min (~5h30; el cron lo relanza)
+      - name: bucle de escaneo cada SCAN_EVERY_MIN min (~5h30; el cron lo relanza)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          start=$(date +%s)
           fails=0
-          for i in $(seq 1 30); do
+          # bucle por TIEMPO, no por vueltas: un escaneo lento no alarga el job
+          # mas alla del timeout ni desplaza la cadencia
+          while [ $(( $(date +%s) - start )) -lt 19800 ]; do
+            t0=$(date +%s)
             if python scanner.py; then
               fails=0
             else
@@ -36,5 +41,6 @@ jobs:
             git commit -m "scan: actualiza signals.json" || true
             git pull --rebase || true
             git push || true
-            sleep 600
+            espera=$(( SCAN_EVERY_MIN * 60 - ($(date +%s) - t0) ))
+            if [ $espera -gt 0 ]; then sleep $espera; fi
           done

@@ -1,15 +1,20 @@
 name: backtest
 on:
   workflow_dispatch:
+  schedule:
+    # semanal: el replay crece con cada escaneo y los mercados van liquidando
+    - cron: "41 5 * * 1"
 permissions:
   contents: write
 jobs:
   backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - name: backtest con mercados resueltos
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # el replay necesita TODAS las versiones de signals.json
+      - name: replay del historial de git con el oraculo de resolucion
         run: |
           python backtest.py
           git config user.name "github-actions[bot]"
