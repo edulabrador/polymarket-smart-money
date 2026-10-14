@@ -113,6 +113,13 @@
   .tabs button:hover { color: var(--texto); }
   .tabs button.active { color: var(--acento); border-bottom-color: var(--acento);
     font-weight: 600; }
+  .tag-v { font-size: .7rem; font-weight: 700; border-radius: 999px; padding: .05rem .45rem;
+    margin-left: .3rem; background: var(--acento-suave); color: var(--acento); }
+  .tag-v.ok { background: var(--ok); color: var(--card); }
+  .tag-v.mal { background: var(--aviso-suave); color: var(--aviso); }
+  .alert-badge { background: var(--ok); color: var(--card); border-radius: 999px;
+    padding: .05rem .5rem; font-size: .72rem; font-weight: 700; }
+  .legacy { opacity: .75; }
   .nota { color: var(--sutil); font-size: .85rem; background: var(--card);
     border: 1px solid var(--borde); border-radius: .7rem; padding: .6rem .9rem;
     margin: 0 0 1rem; line-height: 1.5; }
@@ -131,14 +138,18 @@
   <section id="tab-coincidencias" class="tab">
     <div class="tiles" id="tiles" hidden>
       <div class="tile"><b id="t-frescas">–</b><span>señales frescas</span></div>
-      <div class="tile"><b id="t-stale">–</b><span>descartadas</span></div>
-      <div class="tile"><b id="t-aciertos">–</b><span>tasa de acierto</span></div>
-      <div class="tile" id="tile-roi" hidden
-           title="Retorno medio de las coincidencias resueltas si hubieras apostado lo mismo en cada una a su precio de detección. Esto es lo que dice si es RENTABLE, no solo si acierta.">
-        <b id="t-roi">–</b><span>ROI medio / señal</span></div>
+      <div class="tile" title="Señales que se siguen hasta que su mercado liquida, aunque desaparezcan antes: así las perdedoras también quedan registradas.">
+        <b id="t-seguimiento">–</b><span>en seguimiento</span></div>
+      <div class="tile" title="Alertas resueltas y acertadas, frente a la probabilidad que daba el precio de entrada. Solo hay ventaja si se acierta MÁS que eso.">
+        <b id="t-aciertos">–</b><span id="t-aciertos-sub">alertas acertadas</span></div>
+      <div class="tile" title="ROI medio de las ALERTAS resueltas, al precio real de entrada del aviso (libro de órdenes o precio + coste). Entre corchetes, el intervalo de confianza al 95%: solo es rentable de verdad si todo el intervalo está por encima de 0.">
+        <b id="t-roi">–</b><span id="t-roi-sub">ROI medio / alerta</span></div>
+      <div class="tile" id="tile-paper" hidden>
+        <b id="t-paper">–</b><span id="t-paper-sub">cartera simulada</span></div>
       <div class="tile" id="tile-backtest" hidden>
-        <b id="t-backtest">–</b><span>backtest 30 días</span></div>
+        <b id="t-backtest">–</b><span id="t-backtest-sub">backtest (replay)</span></div>
     </div>
+    <p class="nota" id="nota-metodo" hidden></p>
     <div id="fuentes" hidden></div>
     <div class="filtros" id="filtros" hidden>
       <input type="search" id="busqueda" placeholder="Buscar mercado…">
@@ -169,19 +180,41 @@
       <summary></summary>
       <ul id="historial-lista"></ul>
     </details>
+    <details id="historial-inv" hidden>
+      <summary></summary>
+      <p class="nota">Señales detectadas que <b>no</b> se alertaron (descartadas por precio
+        ya movido o favoritos). Se miden con el precio de su primera detección + coste,
+        solo para estudiar qué filtros funcionan. No cuentan en el ROI de las alertas.</p>
+      <ul id="historial-inv-lista"></ul>
+    </details>
+    <details id="historial-legacy" hidden class="legacy">
+      <summary></summary>
+      <p class="nota">⚠️ Histórico anterior al seguimiento persistente. <b>No es fiable</b>:
+        las señales perdedoras desaparecían antes de resolverse y no se registraban
+        (por eso salía ~95% de acierto), y el ROI usaba un precio que nadie habría
+        conseguido. Se conserva como registro, pero no cuenta en ninguna métrica.</p>
+      <ul id="historial-legacy-lista"></ul>
+    </details>
   </section>
 
   <section id="tab-whales" class="tab" hidden>
     <p class="nota">🐋 Compras individuales ≥ $50k de un solo comprador rentable, a
       cuota &lt; 0.90. Fuente <b>secundaria</b>: se muestra aquí pero <b>no</b> se
-      notifica por Telegram (solo las coincidencias lo hacen). Ahora se <b>mide su
-      ROI real</b> al cerrar cada mercado — mira el panel de fuentes en la pestaña
-      principal para ver si seguir compras whale sale rentable.</p>
+      notifica por Telegram. Su ROI se mide al precio que pagaría un <b>seguidor</b>
+      al verla (no al de la propia whale) y contando una sola vez cada mercado; mira
+      el panel de fuentes de la pestaña principal.</p>
     <div id="whales"></div>
     <p id="whales-vacio" class="nota" hidden>Sin compras whale recientes.</p>
     <details id="historial-whales" hidden>
       <summary></summary>
       <ul id="historial-whales-lista"></ul>
+    </details>
+    <details id="historial-whales-legacy" hidden class="legacy">
+      <summary></summary>
+      <p class="nota">⚠️ Whales medidas antes del cambio de método: entrada al precio de
+        la propia whale y compras repetidas del mismo mercado contadas por separado.
+        No cuentan en ninguna métrica.</p>
+      <ul id="historial-whales-legacy-lista"></ul>
     </details>
   </section>
 
@@ -206,9 +239,9 @@ let verTodasWhales = false;
 // clave del titulo — suficiente para filtrar, no para clasificar perfecto
 function categoria(t) {
   t = t.toLowerCase();
-  if (/bitcoin|btc|ethereum|\beth\b|crypto|solana|xrp|doge/.test(t)) return 'cripto';
-  if (/ vs\.? |world cup|mundial|nba|nfl|mlb|nhl|ufc|f1|grand prix|premier|la ?liga|champions|europa league|bundesliga|serie a|\bopen\b|masters|atp|wta|dota|league of legends|lol:|cs2|valorant|olympic|golden (ball|boot)|to advance/.test(t)) return 'deportes';
-  if (/election|president|senate|congress|governor|mayor|minister|parliament|trump|nominee|impeach|ceasefire|\bwar\b|tariff|fed |rate (cut|hike)|supreme court|shutdown/.test(t)) return 'politica';
+  if (/bitcoin|\bbtc\b|ethereum|\beth\b|crypto|solana|\bxrp\b|doge/.test(t)) return 'cripto';
+  if (/ vs\.? |world cup|mundial|\bnba\b|\bnfl\b|\bmlb\b|\bnhl\b|\bufc\b|\bf1\b|grand prix|premier|la ?liga|champions|europa league|bundesliga|serie a|\bopen\b|masters|\batp\b|\bwta\b|dota|league of legends|lol:|cs2|valorant|olympic|golden (ball|boot)|to advance/.test(t)) return 'deportes';
+  if (/election|president|senate|congress|governor|mayor|minister|parliament|trump|nominee|impeach|ceasefire|\bwar\b|tariff|\bfed\b|rate (cut|hike)|supreme court|shutdown/.test(t)) return 'politica';
   return 'otras';
 }
 
@@ -219,48 +252,79 @@ function renderMeta() {
     `Escaneo automático cada <b>${d.params.scanEveryMin ?? 10} min</b> · ` +
     `última actualización <b>hace ${mins} min</b> · ` +
     `vigila el top <b>${d.params.topN}</b> por PnL (30 días) y compras ≥ <b>${usd(d.params.whaleMinUsd ?? 50000)}</b> · ` +
-    `señal a partir de <b>${d.params.minUsers} traders</b> con posición ≥ <b>${usd(d.params.minPositionUsd)}</b>`;
+    `señal con <b>${d.params.minUsers} traders</b>, o <b>${d.params.minUsersSpecialist ?? 3}</b> especialistas, con posición ≥ <b>${usd(d.params.minPositionUsd)}</b>`;
 }
 
-// la pagina principal es SOLO coincidencias; las metricas se calculan sobre esa
-// fuente (el histórico incluye tambien las whales, medidas pero no notificadas)
+// la pagina principal es SOLO coincidencias; las metricas fiables son las de
+// las ALERTAS (formato v2). El historico 'legacy' se muestra aparte y no cuenta.
 const esCoincidencia = h => !h.source || h.source === 'coincidencia';
+const signo = x => (x >= 0 ? '+' : '') + Math.round(x * 100) + '%';
+const ic = c => c ? ` [${signo(c[0])}, ${signo(c[1])}]` : '';
+const VEREDICTO = {
+  'sin muestra': ['', 'aún sin muestra suficiente para juzgar'],
+  'no concluyente': ['', 'positivo pero el intervalo de confianza incluye el 0'],
+  'rentable': ['ok', 'todo el intervalo de confianza está por encima de 0'],
+  'pierde': ['mal', 'ROI medio negativo con muestra suficiente'],
+};
+const tagV = v => v ? `<span class="tag-v ${VEREDICTO[v]?.[0] ?? ''}" title="${VEREDICTO[v]?.[1] ?? ''}">${v}</span>` : '';
 
 function renderTiles() {
   const d = datos;
-  const hist = (d.history ?? []).filter(esCoincidencia);
   const frescas = d.signals.filter(s => !s.stale).length;
   el('t-frescas').textContent = frescas;
-  el('t-stale').textContent = d.signals.length - frescas;
-  const aciertos = hist.filter(h => h.won).length;
-  el('t-aciertos').textContent = hist.length
-    ? `${aciertos}/${hist.length} (${Math.round(100 * aciertos / hist.length)}%)` : '—';
-  // ROI real de las coincidencias resueltas (base del "¿es rentable?")
-  const conRoi = hist.filter(h => h.roi != null);
-  if (conRoi.length) {
-    const roi = conRoi.reduce((a, h) => a + h.roi, 0) / conRoi.length;
+  el('t-seguimiento').textContent = Object.keys(d.tracked ?? {}).length;
+  const st = d.sourceStats?.coincidencia;
+  if (st && st.n) {
+    el('t-aciertos').textContent = `${st.wins}/${st.n}`;
+    el('t-aciertos-sub').textContent = `alertas acertadas (el precio implicaba ${Math.round(st.avgEntry * 100)}%)`;
     const t = el('t-roi');
-    t.textContent = (roi >= 0 ? '+' : '') + Math.round(roi * 100) + '%';
-    t.className = roi >= 0 ? 'deriva-ok' : 'deriva-mal';
-    el('tile-roi').hidden = false;
+    t.textContent = signo(st.avgRoi);
+    t.className = st.avgRoi >= 0 ? 'deriva-ok' : 'deriva-mal';
+    el('t-roi-sub').innerHTML = `ROI / alerta${ic(st.ci95)} ${tagV(st.verdict)}`;
+  } else {
+    el('t-aciertos').textContent = '—';
+    el('t-aciertos-sub').textContent = 'alertas resueltas: aún ninguna';
+    el('t-roi').textContent = '—';
+    el('t-roi-sub').textContent = 'ROI / alerta: sin datos todavía';
+  }
+  const p = d.paper;
+  if (p && p.bets) {
+    const t = el('t-paper');
+    t.textContent = (p.pnl >= 0 ? '+' : '−') + usd(Math.abs(p.pnl));
+    t.className = p.pnl >= 0 ? 'deriva-ok' : 'deriva-mal';
+    el('t-paper-sub').textContent = `cartera simulada · ${p.bets} × ${usd(p.stake)} · caída máx ${usd(p.maxDrawdown)}`;
+    el('tile-paper').title = `Apostando ${usd(p.stake)} en cada alerta al precio real de entrada. ` +
+      `Caída máxima desde un pico: ${usd(p.maxDrawdown)}. Capital inmovilizado a la vez: ${usd(p.capitalNeeded)}.`;
+    el('tile-paper').hidden = false;
+  }
+  if (d.migratedAt) {
+    el('nota-metodo').innerHTML = `📏 Desde el <b>${new Date(d.migratedAt).toLocaleDateString('es-ES')}</b> ` +
+      'cada señal se sigue hasta que su mercado liquida y el ROI se mide solo sobre las alertas, al precio ' +
+      'real de entrada. Las cifras anteriores (~95% de acierto) tenían sesgo de supervivencia y quedan ' +
+      'aparte como histórico antiguo. Mientras se acumula muestra, el backtest por replay da la referencia.';
+    el('nota-metodo').hidden = false;
   }
   el('tiles').hidden = false;
   renderSources();
 }
 
-const NOMBRE_FUENTE = {'coincidencia': '👥 coincidencias', 'whale': '🐋 compras whale'};
+const NOMBRE_FUENTE = {
+  'coincidencia': '🔔 alertas', 'coincidencia:amplio': '👥 amplio',
+  'coincidencia:especialistas': '🎯 especialistas', 'whale': '🐋 whales',
+  'investigacion': '🔬 todas las detectadas'};
 function renderSources() {
   const st = datos.sourceStats ?? {};
-  const entradas = Object.entries(st).sort((a, b) => b[1].n - a[1].n);
+  const orden = ['coincidencia', 'coincidencia:amplio', 'coincidencia:especialistas', 'whale', 'investigacion'];
+  const entradas = orden.filter(k => st[k]?.n).map(k => [k, st[k]]);
   const cont = el('fuentes');
   cont.hidden = !entradas.length;
   cont.innerHTML = entradas.map(([src, s]) => {
-    const roi = Math.round(s.avgRoi * 100);
     const clase = s.avgRoi >= 0 ? 'deriva-ok' : 'deriva-mal';
+    const inv = src === 'investigacion';
     return `<div class="fuente${s.suppressed ? ' silenciada' : ''}"
-      title="ROI medio real de esta fuente sobre ${s.n} señales resueltas${s.suppressed ? ' — pierde dinero de forma consistente, deja de avisar por Telegram hasta que vuelva a positivo' : ''}">
-      ${esc(NOMBRE_FUENTE[src] || src)}: <b class="${clase}">ROI ${roi >= 0 ? '+' : ''}${roi}%</b>
-      <span style="color:var(--sutil)">· ${s.wins}/${s.n} aciertos</span>${s.suppressed ? '<span class="tag">silenciada</span>' : ''}</div>`;
+      title="${inv ? 'Todas las señales detectadas, alertadas o no, con entrada en la detección + coste. Solo para estudiar; no decide nada.' : 'ROI medio real sobre ' + s.n + ' resueltas, al precio de entrada del seguidor. Acierto ' + Math.round(s.hitRate * 100) + '% frente a ' + Math.round(s.avgEntry * 100) + '% que implicaba el precio.'}${s.suppressed ? ' Pierde dinero: deja de avisar por Telegram hasta que vuelva a positivo.' : ''}">
+      ${esc(NOMBRE_FUENTE[src] || src)}: <b class="${clase}">ROI ${signo(s.avgRoi)}</b>
+      <span style="color:var(--sutil)">${ic(s.ci95)} · ${s.wins}/${s.n}</span>${tagV(s.verdict)}${s.suppressed ? '<span class="tag">silenciada</span>' : ''}</div>`;
   }).join('');
 }
 
@@ -303,6 +367,7 @@ function renderSignals() {
            target="_blank" rel="noopener">${esc(s.title)}</a>
         <span class="pastilla">${esc(s.outcome)}</span>
         ${s.tier === 'especialistas' ? `<span class="esp-badge" title="menos de ${datos.params.minUsers ?? 5} traders, pero con acierto 30d probado alto: señal temprana de especialistas, no simple coincidencia numérica">🎯 especialistas</span>` : ''}
+        ${s.alerted ? `<span class="alert-badge" title="Alertada el ${new Date(s.alertedAt).toLocaleString('es-ES')}; su ROI se medirá con esta entrada">🔔 alertada a ${pct(s.entryPrice)}</span>` : ''}
       </div>
       <div class="datos">
         <span>entrada <b>${pct(s.avgEntryPrice)}</b> → ahora <b>${pct(s.curPrice)}</b>
@@ -311,6 +376,8 @@ function renderSignals() {
         <span>capital <b>${usd(s.totalUsd)}</b></span>
         ${s.avgWinRate != null ? `<span>acierto medio 30d <b>${pct(s.avgWinRate)}</b></span>` : ''}
         ${s.avgCatWinRate != null ? `<span title="acierto medio de estos traders en mercados de ${esc(s.cat)} (30d): un buen historial general dice poco fuera de su especialidad">en ${esc(s.cat)} <b>${pct(s.avgCatWinRate)}</b></span>` : ''}
+        ${s.edgeEst != null ? `<span title="Media de la ventaja de estos traders frente al precio que pagaron (encogida si tienen poca muestra). Heurística SIN VALIDAR: se registra para comprobar con el histórico si predice algo.">ventaja estimada <b>${signo(s.edgeEst)}</b></span>` : ''}
+        ${s.recentEntrants ? `<span title="traders que compraron en este mercado en las últimas 24 h">entradas 24 h <b>${s.recentEntrants}/${s.numTraders}</b></span>` : ''}
         <span>detectada <b>${new Date(s.firstSeen).toLocaleDateString('es-ES')}</b></span>
       </div>
       ${s.stale ? `<div class="aviso-stale">⚠️ descartada: el precio difiere ${Math.abs(Math.round(deriva * 100))} pp de la entrada media (límite ±${Math.round((datos.params.maxPriceDrift ?? 0.15) * 100)}) — la tesis de entrada ya no es la actual</div>` : ''}
@@ -365,55 +432,67 @@ async function cargarBacktest() {
     const r = await fetch('backtest.json', {cache: 'no-store'});
     if (!r.ok) return;  // aun sin backtest: el tile queda oculto
     const b = await r.json();
-    // solo el metodo redeem+positions es valido (el primero tenia sesgo
-    // de supervivencia: sin canjes solo se ven las perdedoras)
-    if (!b.total || b.method !== 'redeem+positions') return;
-    el('t-backtest').textContent =
-      `${b.won}/${b.total} (${Math.round(100 * b.won / b.total)}%)`;
-    // el % absoluto está sesgado a la BAJA por supervivencia (las ganadoras se
-    // canjean y sus miembros desaparecen; las perdedoras persisten enteras), así
-    // que es un suelo, no la tasa real. Lo útil es comparar niveles de igual nº
-    // de traders. Se detalla por nivel en el tooltip.
-    const orden = ['amplio', 'especialistas', 'descartada'];
-    const detalle = orden.filter(t => b.tiers?.[t]).map(t => {
-      const d = b.tiers[t];
-      return `${t}: ${d.won}/${d.total} (${d.total ? Math.round(100 * d.won / d.total) : 0}%)`;
-    }).join('  ·  ');
+    // solo el replay del historial es fiable (el metodo anterior elegia a los
+    // traders con el leaderboard de hoy y no tenia precio de entrada)
+    if (b.method !== 'replay-git') return;
+    const a = b.groups?.alertadas;
+    if (!a || !a.n) return;
+    const t = el('t-backtest');
+    t.textContent = signo(a.avgRoi);
+    t.className = a.avgRoi >= 0 ? 'deriva-ok' : 'deriva-mal';
+    el('t-backtest-sub').innerHTML = `backtest: ${a.n} alertas${ic(a.ci95)} ${tagV(a.verdict)}`;
+    const linea = k => {
+      const g = b.groups[k];
+      return g?.n ? `${k}: n=${g.n}, acierto ${Math.round(g.hitRate * 100)}% vs ${Math.round(g.avgEntry * 100)}% implícito, ROI ${signo(g.avgRoi)}${ic(g.ci95)}` : `${k}: sin resueltas`;
+    };
+    const sens = Object.entries(b.costSensitivity ?? {}).map(([c, s]) =>
+      s.n ? `coste ${Math.round(c * 100)}¢ → ROI ${signo(s.avgRoi)}` : '').filter(Boolean).join(' · ');
     el('tile-backtest').title =
-      'Coincidencias del top 50 en mercados ya resueltos, por nivel del algoritmo — '
-      + (detalle || '—') + '.\n\n'
-      + 'OJO: el % es un SUELO, no la tasa real. Sesgo de supervivencia: las '
-      + 'ganadoras se canjean y sus miembros desaparecen de la muestra, las '
-      + 'perdedoras se quedan enteras, así que los grupos grandes salen sesgados a '
-      + 'perdedora. Sirve para comparar niveles de igual tamaño, no como cifra de '
-      + 'rentabilidad. El ROI real y fiable lo da el histórico en vivo (se sigue '
-      + 'cada señal desde su detección con precio de entrada).';
+      `Replay de ${b.snapshots} versiones guardadas (${new Date(b.period.from).toLocaleDateString('es-ES')} a ` +
+      `${new Date(b.period.to).toLocaleDateString('es-ES')}) aplicando las reglas de alerta actuales a lo que ` +
+      `el escáner vio en cada momento; resultado según el oráculo de gamma.\n\n` +
+      ['alertadas', 'alertadas_con_retraso', 'alertadas:amplio', 'alertadas:especialistas', 'detectadas',
+       'descartadas_al_nacer'].map(linea).join('\n') +
+      `\n\nSensibilidad al coste de entrada: ${sens}\n${b.counts.pendientes} señales aún sin liquidar.`;
     el('tile-backtest').hidden = false;
   } catch (e) {}
 }
 
-function filaHistorial(h) {
-  return `<li><span class="${h.won ? 'acierto' : 'fallo'}">${h.won ? '✓ acierto' : '✗ fallo'}</span>
-     — ${esc(h.title)} [${esc(h.outcome)}]${h.source === 'whale' ? '' : ` · ${h.numTraders} traders`}${h.roi != null ? ` · <b class="${h.roi >= 0 ? 'acierto' : 'fallo'}">ROI ${h.roi >= 0 ? '+' : ''}${Math.round(h.roi * 100)}%</b>` : ''}
-     · resuelta ${new Date(h.resolvedAt).toLocaleDateString('es-ES')}${h.stale ? ' · (estaba descartada)' : ''}</li>`;
+function filaHistorial(h, campoRoi = 'roi') {
+  const r = h[campoRoi];
+  const estado = h.payout === 0.5 ? '<span>➖ anulado</span>'
+    : `<span class="${h.won ? 'acierto' : 'fallo'}">${h.won ? '✓ acierto' : '✗ fallo'}</span>`;
+  const entrada = h.entryPrice != null && campoRoi === 'roi' ? ` · entrada ${pct(h.entryPrice)}` : '';
+  return `<li>${estado}
+     — ${esc(h.title)} [${esc(h.outcome)}]${h.source === 'whale' ? '' : ` · ${h.numTraders} traders`}${h.tier === 'especialistas' ? ' 🎯' : ''}${entrada}${r != null ? ` · <b class="${r >= 0 ? 'acierto' : 'fallo'}">ROI ${signo(r)}</b>` : ''}
+     · resuelta ${new Date(h.resolvedAt).toLocaleDateString('es-ES')}${h.sent === false ? ' · (en sombra: fuente silenciada)' : ''}</li>`;
 }
 
-function pintaHistorial(hs, detId, listId, titulo) {
+function pintaHistorial(hs, detId, listId, titulo, campoRoi = 'roi') {
   const cont = el(detId);
   cont.hidden = !hs.length;
   if (!hs.length) return;
   const aciertos = hs.filter(h => h.won).length;
   cont.querySelector('summary').textContent = `${titulo} (${aciertos}/${hs.length} aciertos)`;
-  el(listId).innerHTML = hs.slice().reverse().map(filaHistorial).join('');
+  el(listId).innerHTML = hs.slice().reverse().slice(0, 300).map(h => filaHistorial(h, campoRoi)).join('');
 }
 
 function renderHistory() {
-  const hist = datos.history ?? [];
-  pintaHistorial(hist.filter(esCoincidencia), 'historial', 'historial-lista',
-                 'Histórico de coincidencias resueltas');
-  pintaHistorial(hist.filter(h => h.source === 'whale'),
+  const hist = (datos.history ?? []).filter(h => h.payout !== null || h.legacy);
+  const fiable = hist.filter(h => !h.legacy);
+  const coinc = fiable.filter(esCoincidencia);
+  pintaHistorial(coinc.filter(h => h.alerted && h.roi != null && !h.seeded), 'historial', 'historial-lista',
+                 'Histórico de alertas resueltas');
+  pintaHistorial(coinc.filter(h => !(h.alerted && h.roi != null) && h.roiDetect != null),
+                 'historial-inv', 'historial-inv-lista', '🔬 Detectadas no alertadas (investigación)',
+                 'roiDetect');
+  pintaHistorial(hist.filter(h => h.legacy && esCoincidencia(h)), 'historial-legacy',
+                 'historial-legacy-lista', '⚠️ Histórico antiguo, no fiable');
+  pintaHistorial(fiable.filter(h => h.source === 'whale'),
                  'historial-whales', 'historial-whales-lista',
-                 'Histórico de compras whale resueltas (ROI)');
+                 'Histórico de compras whale resueltas (ROI de seguidor)');
+  pintaHistorial(hist.filter(h => h.legacy && h.source === 'whale'), 'historial-whales-legacy',
+                 'historial-whales-legacy-lista', '⚠️ Whales medidas con el método antiguo');
 }
 
 async function cargar() {

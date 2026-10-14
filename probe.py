@@ -134,6 +134,31 @@ def main():
             break
         report.append(f"- VACIO activity-all de `{wallet}`")
 
+    # libro de ordenes del CLOB (precio de entrada real de un seguidor) y
+    # oraculo de resolucion de gamma (veredicto de senales y whales)
+    report.append("")
+    token = next((p.get("asset") for p in positions if p.get("asset")), None)
+    if token:
+        url = f"https://clob.polymarket.com/book?token_id={token}"
+        try:
+            book = get(url)
+            asks = book.get("asks", [])
+            best = min((float(a["price"]) for a in asks), default=None)
+            report.append(f"- OK book `{url[:70]}...` -> claves {sorted(book.keys())}, "
+                          f"{len(asks)} asks, mejor ask {best}")
+        except Exception as e:
+            report.append(f"- FALLO book `{url[:70]}...` -> {e}")
+    cond = next((p.get("conditionId") for p in positions if p.get("redeemable")), None)
+    if cond:
+        url = f"https://gamma-api.polymarket.com/markets?closed=true&limit=5&condition_ids={cond}"
+        try:
+            ms = get(url)
+            m = ms[0] if ms else {}
+            report.append(f"- OK gamma resuelto -> closed={m.get('closed')} "
+                          f"outcomePrices={m.get('outcomePrices')}")
+        except Exception as e:
+            report.append(f"- FALLO gamma `{url}` -> {e}")
+
     pathlib.Path("NOTES.md").write_text("\n".join(report) + "\n", encoding="utf-8")
     print("\n".join(report))
 
