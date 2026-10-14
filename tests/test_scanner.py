@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 import scanner
-from scanner import (deliver, detect_entries, fetch_activity, oracle_due, parse_time,
+from scanner import (deliver, detect_entries, drop_hedges, fetch_activity, oracle_due, parse_time,
                      position_sizes)
 from scanner import (alertable, annotate_win_rates, categoria, detect_signals,
                      detect_whales, enrich_whales, entry_price, entry_timing,
@@ -370,6 +370,16 @@ def test_resolve_pending_whales_and_entries():
     assert cad == 1
 
 
+def test_drop_hedges_cleans_both_sides():
+    base = {"conditionId": "0xc", "at": "T"}
+    a = dict(base, id="0xc:0", usd=6189.0)
+    b = dict(base, id="0xc:1", usd=1077.0)          # el caso real: 5,7x -> queda a
+    otra = dict(base, id="0xd:0", conditionId="0xd", usd=500.0)
+    assert [e["id"] for e in drop_hedges([a, b, otra])] == ["0xc:0", "0xd:0"]
+    c = dict(base, id="0xc:1", usd=3000.0)          # 2x: cobertura, fuera las dos
+    assert drop_hedges([a, c]) == []
+
+
 def test_oracle_due():
     assert oracle_due({"endDate": "2026-10-01"}, 0, "2026-10-14")
     assert not oracle_due({"endDate": "2026-12-01"}, 0, "2026-10-14")
@@ -455,6 +465,17 @@ def test_detect_entries_new_and_growing_positions():
     assert ids == ["0xgrow:0", "0xnew:0"] and pending == nuevas
     e = next(x for x in nuevas if x["id"] == "0xnew:0")
     assert e["entryPrice"] == 0.51 and e["usd"] == 2000.0 and e["traderEdge"] == 0.05
+    # coberturas: ambos lados en el mismo escaneo sin uno dominante -> nada;
+    # con uno dominante (>= 3x) -> solo ese; contra una posicion contraria mayor -> nada
+    def dos_lados(a, b, previa=None):
+        prev_h = {"0xh": previa or {}}
+        pos_h = [dict(pos(cond="0xhm", outcome_idx=0, curPrice=0.6), size=a),
+                 dict(pos(cond="0xhm", outcome_idx=1, curPrice=0.4), size=b)]
+        return detect_entries(prev_h, {"0xh": {"positions": pos_h}}, {}, now, [])
+    assert dos_lados(4000, 5000) == []                     # $2400 vs $2000: cobertura
+    dom = dos_lados(10000, 3000)                           # $6000 vs $1200: domina el 0
+    assert [e["id"] for e in dom] == ["0xhm:0"]
+    assert dos_lados(4000, 20000, previa={"0xhm:1": 20000}) == []  # contra posicion mayor
     # otro top trader entra en el mismo mercado en < 24 h: se suma, no se duplica
     prev2 = {"0xa": {}, "0xb": {}}
     otra = detect_entries(prev2, {"0xb": {"positions": [p("0xnew", 4000)]}}, {}, now, pending)
