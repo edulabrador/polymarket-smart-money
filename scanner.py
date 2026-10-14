@@ -66,7 +66,7 @@ OUTBOX_TTL_MIN = 60  # un aviso de Telegram que falla se reintenta durante 1 h
 # una decision fija: si las señales nuevas resuelven en positivo, se reactiva.
 SOURCE_MIN_SAMPLE = int(os.getenv("SOURCE_MIN_SAMPLE", "20"))
 # cadencia real del bucle en .github/workflows/scan.yml (lee la misma variable)
-SCAN_EVERY_MIN = int(os.getenv("SCAN_EVERY_MIN", "5"))
+SCAN_EVERY_MIN = int(os.getenv("SCAN_EVERY_MIN", "10"))
 # coste de entrada cuando no se puede leer el libro de ordenes: spread +
 # deslizamiento tipico. El ROI medido descuenta esto; sin el, el ROI de seguir
 # una senal sale inflado (nadie compra al precio medio, compra al ask).
@@ -455,7 +455,9 @@ def detect_entries(prev_sizes, positions_by_trader, tracks, now, pending,
     """Compras nuevas desde el escaneo anterior: posicion nueva o que crece
     >= 20% con >= min_usd anadidos, a precio < max_price. Solo para wallets
     que ya estaban en la foto anterior (uno que entra al top no "compra" todo
-    su historico de golpe). Una compra por mercado y lado cada 24 h: si otro
+    su historico de golpe). Las coberturas (comprar ambos lados, o un lado
+    contra una posicion contraria mayor) no cuentan. Una compra por mercado y
+    lado cada 24 h: si otro
     top trader entra en el mismo, se suma a `wallets` de la ya registrada.
     Muta `pending` (lista de compras pendientes de medir) y devuelve las nuevas."""
     reciente = {}
@@ -468,6 +470,9 @@ def detect_entries(prev_sizes, positions_by_trader, tracks, now, pending,
         prev = prev_sizes.get(w)
         if prev is None:
             continue
+        valor = {f'{p["conditionId"]}:{p["outcomeIndex"]}': p.get("size", 0) * p.get("curPrice", 0)
+                 for p in info["positions"] if not p.get("redeemable")}
+        candidatas = {}  # conditionId -> [(usd anadidos, posicion)]
         for p in info["positions"]:
             if p.get("redeemable"):
                 continue
@@ -476,23 +481,55 @@ def detect_entries(prev_sizes, positions_by_trader, tracks, now, pending,
             antes = prev.get(sid, 0)
             if size <= antes * 1.2 or (size - antes) * cur < min_usd or not 0 < cur < max_price:
                 continue
+            candidatas.setdefault(p["conditionId"], []).append(((size - antes) * cur, p))
+        for cond, lados in candidatas.items():
+            # comprar los DOS lados de un mercado es cubrirse o hacer de market
+            # maker, no apostar: solo cuenta el lado claramente dominante (>= 3x)
+            lados.sort(key=lambda x: -x[0])
+            if len(lados) > 1 and lados[0][0] < 3 * lados[1][0]:
+                continue
+            usd, p = lados[0]
+            sid = f'{cond}:{p["outcomeIndex"]}'
+            # y si ya tenia el lado contrario por al menos ese valor, tambien es cobertura
+            contrario = sum(v for k, v in valor.items()
+                            if k.startswith(cond + ":") and k != sid)
+            if contrario >= usd:
+                continue
             if sid in reciente:
                 if w not in reciente[sid]["wallets"]:
                     reciente[sid]["wallets"].append(w)
                 continue
             tr = tracks.get(w) or {}
             cat = categoria(p.get("title", ""))
-            e = {"id": sid, "conditionId": p["conditionId"], "outcomeIndex": p["outcomeIndex"],
+            cur = p.get("curPrice", 0)
+            e = {"id": sid, "conditionId": cond, "outcomeIndex": p["outcomeIndex"],
                  "title": p.get("title", ""), "outcome": p.get("outcome", ""),
                  "eventSlug": p.get("eventSlug", ""), "endDate": p.get("endDate", ""),
                  "cat": cat, "at": now, "price": cur,
                  "entryPrice": round(min(cur + ENTRY_COST, 0.999), 4),
-                 "usd": round((size - antes) * cur, 2), "wallets": [w],
+                 "usd": round(usd, 2), "wallets": [w],
                  "traderEdge": trader_edge(tr, cat), "traderWinRate": win_rate(tr) if tr else None}
             reciente[sid] = e
             pending.append(e)
             nuevas.append(e)
     return nuevas
+
+
+def drop_hedges(pending):
+    """Limpia de las pendientes las coberturas registradas a la vez (mismo
+    mercado, mismo escaneo, ambos lados): misma regla que detect_entries,
+    solo se queda el lado dominante (>= 3x). Idempotente."""
+    grupos = {}
+    for e in pending:
+        grupos.setdefault((e["conditionId"], e["at"]), []).append(e)
+    fuera = set()
+    for lados in grupos.values():
+        if len(lados) < 2:
+            continue
+        lados.sort(key=lambda e: -e.get("usd", 0))
+        malos = lados if lados[0].get("usd", 0) < 3 * lados[1].get("usd", 0) else lados[1:]
+        fuera |= {id(e) for e in malos}
+    return [e for e in pending if id(e) not in fuera]
 
 
 def oracle_due(item, now_ts, today, key_end="endDate"):
@@ -1255,7 +1292,7 @@ def main():
                     else entries_src)
     ent_doc = (json.loads(entries_src.read_text(encoding="utf-8"))
                if entries_src.exists() else {})
-    ent_pending, ent_resolved = ent_doc.get("pending", []), ent_doc.get("resolved", [])
+    ent_pending, ent_resolved = drop_hedges(ent_doc.get("pending", [])), ent_doc.get("resolved", [])
     nuevas_compras = detect_entries(ent_doc.get("sizes", {}), scannable, tracks, now, ent_pending)
 
     # oraculo unico (gamma) para senales seguidas, whales y compras: el

@@ -157,7 +157,7 @@ flowchart LR
     end
 
     subgraph GH["GitHub (gratis)"]
-        A["⚙️ Actions · scan.yml<br/>bucle cada 5 min"]
+        A["⚙️ Actions · scan.yml<br/>bucle cada 10 min"]
         S["🐍 scanner.py"]
         J[("📄 docs/signals.json<br/>estado + seguimiento + histórico")]
         B["🔁 backtest.py<br/>replay semanal del git"]
@@ -186,7 +186,7 @@ Por qué así:
   problema, así que el escáner corre allí.
 - **El cron de Actions no es fiable a pocos minutos** (GitHub retrasa o salta
   ejecuciones). Por eso el cron solo relanza cada ~3 h un job que **escanea cada
-  `SCAN_EVERY_MIN` (5) minutos durante ~5 h 30**, con un bucle por tiempo. En repos
+  `SCAN_EVERY_MIN` (10) minutos durante ~5 h 30**, con un bucle por tiempo. En repos
   públicos los minutos de Actions son gratis.
 - **El estado vive en git**: cada escaneo hace commit de `signals.json`. Sirve de base
   de datos, de fuente de la web y, sobre todo, de **grabación punto a punto** de lo que
@@ -197,7 +197,7 @@ Por qué así:
 
 ## 🔬 Cómo se genera una señal
 
-Cada 5 minutos `scanner.py` recorre este embudo:
+Cada 10 minutos `scanner.py` recorre este embudo:
 
 ```mermaid
 flowchart TD
@@ -508,7 +508,7 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
 
 | Variable | Defecto | Qué controla |
 |---|---:|---|
-| `SCAN_EVERY_MIN` | `5` | Minutos entre escaneos dentro del job |
+| `SCAN_EVERY_MIN` | `10` | Minutos entre escaneos dentro del job (10 por prudencia con Actions; 5 es posible) |
 | `TOP_N` | `50` | Cuántos traders del leaderboard se vigilan |
 | `MIN_USERS` | `5` | Traders mínimos para una señal de consenso amplio |
 | `MIN_USERS_SPECIALIST` | `3` | Traders mínimos para una señal de especialistas |
@@ -555,7 +555,7 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
 
 | Workflow | Disparo | Qué hace |
 |---|---|---|
-| `scan` | cron cada ~3 h + manual | Escanea cada 5 min durante ~5 h 30; commit de `signals.json` |
+| `scan` | cron cada ~3 h + manual | Escanea cada 10 min durante ~5 h 30; commit de `signals.json` |
 | `backtest` | lunes + manual | Replay del historial de git con el oráculo; escribe `docs/backtest.json` |
 | `test` | cada PR + manual | Tests sin red, escaneo y backtest **en seco** contra la API real |
 | `probe` | manual | Verifica endpoints (incluidos libro y oráculo) y regenera `tests/fixtures/` |
@@ -638,14 +638,14 @@ Todas públicas y sin autenticación (detalle en [NOTES.md](NOTES.md)):
 - **Sin ventaja demostrada.** El backtest da ROI negativo con las reglas actuales. El
   histórico en vivo solo cambiará esa conclusión si acumula muestra y el IC95 lo respalda. Mercados del mismo evento no son independientes, así que el IC
   puede ser algo optimista.
-- **Latencia.** Hasta 5 minutos entre que se forma la señal y la alerta, más lo que
+- **Latencia.** Hasta 10 minutos entre que se forma la señal y la alerta, más lo que
   tardes tú. En partidos en directo el precio se mueve rápido: la variante "con retraso"
   del backtest da una idea del coste.
 - **Selección de traders.** El leaderboard de 30 días mezcla habilidad y suerte. La
   ventaja frente al precio y el encogimiento lo mitigan. `/activity` se pagina hasta
   cubrir los 30 días, con un máximo de 3.000 eventos por wallet.
-- **Compras nuevas cada 5 minutos.** Se detectan comparando escaneos, así que se ven
-  entre 0 y 5 minutos después de producirse. Para medir si "entrar en caliente" paga es
+- **Compras nuevas cada 10 minutos.** Se detectan comparando escaneos, así que se ven
+  entre 0 y 10 minutos después de producirse. Para medir si "entrar en caliente" paga es
   suficiente; para operar en directo haría falta algo más rápido.
 - **Ventaja estimada sin validar.** `edgeEst` es una heurística; no filtra nada salvo
   que definas `MIN_EDGE`, y solo deberías hacerlo si el histórico demuestra que sirve.
@@ -672,7 +672,7 @@ Plan completo y decisiones de diseño en [PLAN.md](PLAN.md).
   PnL, gate auto-corrector y retirada de "primer movimiento"
 - ✅ Fase 6: medición fiable. Seguimiento persistente con oráculo, ROI solo de alertas
   con precio de libro, IC95 y veredicto, cartera simulada, backtest por replay, alertas
-  de especialistas, ventaja frente al precio, momento de entrada, escaneo cada 5 min y
+  de especialistas, ventaja frente al precio, momento de entrada, escaneo más frecuente (hoy cada 10 min) y
   CI con prueba en seco
 - ✅ Fase 7: avisos de Telegram con cola de reintento, rebase seguro en los workflows,
   IC robusto por evento, todas las whales medidas, `/activity` paginado, especialistas

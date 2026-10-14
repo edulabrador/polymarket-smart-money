@@ -17,7 +17,7 @@ jobs:
     env:
       TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      SCAN_EVERY_MIN: "5"
+      SCAN_EVERY_MIN: "10"  # 10 por seguridad con Actions; se puede bajar a 5 si se estabiliza
     steps:
       - uses: actions/checkout@v6
       - name: bucle de escaneo cada SCAN_EVERY_MIN min (~5h30; el cron lo relanza)
