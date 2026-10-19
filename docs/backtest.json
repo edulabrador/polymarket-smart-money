@@ -1,11 +1,11 @@
 {
- "ranAt": "2026-10-14T10:25:39+00:00",
+ "ranAt": "2026-10-19T11:16:05+00:00",
  "method": "replay-git",
  "period": {
   "from": "2026-07-15T22:52:48+00:00",
-  "to": "2026-10-14T10:17:44+00:00"
+  "to": "2026-10-19T09:55:10+00:00"
  },
- "snapshots": 10933,
+ "snapshots": 11586,
  "params": {
   "entryCost": 0.01,
   "maxAlertPrice": 0.9,
@@ -14,67 +14,67 @@
   "sourceMinSample": 20
  },
  "counts": {
-  "senales": 383,
-  "alertadas": 226,
-  "resueltas": 356,
+  "senales": 391,
+  "alertadas": 233,
+  "resueltas": 364,
   "pendientes": 27,
-  "conHoraDeCierre": 356,
-  "conHoraDeInicio": 327
+  "conHoraDeCierre": 364,
+  "conHoraDeInicio": 335
  },
  "groups": {
   "alertadas": {
-   "n": 212,
-   "events": 180,
-   "wins": 118,
-   "hitRate": 0.5566,
-   "avgEntry": 0.5607,
-   "avgRoi": -0.0315,
+   "n": 219,
+   "events": 186,
+   "wins": 123,
+   "hitRate": 0.5616,
+   "avgEntry": 0.5614,
+   "avgRoi": -0.0204,
    "medianRoi": 0.1976,
    "ci95": [
-    -0.1611,
-    0.098
+    -0.1469,
+    0.1062
    ],
    "verdict": "pierde"
   },
   "alertadas_con_retraso": {
-   "n": 212,
-   "events": 180,
-   "wins": 118,
-   "hitRate": 0.5566,
-   "avgEntry": 0.5607,
-   "avgRoi": -0.033,
-   "medianRoi": 0.0753,
+   "n": 219,
+   "events": 186,
+   "wins": 123,
+   "hitRate": 0.5616,
+   "avgEntry": 0.5614,
+   "avgRoi": -0.0306,
+   "medianRoi": 0.087,
    "ci95": [
-    -0.2147,
-    0.1487
+    -0.2072,
+    0.1459
    ],
    "verdict": "pierde"
   },
   "detectadas": {
-   "n": 356,
-   "events": 276,
-   "wins": 245,
-   "hitRate": 0.6882,
-   "avgEntry": 0.6744,
-   "avgRoi": -0.0255,
-   "medianRoi": 0.005,
+   "n": 364,
+   "events": 283,
+   "wins": 251,
+   "hitRate": 0.6896,
+   "avgEntry": 0.6739,
+   "avgRoi": -0.0188,
+   "medianRoi": 0.008,
    "ci95": [
-    -0.105,
-    0.054
+    -0.0973,
+    0.0596
    ],
    "verdict": "pierde"
   },
   "descartadas_al_nacer": {
-   "n": 127,
-   "events": 109,
-   "wins": 110,
-   "hitRate": 0.8661,
-   "avgEntry": 0.824,
+   "n": 128,
+   "events": 110,
+   "wins": 111,
+   "hitRate": 0.8672,
+   "avgEntry": 0.8254,
    "avgRoi": 0.0047,
    "medianRoi": 0.001,
    "ci95": [
-    -0.0827,
-    0.0921
+    -0.0821,
+    0.0914
    ],
    "verdict": "no concluyente"
   },
@@ -107,44 +107,44 @@
    "verdict": "sin muestra"
   },
   "alertadas:especialistas": {
-   "n": 194,
-   "events": 168,
-   "wins": 107,
-   "hitRate": 0.5515,
-   "avgEntry": 0.5672,
-   "avgRoi": -0.0614,
-   "medianRoi": 0.1731,
+   "n": 201,
+   "events": 174,
+   "wins": 112,
+   "hitRate": 0.5572,
+   "avgEntry": 0.5678,
+   "avgRoi": -0.0482,
+   "medianRoi": 0.1976,
    "ci95": [
-    -0.1881,
-    0.0653
+    -0.1719,
+    0.0755
    ],
    "verdict": "pierde"
   },
   "alertadas:previa": {
-   "n": 34,
-   "events": 34,
-   "wins": 19,
-   "hitRate": 0.5588,
-   "avgEntry": 0.5753,
-   "avgRoi": -0.0753,
-   "medianRoi": 0.25,
+   "n": 38,
+   "events": 38,
+   "wins": 22,
+   "hitRate": 0.5789,
+   "avgEntry": 0.5834,
+   "avgRoi": -0.0511,
+   "medianRoi": 0.2579,
    "ci95": [
-    -0.37,
-    0.2195
+    -0.3251,
+    0.2229
    ],
    "verdict": "pierde"
   },
   "alertadas:directo": {
-   "n": 165,
-   "events": 140,
-   "wins": 90,
-   "hitRate": 0.5455,
-   "avgEntry": 0.5516,
-   "avgRoi": -0.0258,
+   "n": 168,
+   "events": 143,
+   "wins": 92,
+   "hitRate": 0.5476,
+   "avgEntry": 0.5506,
+   "avgRoi": -0.0157,
    "medianRoi": 0.1976,
    "ci95": [
-    -0.1783,
-    0.1267
+    -0.1679,
+    0.1364
    ],
    "verdict": "pierde"
   },
@@ -161,67 +161,95 @@
     0.4577
    ],
    "verdict": "sin muestra"
+  },
+  "especialistas_por_acierto": {
+   "n": 7,
+   "events": 6,
+   "wins": 5,
+   "hitRate": 0.7143,
+   "avgEntry": 0.5836,
+   "avgRoi": 0.3177,
+   "medianRoi": 0.4388,
+   "ci95": [
+    -0.1415,
+    0.777
+   ],
+   "verdict": "sin muestra"
+  },
+  "especialistas_por_ventaja": {
+   "n": 7,
+   "events": 6,
+   "wins": 5,
+   "hitRate": 0.7143,
+   "avgEntry": 0.5836,
+   "avgRoi": 0.3177,
+   "medianRoi": 0.4388,
+   "ci95": [
+    -0.1415,
+    0.777
+   ],
+   "verdict": "sin muestra"
   }
  },
  "costSensitivity": {
   "0.0": {
-   "n": 212,
-   "events": 180,
-   "wins": 118,
-   "hitRate": 0.5566,
-   "avgEntry": 0.5507,
-   "avgRoi": -0.0122,
+   "n": 219,
+   "events": 186,
+   "wins": 123,
+   "hitRate": 0.5616,
+   "avgEntry": 0.5514,
+   "avgRoi": -0.0007,
    "medianRoi": 0.2121,
    "ci95": [
-    -0.1456,
-    0.1213
+    -0.1311,
+    0.1296
    ]
   },
   "0.01": {
-   "n": 212,
-   "events": 180,
-   "wins": 118,
-   "hitRate": 0.5566,
-   "avgEntry": 0.5607,
-   "avgRoi": -0.0315,
+   "n": 219,
+   "events": 186,
+   "wins": 123,
+   "hitRate": 0.5616,
+   "avgEntry": 0.5614,
+   "avgRoi": -0.0204,
    "medianRoi": 0.1976,
    "ci95": [
-    -0.1611,
-    0.098
+    -0.1469,
+    0.1062
    ]
   },
   "0.02": {
-   "n": 212,
-   "events": 180,
-   "wins": 118,
-   "hitRate": 0.5566,
-   "avgEntry": 0.5707,
-   "avgRoi": -0.05,
+   "n": 219,
+   "events": 186,
+   "wins": 123,
+   "hitRate": 0.5616,
+   "avgEntry": 0.5714,
+   "avgRoi": -0.0391,
    "medianRoi": 0.1834,
    "ci95": [
-    -0.176,
-    0.076
+    -0.1622,
+    0.084
    ]
   },
   "0.03": {
-   "n": 212,
-   "events": 180,
-   "wins": 118,
-   "hitRate": 0.5566,
-   "avgEntry": 0.5807,
-   "avgRoi": -0.0677,
+   "n": 219,
+   "events": 186,
+   "wins": 123,
+   "hitRate": 0.5616,
+   "avgEntry": 0.5814,
+   "avgRoi": -0.057,
    "medianRoi": 0.1696,
    "ci95": [
-    -0.1904,
-    0.055
+    -0.1769,
+    0.0628
    ]
   }
  },
  "paper": {
   "stake": 100.0,
-  "bets": 212,
-  "pnl": -668.68,
-  "roi": -0.0315,
+  "bets": 219,
+  "pnl": -446.28,
+  "roi": -0.0204,
   "maxDrawdown": 2001.11,
   "maxOpen": 13,
   "capitalNeeded": 1300.0,
@@ -1073,14 +1101,42 @@
    [
     "2026-10-09T13:52:33+00:00",
     -668.68
+   ],
+   [
+    "2026-10-15T03:33:44+00:00",
+    -768.68
+   ],
+   [
+    "2026-10-15T03:33:44+00:00",
+    -578.82
+   ],
+   [
+    "2026-10-15T15:41:59+00:00",
+    -678.82
+   ],
+   [
+    "2026-10-17T16:29:02+00:00",
+    -595.33
+   ],
+   [
+    "2026-10-18T15:11:20+00:00",
+    -551.45
+   ],
+   [
+    "2026-10-18T22:03:00+00:00",
+    -517.22
+   ],
+   [
+    "2026-10-19T04:04:02+00:00",
+    -446.28
    ]
   ]
  },
  "walkForward": {
-  "split": "2026-08-30T04:35:16+00:00",
+  "split": "2026-09-01T16:23:59+00:00",
   "combinaciones": 135,
-  "validas": 19,
-  "positivasEnAjuste": 10,
+  "validas": 22,
+  "positivasEnAjuste": 13,
   "elegida": {
    "rules": {
     "max_drift": 1.0,
@@ -1089,57 +1145,57 @@
     "phases": null
    },
    "train": {
-    "n": 31,
-    "events": 27,
-    "wins": 20,
-    "hitRate": 0.6452,
-    "avgEntry": 0.5676,
-    "avgRoi": 0.1773,
+    "n": 37,
+    "events": 31,
+    "wins": 25,
+    "hitRate": 0.6757,
+    "avgEntry": 0.578,
+    "avgRoi": 0.1957,
     "medianRoi": 0.4388,
     "ci95": [
-     -0.2362,
-     0.5909
+     -0.1561,
+     0.5475
     ]
    },
    "test": {
-    "n": 38,
-    "events": 34,
-    "wins": 19,
-    "hitRate": 0.5,
-    "avgEntry": 0.5379,
-    "avgRoi": -0.1825,
-    "medianRoi": -0.3789,
+    "n": 33,
+    "events": 32,
+    "wins": 14,
+    "hitRate": 0.4242,
+    "avgEntry": 0.5186,
+    "avgRoi": -0.2933,
+    "medianRoi": -1.0,
     "ci95": [
-     -0.459,
-     0.094
+     -0.5913,
+     0.0047
     ]
    }
   },
   "reglasActuales": {
    "train": {
-    "n": 120,
-    "events": 98,
-    "wins": 72,
-    "hitRate": 0.6,
-    "avgEntry": 0.5729,
-    "avgRoi": 0.0351,
-    "medianRoi": 0.2422,
+    "n": 128,
+    "events": 104,
+    "wins": 77,
+    "hitRate": 0.6016,
+    "avgEntry": 0.5738,
+    "avgRoi": 0.0294,
+    "medianRoi": 0.2923,
     "ci95": [
-     -0.1421,
-     0.2123
+     -0.1393,
+     0.198
     ]
    },
    "test": {
-    "n": 92,
-    "events": 82,
+    "n": 91,
+    "events": 83,
     "wins": 46,
-    "hitRate": 0.5,
-    "avgEntry": 0.5447,
-    "avgRoi": -0.1185,
-    "medianRoi": -0.4475,
+    "hitRate": 0.5055,
+    "avgEntry": 0.5439,
+    "avgRoi": -0.0903,
+    "medianRoi": 0.105,
     "ci95": [
-     -0.3069,
-     0.0699
+     -0.2799,
+     0.0992
     ]
    }
   }
@@ -10947,7 +11003,7 @@
    "roi": null,
    "roiDelayed": null,
    "roiDetect": null,
-   "lastTs": 1790688967,
+   "lastTs": 1791988032,
    "closedAt": null,
    "gameStart": null,
    "phase": null
@@ -11003,7 +11059,7 @@
    "roi": null,
    "roiDelayed": null,
    "roiDetect": null,
-   "lastTs": 1791072455,
+   "lastTs": 1791988032,
    "closedAt": null,
    "gameStart": null,
    "phase": null
@@ -11059,7 +11115,7 @@
    "roi": null,
    "roiDelayed": null,
    "roiDetect": null,
-   "lastTs": 1790539531,
+   "lastTs": 1791997632,
    "closedAt": null,
    "gameStart": null,
    "phase": null
@@ -11087,7 +11143,7 @@
    "roi": null,
    "roiDelayed": null,
    "roiDetect": null,
-   "lastTs": 1791973064,
+   "lastTs": 1792031309,
    "closedAt": null,
    "gameStart": null,
    "phase": null
@@ -11115,7 +11171,7 @@
    "roi": null,
    "roiDelayed": null,
    "roiDetect": null,
-   "lastTs": 1791937665,
+   "lastTs": 1792024109,
    "closedAt": null,
    "gameStart": null,
    "phase": null
@@ -11759,7 +11815,7 @@
    "roi": null,
    "roiDelayed": null,
    "roiDetect": null,
-   "lastTs": 1791722665,
+   "lastTs": 1792024109,
    "closedAt": null,
    "gameStart": null,
    "phase": null
@@ -11875,6 +11931,230 @@
    "closedAt": "2026-10-09T13:52:33+00:00",
    "gameStart": "2026-10-09T11:30:00+00:00",
    "phase": "previa"
+  },
+  {
+   "id": "0x75ee71f41c90708fd891f13384bf563016523828c13fe64a268169c5bf68e062:1",
+   "title": "Milwaukee Brewers vs. Los Angeles Dodgers",
+   "outcome": "Los Angeles Dodgers",
+   "eventSlug": "mlb-mil-lad-2026-10-14",
+   "cat": "deportes",
+   "firstTs": 1792013974,
+   "detectPrice": 0.615,
+   "tierAtDetection": "especialistas",
+   "staleAtDetection": false,
+   "maxTraders": 4,
+   "alerted": true,
+   "alertTs": 1792013974,
+   "alertPrice": 0.615,
+   "alertPriceDelayed": 0.615,
+   "tierAtAlert": "especialistas",
+   "entryPrice": 0.625,
+   "status": "resuelta",
+   "payout": 0.0,
+   "won": false,
+   "roi": -1.0,
+   "roiDelayed": -1.0,
+   "roiDetect": -1.0,
+   "lastTs": 1792031309,
+   "closedAt": "2026-10-15T03:33:44+00:00",
+   "gameStart": "2026-10-15T00:00:00+00:00",
+   "phase": "previa"
+  },
+  {
+   "id": "0x75ee71f41c90708fd891f13384bf563016523828c13fe64a268169c5bf68e062:0",
+   "title": "Milwaukee Brewers vs. Los Angeles Dodgers",
+   "outcome": "Milwaukee Brewers",
+   "eventSlug": "mlb-mil-lad-2026-10-14",
+   "cat": "deportes",
+   "firstTs": 1792030112,
+   "detectPrice": 0.335,
+   "tierAtDetection": "especialistas",
+   "staleAtDetection": false,
+   "maxTraders": 3,
+   "alerted": true,
+   "alertTs": 1792030112,
+   "alertPrice": 0.335,
+   "alertPriceDelayed": 0.785,
+   "tierAtAlert": "especialistas",
+   "entryPrice": 0.345,
+   "status": "resuelta",
+   "payout": 1.0,
+   "won": true,
+   "roi": 1.8986,
+   "roiDelayed": 0.2579,
+   "roiDetect": 1.8986,
+   "lastTs": 1792033112,
+   "closedAt": "2026-10-15T03:33:44+00:00",
+   "gameStart": "2026-10-15T00:00:00+00:00",
+   "phase": "directo"
+  },
+  {
+   "id": "0xde50a145b8e5f7a84c367a307f9708600a724ae9f2760e304daf6e1334568637:1",
+   "title": "LoL: Team WE vs HANJIN BRION (BO5) - Demacia Cup Global Invitational Playoffs",
+   "outcome": "HANJIN BRION",
+   "eventSlug": "lol-we-bro2-2026-10-15",
+   "cat": "deportes",
+   "firstTs": 1792068154,
+   "detectPrice": 0.71,
+   "tierAtDetection": "especialistas",
+   "staleAtDetection": true,
+   "maxTraders": 3,
+   "alerted": true,
+   "alertTs": 1792068759,
+   "alertPrice": 0.535,
+   "alertPriceDelayed": 0.235,
+   "tierAtAlert": "especialistas",
+   "entryPrice": 0.545,
+   "status": "resuelta",
+   "payout": 0.0,
+   "won": false,
+   "roi": -1.0,
+   "roiDelayed": -1.0,
+   "roiDetect": -1.0,
+   "lastTs": 1792069350,
+   "closedAt": "2026-10-15T15:41:59+00:00",
+   "gameStart": "2026-10-15T09:00:00+00:00",
+   "phase": "directo"
+  },
+  {
+   "id": "0x78717bc333cc779da078456f5e36c54b99111a924d758d2242adeb10937a2e39:0",
+   "title": "Counter-Strike: FURIA vs Aurora Gaming (BO3) - Thunderpick World Championship Playoffs",
+   "outcome": "FURIA",
+   "eventSlug": "cs2-furia-aur1-2026-10-17",
+   "cat": "deportes",
+   "firstTs": 1792244849,
+   "detectPrice": 0.535,
+   "tierAtDetection": "especialistas",
+   "staleAtDetection": false,
+   "maxTraders": 3,
+   "alerted": true,
+   "alertTs": 1792244849,
+   "alertPrice": 0.535,
+   "alertPriceDelayed": 0.535,
+   "tierAtAlert": "especialistas",
+   "entryPrice": 0.545,
+   "status": "resuelta",
+   "payout": 1.0,
+   "won": true,
+   "roi": 0.8349,
+   "roiDelayed": 0.8349,
+   "roiDetect": 0.8349,
+   "lastTs": 1792254033,
+   "closedAt": "2026-10-17T16:29:02+00:00",
+   "gameStart": "2026-10-17T14:00:00+00:00",
+   "phase": "previa"
+  },
+  {
+   "id": "0x491b785c82d65c7ab9c65bb51df9e58e9b3fc53dbc8b4ee1aef49db0244b6560:0",
+   "title": "Will Brighton & Hove Albion FC win on 2026-10-18?",
+   "outcome": "Yes",
+   "eventSlug": "epl-bri-cry-2026-10-18",
+   "cat": "otras",
+   "firstTs": 1792325347,
+   "detectPrice": 0.685,
+   "tierAtDetection": "especialistas",
+   "staleAtDetection": false,
+   "maxTraders": 3,
+   "alerted": true,
+   "alertTs": 1792325347,
+   "alertPrice": 0.685,
+   "alertPriceDelayed": 0.685,
+   "tierAtAlert": "especialistas",
+   "entryPrice": 0.695,
+   "status": "resuelta",
+   "payout": 1.0,
+   "won": true,
+   "roi": 0.4388,
+   "roiDelayed": 0.4388,
+   "roiDetect": 0.4388,
+   "lastTs": 1792333751,
+   "closedAt": "2026-10-18T15:11:20+00:00",
+   "gameStart": "2026-10-18T13:00:00+00:00",
+   "phase": "previa"
+  },
+  {
+   "id": "0x2bc5f36b0b7b408984f2fc86a56fc6c36fdaef8a3c10689c684319b3218f1a5a:0",
+   "title": "Counter-Strike: FURIA vs BetBoom Team (BO5) - Thunderpick World Championship Playoffs",
+   "outcome": "FURIA",
+   "eventSlug": "cs2-furia-bb3-2026-10-18",
+   "cat": "deportes",
+   "firstTs": 1792339186,
+   "detectPrice": 0.735,
+   "tierAtDetection": "especialistas",
+   "staleAtDetection": false,
+   "maxTraders": 3,
+   "alerted": true,
+   "alertTs": 1792339186,
+   "alertPrice": 0.735,
+   "alertPriceDelayed": null,
+   "tierAtAlert": "especialistas",
+   "entryPrice": 0.745,
+   "status": "resuelta",
+   "payout": 1.0,
+   "won": true,
+   "roi": 0.3423,
+   "roiDelayed": 0.3423,
+   "roiDetect": 0.3423,
+   "lastTs": 1792358248,
+   "closedAt": "2026-10-18T22:03:00+00:00",
+   "gameStart": "2026-10-18T16:00:00+00:00",
+   "phase": "previa"
+  },
+  {
+   "id": "0xe5699e9eeb4d985d52ced2156482d1f49c3c27806e68e8011f4a4d217799e84c:0",
+   "title": "Saints vs. Giants",
+   "outcome": "Saints",
+   "eventSlug": "nfl-no-nyg-2026-10-18",
+   "cat": "deportes",
+   "firstTs": 1792355394,
+   "detectPrice": 0.9995,
+   "tierAtDetection": "especialistas",
+   "staleAtDetection": true,
+   "maxTraders": 3,
+   "alerted": false,
+   "alertTs": null,
+   "alertPrice": null,
+   "alertPriceDelayed": null,
+   "tierAtAlert": null,
+   "entryPrice": null,
+   "status": "resuelta",
+   "payout": 1.0,
+   "won": true,
+   "roi": null,
+   "roiDelayed": null,
+   "roiDetect": 0.001,
+   "lastTs": 1792356448,
+   "closedAt": "2026-10-18T20:52:36+00:00",
+   "gameStart": "2026-10-18T17:00:00+00:00",
+   "phase": null
+  },
+  {
+   "id": "0x340c1c3ad87ec9d60450284665ba1a386a213d818a9042fdfcc8e20e0521f624:1",
+   "title": "Cowboys vs. Packers",
+   "outcome": "Packers",
+   "eventSlug": "nfl-dal-gb-2026-10-19",
+   "cat": "deportes",
+   "firstTs": 1792370349,
+   "detectPrice": 0.575,
+   "tierAtDetection": "especialistas",
+   "staleAtDetection": false,
+   "maxTraders": 3,
+   "alerted": true,
+   "alertTs": 1792370349,
+   "alertPrice": 0.575,
+   "alertPriceDelayed": 0.695,
+   "tierAtAlert": "especialistas",
+   "entryPrice": 0.585,
+   "status": "resuelta",
+   "payout": 1.0,
+   "won": true,
+   "roi": 0.7094,
+   "roiDelayed": 0.4184,
+   "roiDetect": 0.7094,
+   "lastTs": 1792382345,
+   "closedAt": "2026-10-19T04:04:02+00:00",
+   "gameStart": "2026-10-19T00:20:00+00:00",
+   "phase": "directo"
   }
  ]
 }
