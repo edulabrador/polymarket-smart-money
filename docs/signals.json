@@ -1,6 +1,6 @@
 {
  "schema": 2,
- "updatedAt": "2026-10-19T23:13:42+00:00",
+ "updatedAt": "2026-10-19T23:23:42+00:00",
  "params": {
   "topN": 50,
   "minUsers": 5,
@@ -1762,7 +1762,7 @@
    "whalePrice": 0.86,
    "ts": 1792418264,
    "at": "2026-10-19T13:57:44+00:00",
-   "chk": 1792451622
+   "chk": 1792452222
   },
   {
    "id": "0x7fefe447029d22c576841234c8cf8a0b545b0e81e1c3e7842ace7f907bc80946:0",
@@ -1780,25 +1780,69 @@
  ],
  "lastWhaleTs": 1792449405,
  "trackRecords": {
-  "0x80d5aebbe7a714879177e4dae0014195beb3987e": {
-   "wins": 5,
-   "losses": 0,
-   "net": 433365.95,
+  "0x16bb9951a36fce71e2ef57890b786145e0ba8492": {
+   "wins": 188,
+   "losses": 90,
+   "net": 294482.67,
    "cats": {
     "otras": {
-     "wins": 3,
-     "losses": 0,
-     "edgeSum": 1.3623,
-     "edgeN": 3
+     "wins": 77,
+     "losses": 36,
+     "edgeSum": 17.4729,
+     "edgeN": 110
     },
     "deportes": {
-     "wins": 2,
-     "losses": 0
+     "wins": 111,
+     "losses": 54,
+     "edgeSum": 24.4993,
+     "edgeN": 156
     }
    },
    "edge": {
-    "sum": 1.3623,
-    "n": 3
+    "sum": 41.9722,
+    "n": 266
+   },
+   "at": 1792442022
+  },
+  "0xa19cbababc312f9df185e49d7004c249ed1ade6b": {
+   "wins": 145,
+   "losses": 0,
+   "net": 381516.69,
+   "cats": {
+    "cripto": {
+     "wins": 132,
+     "losses": 0,
+     "edgeSum": 14.1238,
+     "edgeN": 74
+    },
+    "otras": {
+     "wins": 13,
+     "losses": 0,
+     "edgeSum": 3.1859,
+     "edgeN": 11
+    }
+   },
+   "edge": {
+    "sum": 17.3097,
+    "n": 85
+   },
+   "at": 1792442022
+  },
+  "0x06dc51826bc524d9a83770e7de9dd7e005b04524": {
+   "wins": 60,
+   "losses": 34,
+   "net": 846605.51,
+   "cats": {
+    "cripto": {
+     "wins": 60,
+     "losses": 34,
+     "edgeSum": -2.2671,
+     "edgeN": 42
+    }
+   },
+   "edge": {
+    "sum": -2.2671,
+    "n": 42
    },
    "at": 1792442022
   },
@@ -1826,54 +1870,6 @@
    },
    "at": 1792442022
   },
-  "0x83720820a8aa6c3f20ad71850e7a1a17d16c5223": {
-   "wins": 167,
-   "losses": 16,
-   "net": 586082.83,
-   "cats": {
-    "deportes": {
-     "wins": 76,
-     "losses": 9,
-     "edgeSum": 14.7977,
-     "edgeN": 78
-    },
-    "otras": {
-     "wins": 91,
-     "losses": 7,
-     "edgeSum": 19.0026,
-     "edgeN": 93
-    }
-   },
-   "edge": {
-    "sum": 33.8003,
-    "n": 171
-   },
-   "at": 1792442022
-  },
-  "0xa2cced8bfae7d645f7f437fb76becf2fcbb70cbc": {
-   "wins": 31,
-   "losses": 1,
-   "net": 402355.32,
-   "cats": {
-    "otras": {
-     "wins": 16,
-     "losses": 0,
-     "edgeSum": 7.9978,
-     "edgeN": 16
-    },
-    "deportes": {
-     "wins": 15,
-     "losses": 1,
-     "edgeSum": 5.9675,
-     "edgeN": 14
-    }
-   },
-   "edge": {
-    "sum": 13.9653,
-    "n": 30
-   },
-   "at": 1792442022
-  },
   "0x96489abcb9f583d6835c8ef95ffc923d05a86825": {
    "wins": 25,
    "losses": 101,
@@ -1898,526 +1894,25 @@
    },
    "at": 1792442022
   },
-  "0xb4164e085a0503532989d487c4b4b19f4288dd7b": {
-   "wins": 0,
+  "0x80d5aebbe7a714879177e4dae0014195beb3987e": {
+   "wins": 5,
    "losses": 0,
-   "net": -47924.81,
-   "cats": {},
-   "edge": {
-    "sum": 0.0,
-    "n": 0
-   },
-   "at": 1792442022
-  },
-  "0x9ba9dec33838f4ec9f032f7247d7481987e63ce9": {
-   "wins": 1,
-   "losses": 0,
-   "net": 822537.44,
+   "net": 433365.95,
    "cats": {
     "otras": {
-     "wins": 1,
-     "losses": 0
-    }
-   },
-   "edge": {
-    "sum": 0.0,
-    "n": 0
-   },
-   "at": 1792442022
-  },
-  "0x27f738fe203827445690339104aae35b20bc44b0": {
-   "wins": 381,
-   "losses": 65,
-   "net": 491522.08,
-   "cats": {
-    "deportes": {
-     "wins": 206,
-     "losses": 42,
-     "edgeSum": 60.4986,
-     "edgeN": 213
-    },
-    "otras": {
-     "wins": 175,
-     "losses": 23,
-     "edgeSum": 50.552,
-     "edgeN": 155
-    }
-   },
-   "edge": {
-    "sum": 111.0506,
-    "n": 368
-   },
-   "at": 1792442022
-  },
-  "0x676c1bb692c76b57b06f1b93817515acfa5ce139": {
-   "wins": 107,
-   "losses": 0,
-   "net": 231118.78,
-   "cats": {
-    "otras": {
-     "wins": 6,
+     "wins": 3,
      "losses": 0,
-     "edgeSum": 2.4327,
-     "edgeN": 6
-    },
-    "deportes": {
-     "wins": 101,
-     "losses": 0,
-     "edgeSum": 37.6493,
-     "edgeN": 87
-    }
-   },
-   "edge": {
-    "sum": 40.082,
-    "n": 93
-   },
-   "at": 1792442022
-  },
-  "0xcdcccd0f2d86e450d973da415ad2430e5cc7935a": {
-   "wins": 1,
-   "losses": 3,
-   "net": 6949460.87,
-   "cats": {
-    "deportes": {
-     "wins": 1,
-     "losses": 2,
-     "edgeSum": -0.7521,
+     "edgeSum": 1.3623,
      "edgeN": 3
     },
-    "otras": {
-     "wins": 0,
-     "losses": 1,
-     "edgeSum": -0.496,
-     "edgeN": 1
-    }
-   },
-   "edge": {
-    "sum": -1.2481,
-    "n": 4
-   },
-   "at": 1792442022
-  },
-  "0x983eedfbd75803602e4a6e6ea9aab6dc6b9c6748": {
-   "wins": 4,
-   "losses": 1,
-   "net": 490872.72,
-   "cats": {
-    "otras": {
-     "wins": 4,
-     "losses": 1,
-     "edgeSum": 1.3344,
-     "edgeN": 5
-    }
-   },
-   "edge": {
-    "sum": 1.3344,
-    "n": 5
-   },
-   "at": 1792442022
-  },
-  "0x3eb31daa061a19855cbf0a4884c202fb86976a2a": {
-   "wins": 17,
-   "losses": 5,
-   "net": 444052.89,
-   "cats": {
     "deportes": {
-     "wins": 17,
-     "losses": 5,
-     "edgeSum": 5.1132,
-     "edgeN": 22
-    }
-   },
-   "edge": {
-    "sum": 5.1132,
-    "n": 22
-   },
-   "at": 1792442022
-  },
-  "0x1109da04152c38666464f5adb5d7c55618810b2c": {
-   "wins": 765,
-   "losses": 0,
-   "net": 172484.31,
-   "cats": {
-    "deportes": {
-     "wins": 681,
-     "losses": 0,
-     "edgeSum": 152.6208,
-     "edgeN": 652
-    },
-    "otras": {
-     "wins": 84,
-     "losses": 0,
-     "edgeSum": 14.9535,
-     "edgeN": 76
-    }
-   },
-   "edge": {
-    "sum": 167.5743,
-    "n": 728
-   },
-   "at": 1792442022
-  },
-  "0xdaef2be2a19ad331737d06545f85615b094554e9": {
-   "wins": 72,
-   "losses": 99,
-   "net": 550557.23,
-   "cats": {
-    "otras": {
-     "wins": 13,
-     "losses": 19,
-     "edgeSum": -3.0071,
-     "edgeN": 31
-    },
-    "deportes": {
-     "wins": 59,
-     "losses": 57,
-     "edgeSum": -13.4754,
-     "edgeN": 82
-    },
-    "politica": {
-     "wins": 0,
-     "losses": 23,
-     "edgeSum": -0.6552,
-     "edgeN": 23
-    }
-   },
-   "edge": {
-    "sum": -17.1377,
-    "n": 136
-   },
-   "at": 1792448022
-  },
-  "0x8c0b024c17831a0dde038547b7e791ae6a0d7aa5": {
-   "wins": 72,
-   "losses": 143,
-   "net": 317874.68,
-   "cats": {
-    "deportes": {
-     "wins": 71,
-     "losses": 143,
-     "edgeSum": -24.9328,
-     "edgeN": 199
-    },
-    "otras": {
-     "wins": 1,
-     "losses": 0,
-     "edgeSum": 0.52,
-     "edgeN": 1
-    }
-   },
-   "edge": {
-    "sum": -24.4128,
-    "n": 200
-   },
-   "at": 1792442022
-  },
-  "0xa38a455bbdd4b68486548b7e19da99903f4f821d": {
-   "wins": 161,
-   "losses": 160,
-   "net": 882679.21,
-   "cats": {
-    "deportes": {
-     "wins": 70,
-     "losses": 32,
-     "edgeSum": -3.5329,
-     "edgeN": 59
-    },
-    "otras": {
-     "wins": 91,
-     "losses": 128,
-     "edgeSum": -34.3654,
-     "edgeN": 165
-    }
-   },
-   "edge": {
-    "sum": -37.8983,
-    "n": 224
-   },
-   "at": 1792446822
-  },
-  "0xc95ed399d2fbaec9461f2abd70e0d96df1921288": {
-   "wins": 17,
-   "losses": 41,
-   "net": 170081.75,
-   "cats": {
-    "otras": {
-     "wins": 13,
-     "losses": 32,
-     "edgeSum": -9.4114,
-     "edgeN": 43
-    },
-    "deportes": {
-     "wins": 4,
-     "losses": 9,
-     "edgeSum": -0.9877,
-     "edgeN": 13
-    }
-   },
-   "edge": {
-    "sum": -10.3991,
-    "n": 56
-   },
-   "at": 1792446822
-  },
-  "0xe18ecc345e00ee7c4f2d1f676f3dd2acb112f826": {
-   "wins": 62,
-   "losses": 37,
-   "net": 364153.19,
-   "cats": {
-    "otras": {
-     "wins": 40,
-     "losses": 25,
-     "edgeSum": 6.0932,
-     "edgeN": 65
-    },
-    "deportes": {
-     "wins": 22,
-     "losses": 12,
-     "edgeSum": 3.9864,
-     "edgeN": 34
-    }
-   },
-   "edge": {
-    "sum": 10.0796,
-    "n": 99
-   },
-   "at": 1792442022
-  },
-  "0xe5b70fd855af9258d9463992e4f1ed7987905ee3": {
-   "wins": 30,
-   "losses": 13,
-   "net": 500333.23,
-   "cats": {
-    "otras": {
-     "wins": 14,
-     "losses": 6,
-     "edgeSum": 4.5424,
-     "edgeN": 20
-    },
-    "deportes": {
-     "wins": 16,
-     "losses": 7,
-     "edgeSum": 4.8918,
-     "edgeN": 23
-    }
-   },
-   "edge": {
-    "sum": 9.4342,
-    "n": 43
-   },
-   "at": 1792442022
-  },
-  "0xc9ae00eda811041a059f3eec9356b24067c1b9e0": {
-   "wins": 17,
-   "losses": 12,
-   "net": 347350.69,
-   "cats": {
-    "deportes": {
-     "wins": 17,
-     "losses": 12,
-     "edgeSum": 0.8928,
-     "edgeN": 28
-    }
-   },
-   "edge": {
-    "sum": 0.8928,
-    "n": 28
-   },
-   "at": 1792442022
-  },
-  "0x2117ae94a97d69b78cbc81b6680a62deb1955c26": {
-   "wins": 319,
-   "losses": 164,
-   "net": 170621.95,
-   "cats": {
-    "otras": {
-     "wins": 148,
-     "losses": 81,
-     "edgeSum": 11.3494,
-     "edgeN": 210
-    },
-    "deportes": {
-     "wins": 170,
-     "losses": 83,
-     "edgeSum": 2.3436,
-     "edgeN": 207
-    },
-    "politica": {
-     "wins": 1,
+     "wins": 2,
      "losses": 0
     }
    },
    "edge": {
-    "sum": 13.693,
-    "n": 417
-   },
-   "at": 1792446822
-  },
-  "0x924379a79c64b77ad5816ad362122a5f6228658e": {
-   "wins": 73,
-   "losses": 65,
-   "net": 1753559.76,
-   "cats": {
-    "deportes": {
-     "wins": 41,
-     "losses": 40,
-     "edgeSum": 0.3498,
-     "edgeN": 78
-    },
-    "otras": {
-     "wins": 32,
-     "losses": 25,
-     "edgeSum": 0.1489,
-     "edgeN": 53
-    }
-   },
-   "edge": {
-    "sum": 0.4987,
-    "n": 131
-   },
-   "at": 1792442022
-  },
-  "0x7c37b52eb226bcb9411375ec48b0169663fb6aeb": {
-   "wins": 20,
-   "losses": 115,
-   "net": 2410312.36,
-   "cats": {
-    "deportes": {
-     "wins": 20,
-     "losses": 108,
-     "edgeSum": -38.5007,
-     "edgeN": 125
-    },
-    "otras": {
-     "wins": 0,
-     "losses": 7,
-     "edgeSum": -3.5299,
-     "edgeN": 7
-    }
-   },
-   "edge": {
-    "sum": -42.0306,
-    "n": 132
-   },
-   "at": 1792442022
-  },
-  "0x076daa87c4fe1a85402a9b6b8e0a866224388d4c": {
-   "wins": 295,
-   "losses": 176,
-   "net": 205949.34,
-   "cats": {
-    "deportes": {
-     "wins": 214,
-     "losses": 127,
-     "edgeSum": -8.4063,
-     "edgeN": 231
-    },
-    "otras": {
-     "wins": 81,
-     "losses": 49,
-     "edgeSum": 0.2672,
-     "edgeN": 90
-    }
-   },
-   "edge": {
-    "sum": -8.1391,
-    "n": 321
-   },
-   "at": 1792442022
-  },
-  "0x7e3a1f95c558f39a51ff334d789e3e039b553246": {
-   "wins": 113,
-   "losses": 101,
-   "net": 319453.37,
-   "cats": {
-    "deportes": {
-     "wins": 86,
-     "losses": 68,
-     "edgeSum": 2.0909,
-     "edgeN": 142
-    },
-    "otras": {
-     "wins": 27,
-     "losses": 33,
-     "edgeSum": -3.3996,
-     "edgeN": 59
-    }
-   },
-   "edge": {
-    "sum": -1.3087,
-    "n": 201
-   },
-   "at": 1792442022
-  },
-  "0x361b16e3ddfe1d415d41008daac2631d94ab74fe": {
-   "wins": 218,
-   "losses": 0,
-   "net": 2568745.06,
-   "cats": {
-    "otras": {
-     "wins": 137,
-     "losses": 0,
-     "edgeSum": 13.1333,
-     "edgeN": 47
-    },
-    "deportes": {
-     "wins": 81,
-     "losses": 0,
-     "edgeSum": 9.3755,
-     "edgeN": 31
-    }
-   },
-   "edge": {
-    "sum": 22.5088,
-    "n": 78
-   },
-   "at": 1792442022
-  },
-  "0xe221be3b45dfe5ed562ee9dc16f47205728e06f6": {
-   "wins": 3,
-   "losses": 0,
-   "net": 402361.22,
-   "cats": {
-    "deportes": {
-     "wins": 2,
-     "losses": 0,
-     "edgeSum": 1.1753,
-     "edgeN": 2
-    },
-    "otras": {
-     "wins": 1,
-     "losses": 0,
-     "edgeSum": 0.6097,
-     "edgeN": 1
-    }
-   },
-   "edge": {
-    "sum": 1.785,
+    "sum": 1.3623,
     "n": 3
-   },
-   "at": 1792442022
-  },
-  "0x7ad71d79a3bb90d0a87a06500fa0fe11663842aa": {
-   "wins": 26,
-   "losses": 26,
-   "net": 667036.19,
-   "cats": {
-    "otras": {
-     "wins": 19,
-     "losses": 21,
-     "edgeSum": -2.1848,
-     "edgeN": 37
-    },
-    "deportes": {
-     "wins": 7,
-     "losses": 5,
-     "edgeSum": 0.6922,
-     "edgeN": 12
-    }
-   },
-   "edge": {
-    "sum": -1.4926,
-    "n": 49
    },
    "at": 1792442022
   },
@@ -2445,135 +1940,213 @@
    },
    "at": 1792442022
   },
-  "0x03805a13a0b3e058f55f6c6af95389d4f431073d": {
+  "0x983eedfbd75803602e4a6e6ea9aab6dc6b9c6748": {
    "wins": 4,
-   "losses": 0,
-   "net": -54732.63,
+   "losses": 1,
+   "net": 490872.72,
    "cats": {
     "otras": {
      "wins": 4,
-     "losses": 0,
-     "edgeSum": 0.55,
-     "edgeN": 1
+     "losses": 1,
+     "edgeSum": 1.3344,
+     "edgeN": 5
     }
    },
    "edge": {
-    "sum": 0.55,
-    "n": 1
+    "sum": 1.3344,
+    "n": 5
    },
    "at": 1792442022
   },
-  "0x06dc51826bc524d9a83770e7de9dd7e005b04524": {
-   "wins": 60,
-   "losses": 34,
-   "net": 846605.51,
-   "cats": {
-    "cripto": {
-     "wins": 60,
-     "losses": 34,
-     "edgeSum": -2.2671,
-     "edgeN": 42
-    }
-   },
-   "edge": {
-    "sum": -2.2671,
-    "n": 42
-   },
-   "at": 1792442022
-  },
-  "0x111f73e91f85b6fe4de1ddec3de2fe32122e355b": {
-   "wins": 360,
-   "losses": 0,
-   "net": 95135.07,
-   "cats": {
-    "cripto": {
-     "wins": 360,
-     "losses": 0,
-     "edgeSum": 66.5316,
-     "edgeN": 137
-    }
-   },
-   "edge": {
-    "sum": 66.5316,
-    "n": 137
-   },
-   "at": 1792442022
-  },
-  "0x2dfa4e79eca44b7c774f40a45535adbc368a6f60": {
-   "wins": 5,
-   "losses": 1,
-   "net": 348443.43,
+  "0x8c0b024c17831a0dde038547b7e791ae6a0d7aa5": {
+   "wins": 72,
+   "losses": 143,
+   "net": 317874.68,
    "cats": {
     "deportes": {
-     "wins": 4,
-     "losses": 1,
-     "edgeSum": 1.817,
-     "edgeN": 5
+     "wins": 71,
+     "losses": 143,
+     "edgeSum": -24.9328,
+     "edgeN": 199
     },
     "otras": {
      "wins": 1,
      "losses": 0,
-     "edgeSum": 0.2865,
+     "edgeSum": 0.52,
      "edgeN": 1
     }
    },
    "edge": {
-    "sum": 2.1035,
-    "n": 6
+    "sum": -24.4128,
+    "n": 200
    },
    "at": 1792442022
   },
-  "0x1f3a646ce5cbe2c70270e7a46161d89b7c7b895d": {
-   "wins": 112,
-   "losses": 407,
-   "net": 1575726.46,
+  "0x2a69660046d7acc4ab204d7cc5ba78b0776cd2f7": {
+   "wins": 64,
+   "losses": 63,
+   "net": 108839.53,
    "cats": {
-    "otras": {
-     "wins": 42,
-     "losses": 217,
-     "edgeSum": -97.6714,
-     "edgeN": 236
-    },
     "deportes": {
-     "wins": 70,
-     "losses": 190,
-     "edgeSum": -78.3228,
-     "edgeN": 213
+     "wins": 35,
+     "losses": 40,
+     "edgeSum": -7.7451,
+     "edgeN": 41
+    },
+    "otras": {
+     "wins": 29,
+     "losses": 23,
+     "edgeSum": -7.1352,
+     "edgeN": 23
     }
    },
    "edge": {
-    "sum": -175.9942,
-    "n": 449
+    "sum": -14.8803,
+    "n": 64
    },
    "at": 1792442022
   },
-  "0x511f9c771449162349795d17becf8b37031acbe1": {
-   "wins": 0,
-   "losses": 72,
-   "net": -149569.03,
+  "0x9b11866433281ade9f2811dbde8acdefc45f5375": {
+   "wins": 130,
+   "losses": 0,
+   "net": 701997.07,
    "cats": {
-    "politica": {
-     "wins": 0,
-     "losses": 51,
-     "edgeSum": -1.6798,
-     "edgeN": 51
-    },
     "otras": {
-     "wins": 0,
-     "losses": 20,
-     "edgeSum": -0.502,
-     "edgeN": 20
+     "wins": 61,
+     "losses": 0,
+     "edgeSum": 10.7116,
+     "edgeN": 34
     },
     "deportes": {
-     "wins": 0,
-     "losses": 1,
-     "edgeSum": -0.0203,
-     "edgeN": 1
+     "wins": 69,
+     "losses": 0,
+     "edgeSum": 16.8565,
+     "edgeN": 40
     }
    },
    "edge": {
-    "sum": -2.2021,
-    "n": 72
+    "sum": 27.5681,
+    "n": 74
+   },
+   "at": 1792442022
+  },
+  "0x361b16e3ddfe1d415d41008daac2631d94ab74fe": {
+   "wins": 218,
+   "losses": 0,
+   "net": 2568745.06,
+   "cats": {
+    "otras": {
+     "wins": 137,
+     "losses": 0,
+     "edgeSum": 13.1333,
+     "edgeN": 47
+    },
+    "deportes": {
+     "wins": 81,
+     "losses": 0,
+     "edgeSum": 9.3755,
+     "edgeN": 31
+    }
+   },
+   "edge": {
+    "sum": 22.5088,
+    "n": 78
+   },
+   "at": 1792442022
+  },
+  "0x076daa87c4fe1a85402a9b6b8e0a866224388d4c": {
+   "wins": 295,
+   "losses": 176,
+   "net": 205949.34,
+   "cats": {
+    "deportes": {
+     "wins": 214,
+     "losses": 127,
+     "edgeSum": -8.4063,
+     "edgeN": 231
+    },
+    "otras": {
+     "wins": 81,
+     "losses": 49,
+     "edgeSum": 0.2672,
+     "edgeN": 90
+    }
+   },
+   "edge": {
+    "sum": -8.1391,
+    "n": 321
+   },
+   "at": 1792442022
+  },
+  "0xc95ed399d2fbaec9461f2abd70e0d96df1921288": {
+   "wins": 17,
+   "losses": 41,
+   "net": 170081.75,
+   "cats": {
+    "otras": {
+     "wins": 13,
+     "losses": 32,
+     "edgeSum": -9.4114,
+     "edgeN": 43
+    },
+    "deportes": {
+     "wins": 4,
+     "losses": 9,
+     "edgeSum": -0.9877,
+     "edgeN": 13
+    }
+   },
+   "edge": {
+    "sum": -10.3991,
+    "n": 56
+   },
+   "at": 1792446822
+  },
+  "0x95c6c9a6727ed203e97230dda61ab19a020e1508": {
+   "wins": 29,
+   "losses": 19,
+   "net": 324406.44,
+   "cats": {
+    "deportes": {
+     "wins": 6,
+     "losses": 6,
+     "edgeSum": 0.5279,
+     "edgeN": 12
+    },
+    "otras": {
+     "wins": 23,
+     "losses": 13,
+     "edgeSum": 6.5845,
+     "edgeN": 36
+    }
+   },
+   "edge": {
+    "sum": 7.1124,
+    "n": 48
+   },
+   "at": 1792442022
+  },
+  "0xd38b71f3e8ed1af71983e5c309eac3dfa9b35029": {
+   "wins": 275,
+   "losses": 249,
+   "net": 239995.13,
+   "cats": {
+    "deportes": {
+     "wins": 133,
+     "losses": 128,
+     "edgeSum": -15.3964,
+     "edgeN": 211
+    },
+    "otras": {
+     "wins": 142,
+     "losses": 121,
+     "edgeSum": -2.7769,
+     "edgeN": 224
+    }
+   },
+   "edge": {
+    "sum": -18.1733,
+    "n": 435
    },
    "at": 1792442022
   },
@@ -2601,51 +2174,27 @@
    },
    "at": 1792442022
   },
-  "0x03e8a544e97eeff5753bc1e90d46e5ef22af1697": {
-   "wins": 4,
-   "losses": 3,
-   "net": 349606.05,
+  "0x7ad71d79a3bb90d0a87a06500fa0fe11663842aa": {
+   "wins": 26,
+   "losses": 26,
+   "net": 667036.19,
    "cats": {
-    "deportes": {
-     "wins": 3,
-     "losses": 1,
-     "edgeSum": 0.8833,
-     "edgeN": 4
-    },
     "otras": {
-     "wins": 1,
-     "losses": 2,
-     "edgeSum": -0.55,
-     "edgeN": 3
+     "wins": 19,
+     "losses": 21,
+     "edgeSum": -2.1848,
+     "edgeN": 37
+    },
+    "deportes": {
+     "wins": 7,
+     "losses": 5,
+     "edgeSum": 0.6922,
+     "edgeN": 12
     }
    },
    "edge": {
-    "sum": 0.3333,
-    "n": 7
-   },
-   "at": 1792442022
-  },
-  "0xb7271c112cbd83eb4c1ef1b554ff963604ae2a9d": {
-   "wins": 59,
-   "losses": 32,
-   "net": 203439.49,
-   "cats": {
-    "deportes": {
-     "wins": 37,
-     "losses": 22,
-     "edgeSum": 6.7699,
-     "edgeN": 58
-    },
-    "otras": {
-     "wins": 22,
-     "losses": 10,
-     "edgeSum": 3.5302,
-     "edgeN": 30
-    }
-   },
-   "edge": {
-    "sum": 10.3001,
-    "n": 88
+    "sum": -1.4926,
+    "n": 49
    },
    "at": 1792442022
   },
@@ -2685,99 +2234,256 @@
    },
    "at": 1792442022
   },
-  "0x9b11866433281ade9f2811dbde8acdefc45f5375": {
-   "wins": 130,
+  "0x03805a13a0b3e058f55f6c6af95389d4f431073d": {
+   "wins": 4,
    "losses": 0,
-   "net": 701997.07,
+   "net": -54732.63,
    "cats": {
     "otras": {
-     "wins": 61,
+     "wins": 4,
      "losses": 0,
-     "edgeSum": 10.7116,
-     "edgeN": 34
-    },
-    "deportes": {
-     "wins": 69,
-     "losses": 0,
-     "edgeSum": 16.8565,
-     "edgeN": 40
-    }
-   },
-   "edge": {
-    "sum": 27.5681,
-    "n": 74
-   },
-   "at": 1792442022
-  },
-  "0x95c6c9a6727ed203e97230dda61ab19a020e1508": {
-   "wins": 29,
-   "losses": 19,
-   "net": 324406.44,
-   "cats": {
-    "deportes": {
-     "wins": 6,
-     "losses": 6,
-     "edgeSum": 0.5279,
-     "edgeN": 12
-    },
-    "otras": {
-     "wins": 23,
-     "losses": 13,
-     "edgeSum": 6.5845,
-     "edgeN": 36
-    }
-   },
-   "edge": {
-    "sum": 7.1124,
-    "n": 48
-   },
-   "at": 1792442022
-  },
-  "0x57a85952044f2c8e4d31b475aab6987d2f98ebc2": {
-   "wins": 7,
-   "losses": 8,
-   "net": 858504.13,
-   "cats": {
-    "deportes": {
-     "wins": 7,
-     "losses": 7,
-     "edgeSum": -0.3329,
-     "edgeN": 13
-    },
-    "otras": {
-     "wins": 0,
-     "losses": 1,
-     "edgeSum": -0.3574,
+     "edgeSum": 0.55,
      "edgeN": 1
     }
    },
    "edge": {
-    "sum": -0.6903,
-    "n": 14
+    "sum": 0.55,
+    "n": 1
    },
-   "at": 1792445623
+   "at": 1792442022
   },
-  "0x2a69660046d7acc4ab204d7cc5ba78b0776cd2f7": {
-   "wins": 64,
-   "losses": 63,
-   "net": 108839.53,
+  "0xdaef2be2a19ad331737d06545f85615b094554e9": {
+   "wins": 72,
+   "losses": 99,
+   "net": 550557.23,
    "cats": {
-    "deportes": {
-     "wins": 35,
-     "losses": 40,
-     "edgeSum": -7.7451,
-     "edgeN": 41
-    },
     "otras": {
-     "wins": 29,
+     "wins": 13,
+     "losses": 19,
+     "edgeSum": -3.0071,
+     "edgeN": 31
+    },
+    "deportes": {
+     "wins": 59,
+     "losses": 57,
+     "edgeSum": -13.4754,
+     "edgeN": 82
+    },
+    "politica": {
+     "wins": 0,
      "losses": 23,
-     "edgeSum": -7.1352,
+     "edgeSum": -0.6552,
      "edgeN": 23
     }
    },
    "edge": {
-    "sum": -14.8803,
-    "n": 64
+    "sum": -17.1377,
+    "n": 136
+   },
+   "at": 1792448022
+  },
+  "0xe18ecc345e00ee7c4f2d1f676f3dd2acb112f826": {
+   "wins": 62,
+   "losses": 37,
+   "net": 364153.19,
+   "cats": {
+    "otras": {
+     "wins": 40,
+     "losses": 25,
+     "edgeSum": 6.0932,
+     "edgeN": 65
+    },
+    "deportes": {
+     "wins": 22,
+     "losses": 12,
+     "edgeSum": 3.9864,
+     "edgeN": 34
+    }
+   },
+   "edge": {
+    "sum": 10.0796,
+    "n": 99
+   },
+   "at": 1792442022
+  },
+  "0x9ba9dec33838f4ec9f032f7247d7481987e63ce9": {
+   "wins": 1,
+   "losses": 0,
+   "net": 822537.44,
+   "cats": {
+    "otras": {
+     "wins": 1,
+     "losses": 0
+    }
+   },
+   "edge": {
+    "sum": 0.0,
+    "n": 0
+   },
+   "at": 1792442022
+  },
+  "0xbc43c8bfbc4d77c2fc9011adad38ba43b88996d3": {
+   "wins": 74,
+   "losses": 0,
+   "net": -345604.86,
+   "cats": {
+    "deportes": {
+     "wins": 61,
+     "losses": 0,
+     "edgeSum": 27.8598,
+     "edgeN": 59
+    },
+    "otras": {
+     "wins": 13,
+     "losses": 0,
+     "edgeSum": 8.093,
+     "edgeN": 13
+    }
+   },
+   "edge": {
+    "sum": 35.9528,
+    "n": 72
+   },
+   "at": 1792442022
+  },
+  "0xe221be3b45dfe5ed562ee9dc16f47205728e06f6": {
+   "wins": 3,
+   "losses": 0,
+   "net": 402361.22,
+   "cats": {
+    "deportes": {
+     "wins": 2,
+     "losses": 0,
+     "edgeSum": 1.1753,
+     "edgeN": 2
+    },
+    "otras": {
+     "wins": 1,
+     "losses": 0,
+     "edgeSum": 0.6097,
+     "edgeN": 1
+    }
+   },
+   "edge": {
+    "sum": 1.785,
+    "n": 3
+   },
+   "at": 1792442022
+  },
+  "0x2117ae94a97d69b78cbc81b6680a62deb1955c26": {
+   "wins": 319,
+   "losses": 164,
+   "net": 170621.95,
+   "cats": {
+    "otras": {
+     "wins": 148,
+     "losses": 81,
+     "edgeSum": 11.3494,
+     "edgeN": 210
+    },
+    "deportes": {
+     "wins": 170,
+     "losses": 83,
+     "edgeSum": 2.3436,
+     "edgeN": 207
+    },
+    "politica": {
+     "wins": 1,
+     "losses": 0
+    }
+   },
+   "edge": {
+    "sum": 13.693,
+    "n": 417
+   },
+   "at": 1792446822
+  },
+  "0x2dfa4e79eca44b7c774f40a45535adbc368a6f60": {
+   "wins": 5,
+   "losses": 1,
+   "net": 348443.43,
+   "cats": {
+    "deportes": {
+     "wins": 4,
+     "losses": 1,
+     "edgeSum": 1.817,
+     "edgeN": 5
+    },
+    "otras": {
+     "wins": 1,
+     "losses": 0,
+     "edgeSum": 0.2865,
+     "edgeN": 1
+    }
+   },
+   "edge": {
+    "sum": 2.1035,
+    "n": 6
+   },
+   "at": 1792442022
+  },
+  "0xb4164e085a0503532989d487c4b4b19f4288dd7b": {
+   "wins": 0,
+   "losses": 0,
+   "net": -47924.81,
+   "cats": {},
+   "edge": {
+    "sum": 0.0,
+    "n": 0
+   },
+   "at": 1792442022
+  },
+  "0x511f9c771449162349795d17becf8b37031acbe1": {
+   "wins": 0,
+   "losses": 72,
+   "net": -149569.03,
+   "cats": {
+    "politica": {
+     "wins": 0,
+     "losses": 51,
+     "edgeSum": -1.6798,
+     "edgeN": 51
+    },
+    "otras": {
+     "wins": 0,
+     "losses": 20,
+     "edgeSum": -0.502,
+     "edgeN": 20
+    },
+    "deportes": {
+     "wins": 0,
+     "losses": 1,
+     "edgeSum": -0.0203,
+     "edgeN": 1
+    }
+   },
+   "edge": {
+    "sum": -2.2021,
+    "n": 72
+   },
+   "at": 1792442022
+  },
+  "0x1109da04152c38666464f5adb5d7c55618810b2c": {
+   "wins": 765,
+   "losses": 0,
+   "net": 172484.31,
+   "cats": {
+    "deportes": {
+     "wins": 681,
+     "losses": 0,
+     "edgeSum": 152.6208,
+     "edgeN": 652
+    },
+    "otras": {
+     "wins": 84,
+     "losses": 0,
+     "edgeSum": 14.9535,
+     "edgeN": 76
+    }
+   },
+   "edge": {
+    "sum": 167.5743,
+    "n": 728
    },
    "at": 1792442022
   },
@@ -2817,53 +2523,47 @@
    },
    "at": 1792442022
   },
-  "0xa19cbababc312f9df185e49d7004c249ed1ade6b": {
-   "wins": 145,
-   "losses": 0,
-   "net": 381516.69,
+  "0xc9ae00eda811041a059f3eec9356b24067c1b9e0": {
+   "wins": 17,
+   "losses": 12,
+   "net": 347350.69,
    "cats": {
-    "cripto": {
-     "wins": 132,
-     "losses": 0,
-     "edgeSum": 14.1238,
-     "edgeN": 74
-    },
-    "otras": {
-     "wins": 13,
-     "losses": 0,
-     "edgeSum": 3.1859,
-     "edgeN": 11
+    "deportes": {
+     "wins": 17,
+     "losses": 12,
+     "edgeSum": 0.8928,
+     "edgeN": 28
     }
    },
    "edge": {
-    "sum": 17.3097,
-    "n": 85
+    "sum": 0.8928,
+    "n": 28
    },
    "at": 1792442022
   },
-  "0x16bb9951a36fce71e2ef57890b786145e0ba8492": {
-   "wins": 188,
-   "losses": 90,
-   "net": 294482.67,
+  "0x57a85952044f2c8e4d31b475aab6987d2f98ebc2": {
+   "wins": 7,
+   "losses": 8,
+   "net": 858504.13,
    "cats": {
-    "otras": {
-     "wins": 77,
-     "losses": 36,
-     "edgeSum": 17.4729,
-     "edgeN": 110
-    },
     "deportes": {
-     "wins": 111,
-     "losses": 54,
-     "edgeSum": 24.4993,
-     "edgeN": 156
+     "wins": 7,
+     "losses": 7,
+     "edgeSum": -0.3329,
+     "edgeN": 13
+    },
+    "otras": {
+     "wins": 0,
+     "losses": 1,
+     "edgeSum": -0.3574,
+     "edgeN": 1
     }
    },
    "edge": {
-    "sum": 41.9722,
-    "n": 266
+    "sum": -0.6903,
+    "n": 14
    },
-   "at": 1792442022
+   "at": 1792445623
   },
   "0xb0e74df9430a089aa102e2207af5fde1967439d2": {
    "wins": 0,
@@ -2876,51 +2576,99 @@
    },
    "at": 1792442022
   },
-  "0xd38b71f3e8ed1af71983e5c309eac3dfa9b35029": {
-   "wins": 275,
-   "losses": 249,
-   "net": 239995.13,
+  "0xa38a455bbdd4b68486548b7e19da99903f4f821d": {
+   "wins": 161,
+   "losses": 160,
+   "net": 882679.21,
    "cats": {
     "deportes": {
-     "wins": 133,
-     "losses": 128,
-     "edgeSum": -15.3964,
-     "edgeN": 211
-    },
-    "otras": {
-     "wins": 142,
-     "losses": 121,
-     "edgeSum": -2.7769,
-     "edgeN": 224
-    }
-   },
-   "edge": {
-    "sum": -18.1733,
-    "n": 435
-   },
-   "at": 1792442022
-  },
-  "0xbc43c8bfbc4d77c2fc9011adad38ba43b88996d3": {
-   "wins": 74,
-   "losses": 0,
-   "net": -345604.86,
-   "cats": {
-    "deportes": {
-     "wins": 61,
-     "losses": 0,
-     "edgeSum": 27.8598,
+     "wins": 70,
+     "losses": 32,
+     "edgeSum": -3.5329,
      "edgeN": 59
     },
     "otras": {
-     "wins": 13,
-     "losses": 0,
-     "edgeSum": 8.093,
-     "edgeN": 13
+     "wins": 91,
+     "losses": 128,
+     "edgeSum": -34.3654,
+     "edgeN": 165
     }
    },
    "edge": {
-    "sum": 35.9528,
-    "n": 72
+    "sum": -37.8983,
+    "n": 224
+   },
+   "at": 1792446822
+  },
+  "0x7c37b52eb226bcb9411375ec48b0169663fb6aeb": {
+   "wins": 20,
+   "losses": 115,
+   "net": 2410312.36,
+   "cats": {
+    "deportes": {
+     "wins": 20,
+     "losses": 108,
+     "edgeSum": -38.5007,
+     "edgeN": 125
+    },
+    "otras": {
+     "wins": 0,
+     "losses": 7,
+     "edgeSum": -3.5299,
+     "edgeN": 7
+    }
+   },
+   "edge": {
+    "sum": -42.0306,
+    "n": 132
+   },
+   "at": 1792442022
+  },
+  "0xcdcccd0f2d86e450d973da415ad2430e5cc7935a": {
+   "wins": 1,
+   "losses": 3,
+   "net": 6949460.87,
+   "cats": {
+    "deportes": {
+     "wins": 1,
+     "losses": 2,
+     "edgeSum": -0.7521,
+     "edgeN": 3
+    },
+    "otras": {
+     "wins": 0,
+     "losses": 1,
+     "edgeSum": -0.496,
+     "edgeN": 1
+    }
+   },
+   "edge": {
+    "sum": -1.2481,
+    "n": 4
+   },
+   "at": 1792442022
+  },
+  "0x1f3a646ce5cbe2c70270e7a46161d89b7c7b895d": {
+   "wins": 112,
+   "losses": 407,
+   "net": 1575726.46,
+   "cats": {
+    "otras": {
+     "wins": 42,
+     "losses": 217,
+     "edgeSum": -97.6714,
+     "edgeN": 236
+    },
+    "deportes": {
+     "wins": 70,
+     "losses": 190,
+     "edgeSum": -78.3228,
+     "edgeN": 213
+    }
+   },
+   "edge": {
+    "sum": -175.9942,
+    "n": 449
    },
    "at": 1792442022
   },
@@ -2945,6 +2693,258 @@
    "edge": {
     "sum": -4.7282,
     "n": 46
+   },
+   "at": 1792442022
+  },
+  "0x111f73e91f85b6fe4de1ddec3de2fe32122e355b": {
+   "wins": 360,
+   "losses": 0,
+   "net": 95135.07,
+   "cats": {
+    "cripto": {
+     "wins": 360,
+     "losses": 0,
+     "edgeSum": 66.5316,
+     "edgeN": 137
+    }
+   },
+   "edge": {
+    "sum": 66.5316,
+    "n": 137
+   },
+   "at": 1792442022
+  },
+  "0xa2cced8bfae7d645f7f437fb76becf2fcbb70cbc": {
+   "wins": 31,
+   "losses": 1,
+   "net": 402355.32,
+   "cats": {
+    "otras": {
+     "wins": 16,
+     "losses": 0,
+     "edgeSum": 7.9978,
+     "edgeN": 16
+    },
+    "deportes": {
+     "wins": 15,
+     "losses": 1,
+     "edgeSum": 5.9675,
+     "edgeN": 14
+    }
+   },
+   "edge": {
+    "sum": 13.9653,
+    "n": 30
+   },
+   "at": 1792442022
+  },
+  "0x924379a79c64b77ad5816ad362122a5f6228658e": {
+   "wins": 73,
+   "losses": 65,
+   "net": 1753559.76,
+   "cats": {
+    "deportes": {
+     "wins": 41,
+     "losses": 40,
+     "edgeSum": 0.3498,
+     "edgeN": 78
+    },
+    "otras": {
+     "wins": 32,
+     "losses": 25,
+     "edgeSum": 0.1489,
+     "edgeN": 53
+    }
+   },
+   "edge": {
+    "sum": 0.4987,
+    "n": 131
+   },
+   "at": 1792442022
+  },
+  "0xb7271c112cbd83eb4c1ef1b554ff963604ae2a9d": {
+   "wins": 59,
+   "losses": 32,
+   "net": 203439.49,
+   "cats": {
+    "deportes": {
+     "wins": 37,
+     "losses": 22,
+     "edgeSum": 6.7699,
+     "edgeN": 58
+    },
+    "otras": {
+     "wins": 22,
+     "losses": 10,
+     "edgeSum": 3.5302,
+     "edgeN": 30
+    }
+   },
+   "edge": {
+    "sum": 10.3001,
+    "n": 88
+   },
+   "at": 1792442022
+  },
+  "0x676c1bb692c76b57b06f1b93817515acfa5ce139": {
+   "wins": 107,
+   "losses": 0,
+   "net": 231118.78,
+   "cats": {
+    "otras": {
+     "wins": 6,
+     "losses": 0,
+     "edgeSum": 2.4327,
+     "edgeN": 6
+    },
+    "deportes": {
+     "wins": 101,
+     "losses": 0,
+     "edgeSum": 37.6493,
+     "edgeN": 87
+    }
+   },
+   "edge": {
+    "sum": 40.082,
+    "n": 93
+   },
+   "at": 1792442022
+  },
+  "0x83720820a8aa6c3f20ad71850e7a1a17d16c5223": {
+   "wins": 167,
+   "losses": 16,
+   "net": 586082.83,
+   "cats": {
+    "deportes": {
+     "wins": 76,
+     "losses": 9,
+     "edgeSum": 14.7977,
+     "edgeN": 78
+    },
+    "otras": {
+     "wins": 91,
+     "losses": 7,
+     "edgeSum": 19.0026,
+     "edgeN": 93
+    }
+   },
+   "edge": {
+    "sum": 33.8003,
+    "n": 171
+   },
+   "at": 1792442022
+  },
+  "0x27f738fe203827445690339104aae35b20bc44b0": {
+   "wins": 381,
+   "losses": 65,
+   "net": 491522.08,
+   "cats": {
+    "deportes": {
+     "wins": 206,
+     "losses": 42,
+     "edgeSum": 60.4986,
+     "edgeN": 213
+    },
+    "otras": {
+     "wins": 175,
+     "losses": 23,
+     "edgeSum": 50.552,
+     "edgeN": 155
+    }
+   },
+   "edge": {
+    "sum": 111.0506,
+    "n": 368
+   },
+   "at": 1792442022
+  },
+  "0x03e8a544e97eeff5753bc1e90d46e5ef22af1697": {
+   "wins": 4,
+   "losses": 3,
+   "net": 349606.05,
+   "cats": {
+    "deportes": {
+     "wins": 3,
+     "losses": 1,
+     "edgeSum": 0.8833,
+     "edgeN": 4
+    },
+    "otras": {
+     "wins": 1,
+     "losses": 2,
+     "edgeSum": -0.55,
+     "edgeN": 3
+    }
+   },
+   "edge": {
+    "sum": 0.3333,
+    "n": 7
+   },
+   "at": 1792442022
+  },
+  "0x7e3a1f95c558f39a51ff334d789e3e039b553246": {
+   "wins": 113,
+   "losses": 101,
+   "net": 319453.37,
+   "cats": {
+    "deportes": {
+     "wins": 86,
+     "losses": 68,
+     "edgeSum": 2.0909,
+     "edgeN": 142
+    },
+    "otras": {
+     "wins": 27,
+     "losses": 33,
+     "edgeSum": -3.3996,
+     "edgeN": 59
+    }
+   },
+   "edge": {
+    "sum": -1.3087,
+    "n": 201
+   },
+   "at": 1792442022
+  },
+  "0x3eb31daa061a19855cbf0a4884c202fb86976a2a": {
+   "wins": 17,
+   "losses": 5,
+   "net": 444052.89,
+   "cats": {
+    "deportes": {
+     "wins": 17,
+     "losses": 5,
+     "edgeSum": 5.1132,
+     "edgeN": 22
+    }
+   },
+   "edge": {
+    "sum": 5.1132,
+    "n": 22
+   },
+   "at": 1792442022
+  },
+  "0xe5b70fd855af9258d9463992e4f1ed7987905ee3": {
+   "wins": 30,
+   "losses": 13,
+   "net": 500333.23,
+   "cats": {
+    "otras": {
+     "wins": 14,
+     "losses": 6,
+     "edgeSum": 4.5424,
+     "edgeN": 20
+    },
+    "deportes": {
+     "wins": 16,
+     "losses": 7,
+     "edgeSum": 4.8918,
+     "edgeN": 23
+    }
+   },
+   "edge": {
+    "sum": 9.4342,
+    "n": 43
    },
    "at": 1792442022
   }
@@ -3075,41 +3075,41 @@
    "suppressed": false
   },
   "sesgo": {
-   "n": 1537,
-   "events": 546,
+   "n": 1539,
+   "events": 548,
    "wins": 838,
-   "hitRate": 0.5452,
-   "avgEntry": 0.5422,
-   "avgRoi": 0.0272,
-   "medianRoi": 0.0091,
+   "hitRate": 0.5445,
+   "avgEntry": 0.5423,
+   "avgRoi": 0.0258,
+   "medianRoi": 0.0086,
    "ci95": [
-    -0.0515,
-    0.1058
+    -0.0528,
+    0.1045
    ],
    "verdict": "no concluyente",
    "suppressed": false,
    "halves": [
-    -0.0104,
-    0.0647
+    -0.0091,
+    0.0607
    ]
   },
   "sesgo:0.30-0.70": {
-   "n": 1016,
-   "events": 441,
+   "n": 1018,
+   "events": 443,
    "wins": 527,
-   "hitRate": 0.5187,
-   "avgEntry": 0.5154,
-   "avgRoi": 0.0175,
-   "medianRoi": 0.4472,
+   "hitRate": 0.5177,
+   "avgEntry": 0.5155,
+   "avgRoi": 0.0155,
+   "medianRoi": 0.442,
    "ci95": [
-    -0.0565,
-    0.0915
+    -0.0585,
+    0.0895
    ],
    "verdict": "no concluyente",
    "suppressed": false,
    "halves": [
-    -0.0103,
-    0.0453
+    -0.0123,
+    0.0433
    ]
   },
   "sesgo:0.70-0.90": {
@@ -3189,41 +3189,41 @@
    ]
   },
   "entrada": {
-   "n": 544,
-   "events": 210,
-   "wins": 307,
-   "hitRate": 0.5643,
-   "avgEntry": 0.5451,
-   "avgRoi": 0.0722,
+   "n": 546,
+   "events": 212,
+   "wins": 308,
+   "hitRate": 0.5641,
+   "avgEntry": 0.545,
+   "avgRoi": 0.0723,
    "medianRoi": 0.3072,
    "ci95": [
-    -0.0545,
-    0.1989
+    -0.054,
+    0.1986
    ],
    "verdict": "no concluyente",
    "suppressed": false,
    "halves": [
-    0.0735,
-    0.0708
+    0.0696,
+    0.075
    ]
   },
   "entrada:ventaja+": {
-   "n": 423,
-   "events": 165,
+   "n": 424,
+   "events": 166,
    "wins": 232,
-   "hitRate": 0.5485,
-   "avgEntry": 0.548,
-   "avgRoi": 0.0365,
-   "medianRoi": 0.2658,
+   "hitRate": 0.5472,
+   "avgEntry": 0.5481,
+   "avgRoi": 0.034,
+   "medianRoi": 0.2619,
    "ci95": [
-    -0.0807,
-    0.1537
+    -0.083,
+    0.1511
    ],
    "verdict": "no concluyente",
    "suppressed": false,
    "halves": [
-    0.088,
-    -0.0147
+    0.0978,
+    -0.0297
    ]
   },
   "entrada:2+": {
@@ -3246,41 +3246,41 @@
    ]
   },
   "entrada:historial+": {
-   "n": 335,
-   "events": 87,
-   "wins": 184,
-   "hitRate": 0.5493,
-   "avgEntry": 0.5422,
-   "avgRoi": 0.0644,
+   "n": 337,
+   "events": 89,
+   "wins": 185,
+   "hitRate": 0.549,
+   "avgEntry": 0.5421,
+   "avgRoi": 0.0646,
    "medianRoi": 0.2739,
    "ci95": [
-    -0.1321,
-    0.2609
+    -0.1309,
+    0.2601
    ],
    "verdict": "no concluyente",
    "suppressed": false,
    "halves": [
-    0.0207,
-    0.1078
+    0.0147,
+    0.1143
    ]
   },
   "entrada:previa": {
-   "n": 262,
-   "events": 184,
-   "wins": 144,
-   "hitRate": 0.5496,
-   "avgEntry": 0.5204,
-   "avgRoi": 0.0882,
+   "n": 264,
+   "events": 186,
+   "wins": 145,
+   "hitRate": 0.5492,
+   "avgEntry": 0.5205,
+   "avgRoi": 0.0883,
    "medianRoi": 0.3699,
    "ci95": [
-    -0.0392,
-    0.2156
+    -0.0386,
+    0.2152
    ],
    "verdict": "no concluyente",
    "suppressed": false,
    "halves": [
-    0.0695,
-    0.1069
+    0.0614,
+    0.1152
    ]
   },
   "entrada:directo": {
@@ -3373,9 +3373,9 @@
   {
    "wallet": "0x7ad71d79a3bb90d0a87a06500fa0fe11663842aa",
    "name": "theowalcott",
-   "n": 27,
-   "wins": 15,
-   "roi": 0.0857
+   "n": 29,
+   "wins": 16,
+   "roi": 0.0867
   },
   {
    "wallet": "0x1e52bbdf389526f57abc62641d518868f4c5eb43",
