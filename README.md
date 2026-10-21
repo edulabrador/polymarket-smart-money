@@ -479,14 +479,22 @@ Polymarket.
 
 **A · Cuotas de casas.** Cada 8 h (configurable) descarga de
 [The Odds API](https://the-odds-api.com) las cuotas 1X2 de Pinnacle y Betfair para los
-deportes de `ODDS_SPORTS`, les quita el margen y las compara con los mercados deportivos
-de corto plazo de Polymarket ("Will X win on FECHA?" y "X vs. Y"; hándicaps y totales no).
+deportes de `ODDS_SPORTS` y les quita el margen. En la misma pasada pide a Polymarket
+(gamma, por liga) **todos** sus partidos de esas competiciones que empiezan en los
+próximos 3 días, con sus mercados de ganador y empate. Ya no depende de que algún top
+trader tenga posición en ese partido, que era por lo que casi nunca se emparejaba nada.
 Si Polymarket infravalora un lado en `ODDS_MIN_EDGE` (3 puntos) o más tras coste, se
-registra en sombra. Para activarla: crea una cuenta en The Odds API (tiene plan gratuito
-con un límite mensual de peticiones) y añade la clave como secret `ODDS_API_KEY` en
-*Settings → Secrets and variables → Actions*. La clave nunca se escribe en los JSON
-públicos. Los nombres de equipo se emparejan de forma conservadora (todos los tokens del
-nombre corto deben estar en el largo): prefiere no comparar a comparar mal.
+registra en sombra (una vez por mercado). Solo cuenta antes del partido: en directo, unas
+cuotas de hace horas no sirven. Para activarla: crea una cuenta en The Odds API (tiene
+plan gratuito con un límite mensual de peticiones) y añade la clave como secret
+`ODDS_API_KEY` en *Settings → Secrets and variables → Actions*. La clave nunca se escribe
+en los JSON públicos.
+
+El partido se empareja por **hora de inicio** (±2 h) y al menos un equipo que case sin
+dudas (todos los tokens del nombre corto deben estar en el largo). La fecha del título de
+Polymarket no se usa: en partidos aplazados conserva la fecha original. A esa hora y en
+esa liga, un equipo seguro ya identifica el partido, así que el otro puede escribirse
+distinto ("Bayern München" / "Bayern Munich"). Prefiere no comparar a comparar mal.
 
 ---
 
