@@ -72,7 +72,10 @@ def test_full_lifecycle_on_real_state():
     import os
     os.environ["TELEGRAM_CHAT_ID"] = "1"
     originals = (scanner.get_json, scanner.SIGNALS_PATH, scanner.send_telegram,
-                 scanner.time.sleep)
+                 scanner.time.sleep, scanner.LIVE_ALERTS, scanner.WEEKLY_SUMMARY)
+    # este test recorre el envio en vivo; el modo por defecto (en silencio +
+    # resumen semanal) tiene su propio test abajo
+    scanner.LIVE_ALERTS, scanner.WEEKLY_SUMMARY = True, False
     try:
         api, sent = FakeApi(), []
         # escaneo 1: 5 traders en 0xA:Yes (fresca, 0.5 vs entrada 0.45) y 4 en
@@ -92,7 +95,9 @@ def test_full_lifecycle_on_real_state():
             legacy = json.loads((tmp / "history_legacy.json").read_text(encoding="utf-8"))
             assert len(legacy) == n_legacy and all(h.get("legacy") for h in legacy)
         assert not any(h.get("legacy") for h in d["history"])
-        assert d["sourceStats"]["coincidencia"]["n"] == 0
+        # produccion ya tiene alertas resueltas: se comprueban los INCREMENTOS
+        base_st, base_paper = d["sourceStats"], d["paper"]
+        base = lambda k, f="n": (base_st.get(k) or {}).get(f) or 0
         a = d["tracked"]["0xA:0"]
         assert a["alerted"] and a["entryPrice"] == 0.47 and a["entrySource"] == "libro"
         assert d["tracked"]["0xA:0"]["detectPrice"] == 0.5
@@ -149,19 +154,56 @@ def test_full_lifecycle_on_real_state():
         # el ROI de alertas incluye las de sombra (0xE, especialistas, gana);
         # por nivel: amplio pierde la de 0xA, especialistas gana la de 0xE
         st = d["sourceStats"]
-        assert st["coincidencia"]["n"] == 2
-        assert st["coincidencia:amplio"]["n"] == 1 and st["coincidencia:amplio"]["avgRoi"] == -1.0
-        assert st["coincidencia:previa"]["n"] == 1                 # 0xA, antes del partido
-        assert st["coincidencia:especialistas"]["n"] == 1
-        assert st["coincidencia:especialistas"]["wins"] == 1
-        assert d["paper"]["bets"] == 1 and d["paper"]["pnl"] == -100.0  # solo la enviada
+        assert st["coincidencia"]["n"] == base("coincidencia") + 2
+        assert st["coincidencia:amplio"]["n"] == base("coincidencia:amplio") + 1
+        assert st["coincidencia:amplio"]["wins"] == base("coincidencia:amplio", "wins")
+        assert st["coincidencia:previa"]["n"] == base("coincidencia:previa") + 1   # 0xA
+        assert st["coincidencia:especialistas"]["n"] == base("coincidencia:especialistas") + 1
+        assert st["coincidencia:especialistas"]["wins"] == base("coincidencia:especialistas", "wins") + 1
+        # cartera simulada: solo la enviada (0xA, pierde $100)
+        assert d["paper"]["bets"] == (base_paper.get("bets") or 0) + 1
+        assert d["paper"]["pnl"] == round((base_paper.get("pnl") or 0) - 100.0, 2)
         assert len(sent) == 1 and "perdio" in sent[0] and "ROI -100%" in sent[0]
         ent = json.loads((tmp / "entries.json").read_text(encoding="utf-8"))
         assert ent["pending"] == [] and ent["resolved"][0]["won"]
         assert d["sourceStats"]["entrada"]["n"] == 1
     finally:
         (scanner.get_json, scanner.SIGNALS_PATH, scanner.send_telegram,
-         scanner.time.sleep) = originals
+         scanner.time.sleep, scanner.LIVE_ALERTS, scanner.WEEKLY_SUMMARY) = originals
+        del os.environ["TELEGRAM_CHAT_ID"]
+        shutil.rmtree(tmp)
+
+
+def test_silent_alerts_and_weekly_summary():
+    """Por defecto: las coincidencias se alertan y miden igual, pero no se
+    envian; por Telegram solo sale el resumen semanal, una vez por semana."""
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    path = tmp / "signals.json"
+    shutil.copy(ROOT / "docs" / "signals.json", path)
+    import os
+    os.environ["TELEGRAM_CHAT_ID"] = "1"
+    originals = (scanner.get_json, scanner.SIGNALS_PATH, scanner.send_telegram,
+                 scanner.time.sleep, scanner.LIVE_ALERTS, scanner.WEEKLY_SUMMARY)
+    scanner.LIVE_ALERTS, scanner.WEEKLY_SUMMARY = False, True
+    try:
+        api, sent = FakeApi(), []
+        for w in WALLETS[:5]:
+            api.positions[w] = [position("0xA", 0, 2000, 0.5)]
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        doc.pop("lastWeeklyAt", None)          # nunca se ha enviado: toca ya
+        path.write_text(json.dumps(doc), encoding="utf-8")
+        d = run_scan(api, path, sent)
+        a = d["tracked"]["0xA:0"]
+        assert a["alerted"] and a["sent"] is True and "delivered" not in a  # medida, no enviada
+        assert len(sent) == 1 and sent[0].startswith("\U0001F4C5 Resumen semanal")
+        assert "Compras nuevas" in sent[0] and "Sesgos de precio" in sent[0]
+        assert "Cuotas de casas" in sent[0] and d["lastWeeklyAt"] == d["updatedAt"]
+        sent.clear()
+        d = run_scan(api, path, sent)          # mismo dia: no se repite
+        assert sent == [] and d["params"]["liveAlerts"] is False
+    finally:
+        (scanner.get_json, scanner.SIGNALS_PATH, scanner.send_telegram,
+         scanner.time.sleep, scanner.LIVE_ALERTS, scanner.WEEKLY_SUMMARY) = originals
         del os.environ["TELEGRAM_CHAT_ID"]
         shutil.rmtree(tmp)
 

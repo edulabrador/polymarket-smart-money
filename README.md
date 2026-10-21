@@ -520,7 +520,17 @@ histórico de whales resueltas con ROI de seguidor.
 
 ## 📱 Notificaciones por Telegram
 
-**Telegram solo avisa de coincidencias.** Recibirás:
+**Por defecto Telegram solo manda un resumen semanal** (lunes, primer escaneo desde las
+08:00 UTC). Trae una línea por grupo de cada pestaña (compras nuevas, sesgos de precio,
+cuotas, coincidencias y whales) con resueltas totales y de la semana, ROI medio, IC95,
+las dos mitades y el veredicto. Una estrategia solo aparece como **candidata** si su IC95
+entero está por encima de 0 **y** gana en las dos mitades.
+
+Las **alertas de coincidencias en vivo están en silencio** (`LIVE_ALERTS` sin definir):
+la coincidencia no ha demostrado ventaja (replay −3 %, −12 % fuera de muestra) y un aviso
+en el móvil invita a apostar con él. Se siguen detectando, alertando y midiendo igual
+(`sent` marca las que se habrían enviado y la cartera simulada las sigue contando); solo
+no salen por Telegram. Con `LIVE_ALERTS=1` vuelven a enviarse:
 
 - 🚨 Alertas nuevas (frescas y con precio < 0,90) de los niveles de `ALERT_TIERS`. Por
   defecto **solo consenso amplio**: el backtest dio ROI negativo a los especialistas, que
@@ -567,6 +577,9 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
 | `ENTRY_COST` | `0.01` | Coste de entrada (spread + deslizamiento) cuando no hay libro |
 | `PAPER_STAKE` | `100` | Apuesta de la cartera simulada y tamaño con que se lee el libro |
 | `ALERT_TIERS` | `amplio` | Niveles que se envían por Telegram; el resto se alerta en sombra |
+| `LIVE_ALERTS` | sin definir (apagado) | `1` = enviar las alertas de coincidencias en vivo |
+| `WEEKLY_SUMMARY` | `1` | `0` = no enviar el resumen semanal |
+| `WEEKLY_DOW` / `WEEKLY_HOUR` | `0` / `8` | Día (0 = lunes) y hora UTC del resumen semanal |
 | `MIN_EDGE` | sin definir | Si se define, solo alerta señales con `edgeEst ≥ MIN_EDGE` |
 | `SPECIALIST_MIN_EDGE` | `0.02` | Ventaja mínima para cualificar como especialistas por ventaja |
 | `ENTRY_MIN_USD` | `1000` | Dinero añadido mínimo para registrar una compra nueva |

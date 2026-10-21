@@ -719,6 +719,34 @@ def test_migrate_marks_old_history_legacy():
     assert migrate(out, "otra") is out          # idempotente
 
 
+def test_weekly_due_once_per_week_after_monday_slot():
+    from scanner import weekly_due
+    # 2026-10-19 es lunes; cita a las 08:00 UTC
+    assert weekly_due(None, "2026-10-14T10:00:00+00:00")
+    assert not weekly_due("2026-10-19T07:00:00+00:00", "2026-10-19T07:50:00+00:00")
+    assert weekly_due("2026-10-19T07:00:00+00:00", "2026-10-19T08:05:00+00:00")
+    assert not weekly_due("2026-10-19T08:05:00+00:00", "2026-10-25T23:00:00+00:00")
+    # sin escaneo el lunes: sale el martes, y no otra vez hasta el lunes siguiente
+    assert weekly_due("2026-10-12T08:00:00+00:00", "2026-10-20T03:00:00+00:00")
+    assert not weekly_due("2026-10-20T03:00:00+00:00", "2026-10-26T07:59:00+00:00")
+
+
+def test_format_weekly_flags_only_robust_candidates():
+    from scanner import format_weekly
+    base = {"n": 300, "events": 200, "avgRoi": 0.08, "ci95": [0.02, 0.14]}
+    stats = {"entrada": {**base, "verdict": "rentable", "halves": [0.1, 0.06]},
+             "sesgo": {**base, "verdict": "rentable", "halves": [0.2, -0.04]},
+             "sesgo:0.30-0.70": {**base, "verdict": "no concluyente", "ci95": [-0.1, 0.2]},
+             "whale": {"n": 0}}
+    txt = format_weekly(stats, {"entrada": 12}, {"compras": 3}, "sin clave",
+                        "2026-10-19T08:10:00+00:00")
+    assert "12/10 a 19/10" in txt and "+12 esta semana" in txt
+    assert "Tramo 0.30-0.70" in txt and "Compras whale\n• Todas: sin resueltas" in txt
+    assert "Estado: sin clave" in txt and "3 compras" in txt
+    # sesgo tiene IC > 0 pero una mitad negativa: no es candidata
+    assert "positivas): entrada\n" in txt
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_"):
