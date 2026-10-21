@@ -1,7 +1,9 @@
 """Checks del banco de pruebas de estrategias (sin red).
 `python tests/test_strategies.py` o `pytest`."""
+import json
 import pathlib
 import sys
+from datetime import datetime
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
@@ -63,39 +65,95 @@ def test_fair_probs_removes_margin_and_prefers_order():
     assert st.fair_probs(ev2) == (None, None)            # casa no admitida
 
 
-def test_match_market_formats():
-    ev = evento("Arsenal", "Chelsea", {"Arsenal": 2.0, "Chelsea": 4.0, "Draw": 4.0})
-    gana = pos("0xa", 0.4, title="Will Arsenal FC win on 2026-10-15?", outcome="Yes")
-    fair, book, _ = st.match_market(gana, [ev])
-    assert round(fair, 4) == 0.5
-    no = pos("0xa", 0.6, title="Will Arsenal FC win on 2026-10-15?", outcome="No", idx=1)
-    assert round(st.match_market(no, [ev])[0], 4) == 0.5   # No = 1 - P(gana)
-    otro_dia = pos("0xa", 0.4, title="Will Arsenal FC win on 2026-11-30?")
-    assert st.match_market(otro_dia, [ev]) is None
-    nba = evento("Boston Celtics", "Miami Heat", {"Boston Celtics": 1.5, "Miami Heat": 3.0})
-    vs = pos("0xn", 0.55, title="Celtics vs. Heat", outcome="Celtics")
-    assert round(st.match_market(vs, [nba])[0], 4) == round((1 / 1.5) / (1 / 1.5 + 1 / 3), 4)
-    hcp = pos("0xh", 0.5, title="Spread: Celtics (-3.5)", outcome="Celtics")
-    assert st.match_market(hcp, [nba]) is None             # handicap: no es 1X2
+def gamma_event(title, start="2026-10-15 19:00:00+00", markets=None, slug="ev-ars-che"):
+    return {"title": title, "slug": slug, "endDate": "2026-10-15T19:00:00Z", "markets": markets}
 
 
-def test_odds_bets_picks_undervalued_side_once():
+def mk(cond, question, prices, team="", outcomes=("Yes", "No"), kind="moneyline",
+       start="2026-10-15 19:00:00+00"):
+    # gamma manda outcomes y precios como TEXTO JSON
+    return {"conditionId": cond, "question": question, "groupItemTitle": team,
+            "outcomes": json.dumps(list(outcomes)), "outcomePrices": json.dumps([str(p) for p in prices]),
+            "sportsMarketType": kind, "gameStartTime": start, "endDate": "2026-10-15T19:00:00Z"}
+
+
+def gamma_api(eventos):
+    def fetch(url):
+        if url.endswith("/sports"):
+            return [{"sport": "epl", "series": "10188"}, {"sport": "nfl", "series": "12185"}]
+        if "series_id=10188" in url:
+            return eventos
+        return []
+    return fetch
+
+
+ARS_CHE = gamma_event("Arsenal FC vs. Chelsea FC", markets=[
+    # la fecha del titulo es la ORIGINAL (partido aplazado): manda gameStartTime
+    mk("0xa", "Will Arsenal FC win on 2026-09-16?", [0.40, 0.60], team="Arsenal FC"),
+    mk("0xd", "Will Arsenal FC vs. Chelsea FC end in a draw?", [0.25, 0.75],
+       team="Draw (Arsenal FC vs. Chelsea FC)"),
+    mk("0xc", "Will Chelsea FC win on 2026-09-16?", [0.30, 0.70], team="Chelsea FC"),
+    mk("0xs", "Spread: Arsenal FC (-1.5)", [0.5, 0.5], kind="spreads")])
+
+
+def test_poly_matches_reads_league_markets_from_gamma():
+    otros = [gamma_event("Arsenal FC vs. Chelsea FC - Total Corners", markets=[
+                 mk("0xk", "Corners?", [0.5, 0.5], kind="totals")]),
+             gamma_event("Leeds vs. Hull", markets=[   # ya empezado: fuera
+                 mk("0xl", "Will Leeds win?", [0.5, 0.5], team="Leeds",
+                    start="2026-10-14 09:00:00+00")])]
+    partidos, err = st.poly_matches(gamma_api([ARS_CHE] + otros), NOW,
+                                    sports=["soccer_epl", "soccer_spain_la_liga"])
+    assert err == [] and len(partidos) == 1
+    p = partidos[0]
+    assert p["teams"] == ["Arsenal FC", "Chelsea FC"] and p["slug"] == "ev-ars-che"
+    assert [m["conditionId"] for m in p["markets"]] == ["0xa", "0xd", "0xc"]   # sin hándicap
+    assert p["markets"][0]["prices"] == [0.40, 0.60] and p["start"].hour == 19
+    # un fallo de gamma se informa, no rompe
+    def falla(url):
+        raise RuntimeError("caido")
+    assert st.poly_matches(falla, NOW)[0] == [] and st.poly_matches(falla, NOW)[1]
+
+
+def test_odds_bets_matches_by_kickoff_and_prices_all_three_outcomes():
     ev = evento("Arsenal", "Chelsea", {"Arsenal": 2.0, "Chelsea": 4.0, "Draw": 4.0})
-    # Polymarket da 0.40 a que gana Arsenal; las casas, 0.50 -> ventaja 0.09 tras coste
-    u = {"0xa": pos("0xa", 0.40, title="Will Arsenal FC win on 2026-10-15?")}
+    partidos, _ = st.poly_matches(gamma_api([ARS_CHE]), NOW, sports=["soccer_epl"])
     seen = {}
-    nuevas, disc, diag = st.odds_bets(u, [ev], seen, NOW, entry_cost=0.01, min_edge=0.03)
-    assert diag == {"candidatos": 1, "emparejados": 1}
-    assert len(nuevas) == 1 and nuevas[0]["outcomeIndex"] == 0
-    assert nuevas[0]["edge"] == 0.09 and nuevas[0]["fair"] == 0.5 and nuevas[0]["book"] == "pinnacle"
-    assert nuevas[0]["tag"] == "ventaja 5%+" and nuevas[0]["source"] == "cuotas"
-    # segunda pasada: sigue como discrepancia en la web, pero no se re-apuesta
-    nuevas2, disc2, _ = st.odds_bets(u, [ev], seen, NOW, entry_cost=0.01, min_edge=0.03)
-    assert nuevas2 == [] and len(disc2) == 1
-    # Polymarket sobrevalora a Arsenal (0.60): la apuesta es el "No"
-    u2 = {"0xb": pos("0xb", 0.60, title="Will Arsenal FC win on 2026-10-15?")}
-    n3, _, _ = st.odds_bets(u2, [ev], {}, NOW, entry_cost=0.01, min_edge=0.03)
-    assert n3[0]["outcomeIndex"] == 1 and n3[0]["outcome"] == "No"
+    nuevas, disc, diag = st.odds_bets(partidos, [ev], seen, NOW, entry_cost=0.01, min_edge=0.03)
+    assert diag == {"candidatos": 3, "emparejados": 3, "partidos": 1, "partidosEmparejados": 1}
+    by = {b["conditionId"]: b for b in nuevas}
+    # Arsenal: casas 0.50, Polymarket 0.40 -> compra "Yes" con ventaja 0.09
+    a = by["0xa"]
+    assert a["outcomeIndex"] == 0 and a["edge"] == 0.09 and a["fair"] == 0.5
+    assert a["book"] == "pinnacle" and a["tag"] == "ventaja 5%+" and a["source"] == "cuotas"
+    assert a["eventSlug"] == "ev-ars-che" and a["league"] == "soccer_epl"
+    # empate: casas 0.25 = Polymarket 0.25 -> sin ventaja
+    assert "0xd" not in by
+    # Chelsea: casas 0.25, Polymarket 0.30 -> el "No" (0.70) vale 0.75: ventaja 0.04
+    c = by["0xc"]
+    assert c["outcomeIndex"] == 1 and c["outcome"] == "No" and c["edge"] == 0.04
+    # segunda pasada: sigue en la web, no se re-apuesta
+    n2, d2, _ = st.odds_bets(partidos, [ev], seen, NOW, entry_cost=0.01, min_edge=0.03)
+    assert n2 == [] and len(d2) == 2
+
+
+def test_match_event_needs_same_kickoff_and_one_sure_team():
+    p = {"teams": ["FC Bayern München", "Borussia Dortmund"],
+         "start": datetime.fromisoformat("2026-10-15T19:00:00+00:00")}
+    ev = evento("Bayern Munich", "Borussia Dortmund", {"Bayern Munich": 1.5, "Borussia Dortmund": 5.0,
+                                                       "Draw": 5.0})
+    r = st.match_event(p, [ev])
+    assert r and r[1] == {"FC Bayern München": "Bayern Munich",
+                          "Borussia Dortmund": "Borussia Dortmund"}
+    otro_dia = dict(ev, commence_time="2026-10-18T19:00:00Z")
+    assert st.match_event(p, [otro_dia]) is None
+    nfl = {"teams": ["Seahawks", "Broncos"], "start": p["start"]}
+    ev2 = evento("Denver Broncos", "Seattle Seahawks", {"Denver Broncos": 2.0, "Seattle Seahawks": 2.0})
+    assert st.match_event(nfl, [ev2])[1] == {"Seahawks": "Seattle Seahawks", "Broncos": "Denver Broncos"}
+    # NFL: el resultado 0 del mercado es un equipo, no "Yes"
+    m = {"question": "Seahawks vs. Broncos", "outcomes": ["Seahawks", "Broncos"], "team": ""}
+    assert st.market_fair(m, nfl, st.match_event(nfl, [ev2])[1], {"Seattle Seahawks": 0.6,
+                                                                  "Denver Broncos": 0.4}) == 0.6
 
 
 def test_run_without_key_and_key_never_leaks():
@@ -111,6 +169,7 @@ def test_run_without_key_and_key_never_leaks():
         state = {}
         st.run({}, state, NOW, 0.01, fetch=falla)
         assert state["odds"]["errors"] and all("SECRETO" not in e for e in state["odds"]["errors"])
+        assert any("gamma" in e for e in state["odds"]["errors"])   # Polymarket tambien
         # no toca hasta pasadas ODDS_EVERY_MIN
         assert not st.odds_due(state["odds"], NOW)
     finally:
