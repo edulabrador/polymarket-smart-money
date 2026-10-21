@@ -89,6 +89,20 @@ MIN_EDGE = float(os.environ["MIN_EDGE"]) if os.getenv("MIN_EDGE") else None
 # precio que ya implicaba 57%). Si el historico en vivo les da la razon, se
 # activan con ALERT_TIERS=amplio,especialistas.
 ALERT_TIERS = {t.strip() for t in os.getenv("ALERT_TIERS", "amplio").split(",") if t.strip()}
+# envio en vivo de las alertas de coincidencias (y de su resolucion). Apagado
+# por defecto: la coincidencia no ha demostrado ventaja (replay -3%, -12% fuera
+# de muestra) y un aviso en el movil invita a apostar con el. Apagado, todo se
+# sigue midiendo igual: `sent` marca las que SE HABRIAN enviado y la cartera
+# simulada sigue siendo "si hubiera apostado en cada aviso". LIVE_ALERTS=1 las
+# vuelve a enviar.
+LIVE_ALERTS = os.getenv("LIVE_ALERTS", "") not in ("", "0")
+# resumen semanal por Telegram con el estado de las tres pestanas: se envia en
+# el primer escaneo a partir de WEEKLY_DOW (0 = lunes) a las WEEKLY_HOUR UTC.
+# WEEKLY_SUMMARY=0 lo desactiva.
+WEEKLY_SUMMARY = os.getenv("WEEKLY_SUMMARY", "1") not in ("", "0")
+WEEKLY_DOW = int(os.getenv("WEEKLY_DOW", "0"))
+WEEKLY_HOUR = int(os.getenv("WEEKLY_HOUR", "8"))
+WEB_URL = "https://edulabrador.github.io/polymarket-smart-money/"
 # un trader "entro hace poco" si su ultima compra en ese mercado es de las
 # ultimas RECENT_ENTRY_HOURS horas (vs. posiciones viejas que solo siguen ahi)
 RECENT_ENTRY_HOURS = 24
@@ -1188,6 +1202,68 @@ def format_sample_reached(src, st):
             f"→ {veredicto}")
 
 
+def weekly_due(last, now, dow=WEEKLY_DOW, hour=WEEKLY_HOUR):
+    """True si desde el ultimo resumen (`last`, ISO o None) ya paso la cita
+    semanal mas reciente (dia `dow` a las `hour` UTC). Si un lunes no hubo
+    escaneo, el resumen sale en el siguiente; nunca dos por semana."""
+    t = datetime.fromisoformat(now)
+    cita = (t - timedelta(days=(t.weekday() - dow) % 7)).replace(
+        hour=hour, minute=0, second=0, microsecond=0)
+    if cita > t:
+        cita -= timedelta(days=7)
+    return last is None or datetime.fromisoformat(last) < cita
+
+
+def _linea(stats, key, nombre, semana):
+    st = stats.get(key) or {}
+    if not st.get("n"):
+        return f"{nombre}: sin resueltas todavia"
+    ci = st.get("ci95")
+    ic = f" (IC95 {_pct(ci[0])} a {_pct(ci[1])})" if ci else ""
+    mitades = st.get("halves")
+    mit = f" | mitades {_pct(mitades[0])} / {_pct(mitades[1])}" if mitades else ""
+    nuevas = f", +{semana.get(key, 0)} esta semana"
+    return (f"{nombre}: {st['n']} resueltas{nuevas}, ROI {_pct(st['avgRoi'])}{ic}"
+            f"{mit} → {st['verdict']}")
+
+
+def format_weekly(stats, semana, pendientes, odds_status, now):
+    """Resumen semanal: una linea por grupo con n, ROI medio, IC95, mitades y
+    veredicto. Destaca solo lo que pasa el listón completo: IC95 entero por
+    encima de 0 Y las dos mitades positivas (rentable en ambos periodos)."""
+    desde = (datetime.fromisoformat(now) - timedelta(days=7)).strftime("%d/%m")
+    hasta = now[8:10] + "/" + now[5:7]
+    L = [f"\U0001F4C5 Resumen semanal ({desde} a {hasta})",
+         "Medicion en papel, no consejo de apuesta: nada ha demostrado ventaja "
+         "hasta que lo diga aqui abajo."]
+    secciones = [
+        ("\n\U0001F9E0 Compras nuevas de top traders (C)", [
+            ("entrada", "Todas"), ("entrada:historial+", "Wallets con historial +"),
+            ("entrada:2+", "2+ traders en 24 h"), ("entrada:previa", "Antes del partido"),
+            ("entrada:directo", "En directo")]),
+        ("\n\U0001F4D0 Sesgos de precio (B)", [("sesgo", "Todos")] + [
+            (k, f"Tramo {k.split(':', 1)[1]}") for k in sorted(stats)
+            if k.startswith("sesgo:")]),
+        ("\n\U0001F4CA Cuotas de casas (A)", [("cuotas", "Todas")]),
+        ("\n\U0001F91D Coincidencias (alertas en silencio)", [
+            ("coincidencia", "Alertadas (normales + en sombra)")]),
+        ("\n\U0001F40B Compras whale", [("whale", "Todas")]),
+    ]
+    for titulo, filas in secciones:
+        L.append(titulo)
+        L += ["• " + _linea(stats, k, n, semana) for k, n in filas]
+        if titulo.endswith("(A)") and odds_status:
+            L.append(f"  Estado: {odds_status}")
+    candidatas = [k for k, st in stats.items()
+                  if st.get("verdict") == "rentable" and k != "investigacion"
+                  and (not st.get("halves") or min(st["halves"]) > 0)]
+    L.append("\n\u2B50 Candidatas (IC95 > 0 y las dos mitades positivas): "
+             + (", ".join(sorted(candidatas)) if candidatas else "ninguna todavia"))
+    L.append("Pendientes de resolver: " + ", ".join(f"{v} {k}" for k, v in pendientes.items()))
+    L.append(WEB_URL)
+    return "\n".join(L)[:4000]  # limite de Telegram: 4096
+
+
 def recipients():
     """Destinatarios de alertas, cada uno con sus umbrales. Formatos:
     - TELEGRAM_RECIPIENTS (JSON): [{"chatId": "...", "minUsers": 7,
@@ -1460,20 +1536,37 @@ def main():
                and st["n"] >= SOURCE_MIN_SAMPLE and k not in announced]
     announced |= set(reached)
 
-    # SOLO se notifican coincidencias por Telegram. Se envia ANTES de guardar
-    # para registrar si se entrego; lo que falla queda en cola y se reintenta.
+    # Telegram: alertas de coincidencias solo con LIVE_ALERTS, y el resumen
+    # semanal. Se envia ANTES de guardar para registrar si se entrego; lo que
+    # falla queda en cola y se reintenta.
     resueltas_alertas = [h for h in resolved if h.get("alerted") and h.get("roi") is not None
                          and h.get("sent")]
+    destinatarios = recipients()
+    last_weekly = doc.get("lastWeeklyAt")
+    semanal = None
+    if WEEKLY_SUMMARY and destinatarios and weekly_due(last_weekly, now):
+        hace7 = (datetime.fromisoformat(now) - timedelta(days=7)).isoformat()
+        reciente = lambda rows: [x for x in rows if (x.get("resolvedAt") or "") >= hace7]
+        semana = {k: st["n"] for k, st in source_stats(
+            reciente(history), entries=reciente(ent_resolved),
+            strategy_rows=reciente(strat_resolved)).items()}
+        pendientes = {"compras": len(ent_pending), "apuestas de sesgo/cuotas": len(strat_pending),
+                      "coincidencias": len(tracked), "whales": len(whales_pending)}
+        semanal = format_weekly(stats, semana, pendientes,
+                                strat.get("odds", {}).get("status", ""), now)
+        last_weekly = now
     mensajes = []
-    for r in recipients():
-        mias = for_recipient(alerts, r)
+    for r in destinatarios:
+        mias = for_recipient(alerts, r) if LIVE_ALERTS else []
         if mias:
             mensajes.append((r["chatId"], format_message(mias), [s["id"] for s in mias]))
-        if resueltas_alertas:
+        if resueltas_alertas and LIVE_ALERTS:
             mensajes.append((r["chatId"], format_resolved(resueltas_alertas), []))
         for k in reached:
-            if k.startswith("coincidencia"):
+            if k.startswith("coincidencia") and LIVE_ALERTS:
                 mensajes.append((r["chatId"], format_sample_reached(k, stats[k]), []))
+        if semanal:
+            mensajes.append((r["chatId"], semanal, []))
     outbox, entregados = deliver(mensajes, doc.get("outbox", []), now)
     for sid, ok in entregados.items():
         if sid in tracked:
@@ -1494,7 +1587,8 @@ def main():
                    "whaleMinUsd": WHALE_MIN_USD, "maxAlertPrice": MAX_ALERT_PRICE,
                    "entryCost": ENTRY_COST, "paperStake": PAPER_STAKE,
                    "minEdge": MIN_EDGE, "sourceMinSample": SOURCE_MIN_SAMPLE,
-                   "alertTiers": sorted(ALERT_TIERS), "entryMinUsd": ENTRY_MIN_USD},
+                   "alertTiers": sorted(ALERT_TIERS), "entryMinUsd": ENTRY_MIN_USD,
+                   "liveAlerts": LIVE_ALERTS, "weeklySummary": WEEKLY_SUMMARY},
         "migratedAt": doc.get("migratedAt"),
         "signals": signals,
         "tracked": tracked,
@@ -1506,6 +1600,7 @@ def main():
         "paper": paper,
         "announcedSamples": sorted(announced),
         "outbox": outbox,
+        "lastWeeklyAt": last_weekly,
         # traders por su historial PROPIO medido de compras nuevas (los 30 con mas)
         "entryWallets": sorted(
             ({"wallet": w, "name": positions_by_trader.get(w, {}).get("name", ""), **st}
@@ -1526,7 +1621,9 @@ def main():
     bots = len(positions_by_trader) - len(scannable)
     sombra = sum(1 for s in signals if s.get("alertedAt") == now) - len(alerts)
     print(f"{len(signals)} senales ({stale_count} stale), {len(nuevos)} nuevas, "
-          f"{len(alerts)} alertadas{f' (+{sombra} en sombra)' if sombra else ''} | "
+          f"{len(alerts)} alertadas{f' (+{sombra} en sombra)' if sombra else ''}"
+          f"{'' if LIVE_ALERTS else ' (Telegram en silencio)'}"
+          f"{' | resumen semanal enviado' if semanal else ''} | "
           f"{len(tracked)} en seguimiento | {len(new_whales)}/{detected} whales "
           f"con historial ganador | {bots} wallets excluidos por bot | "
           f"{len(resolved)} senales y {len(resolved_wh)} whales resueltas | "
