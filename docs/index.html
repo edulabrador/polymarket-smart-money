@@ -114,7 +114,7 @@
   .tabs button.active { color: var(--acento); border-bottom-color: var(--acento);
     font-weight: 600; }
   .tag-v { font-size: .7rem; font-weight: 700; border-radius: 999px; padding: .05rem .45rem;
-    margin-left: .3rem; background: var(--acento-suave); color: var(--acento); }
+    margin-left: .3rem; background: var(--acento-suave); color: var(--acento); white-space: nowrap; }
   .tag-v.ok { background: var(--ok); color: var(--card); }
   .tag-v.mal { background: var(--aviso-suave); color: var(--aviso); }
   .alert-badge { background: var(--ok); color: var(--card); border-radius: 999px;
@@ -203,6 +203,13 @@
       original del proyecto llevada a "entrar cuando ellos entran", en vez de copiar posiciones
       que llevan días abiertas. Coberturas (comprar ambos lados) excluidas.</p>
     <div id="compras-fuentes" class="tiles"></div>
+    <p class="nota" id="compras-concentracion"></p>
+    <h3>🧪 Hipótesis registradas</h3>
+    <p class="nota">Ideas sacadas de mirar los datos. Cada una se apuntó con fecha y se mide
+      <b>solo con compras posteriores</b>, que no se usaron para encontrarla. El IC se corrige por el
+      número de hipótesis (con 5 a la vez, al 99%): si se prueban muchas, alguna sale "rentable"
+      por puro azar. Solo cuenta como candidata si además gana en las dos mitades.</p>
+    <div class="tabla-scroll"><table class="datos-t" id="hipotesis-tabla"></table></div>
     <div class="tabla-scroll"><table class="datos-t" id="compras-wallets" hidden></table></div>
     <div id="compras-lista"></div>
     <details id="historial-legacy" hidden class="legacy">
@@ -357,7 +364,8 @@ const NOMBRE_FUENTE = {
   'coincidencia:previa': '⏳ antes del partido', 'coincidencia:directo': '🔴 en directo',
   'coincidencia:sin_hora': '📅 sin hora (largo plazo)',
   'entrada:previa': '⚡⏳ antes del partido', 'entrada:directo': '⚡🔴 en directo',
-  'entrada:sin_hora': '⚡📅 sin hora', 'entrada:historial+': '⚡ wallets con historial propio +'};
+  'entrada:sin_hora': '⚡📅 sin hora', 'entrada:historial+': '⚡ wallets con historial propio +',
+  'entrada:1porEvento': '⚡ una por evento', 'entrada:sinDominante': '⚡ sin el wallet dominante'};
 const DESC_FUENTE = {
   'investigacion': 'Todas las señales detectadas, alertadas o no, con entrada en la detección + coste. Solo para estudiar; no decide nada.',
   'entrada': 'Investigación: cada compra nueva (≥ $1.000) de un top trader, medida al precio del escaneo en que se vio + coste. Una por mercado y día. No se notifica.',
@@ -512,10 +520,30 @@ async function cargarExtra() {
 
 function renderCompras() {
   const st = datos?.sourceStats ?? {};
-  const grupos = ['entrada', 'entrada:historial+', 'entrada:2+', 'entrada:ventaja+',
-                  'entrada:previa', 'entrada:directo', 'entrada:sin_hora'];
+  const grupos = ['entrada', 'entrada:1porEvento', 'entrada:sinDominante', 'entrada:historial+',
+                  'entrada:2+', 'entrada:ventaja+', 'entrada:previa', 'entrada:directo', 'entrada:sin_hora'];
   el('compras-fuentes').innerHTML = `<div class="tabla-scroll" style="grid-column:1/-1"><table class="datos-t">${cabeceraStats}${
     grupos.map(k => filaStats(NOMBRE_FUENTE[k] || k, st[k])).join('')}</table></div>`;
+  // cada trader pesando lo mismo y cuanto pesa el mas activo
+  const bw = st['entrada']?.byWallet;
+  el('compras-concentracion').innerHTML = bw && bw.avgRoi != null
+    ? `Con cada wallet pesando lo mismo (${bw.wallets} wallets con ${bw.minBets}+ compras): ` +
+      `<b class="${bw.avgRoi >= 0 ? 'deriva-ok' : 'deriva-mal'}">ROI ${signo(bw.avgRoi)}</b>` +
+      (bw.ci95 ? ` (IC95 ${signo(bw.ci95[0])} a ${signo(bw.ci95[1])})` : '') +
+      (bw.topShare > 0.25 ? ` · ⚠️ un solo wallet hace el <b>${Math.round(bw.topShare * 100)}%</b> de las compras: ` +
+        'la media por compra mide sobre todo a ese trader' : '')
+    : '';
+  const hs = Object.entries(datos?.hypotheses ?? {});
+  el('hipotesis-tabla').innerHTML = hs.length ? `<tr><th>Hipótesis</th><th>Desde</th><th class="num">Resueltas</th>
+    <th class="num">ROI</th><th class="num">IC</th><th class="num">1ª / 2ª mitad</th><th>Veredicto</th></tr>` +
+    hs.map(([id, h]) => `<tr${h.retired ? ' style="opacity:.5"' : ''}>
+    <td title="${esc('Origen (dentro de muestra, no cuenta): ' + (h.origin || '—'))}"><b>${esc(id)}</b> ${esc(h.desc)}${h.retired ? ` <span class="tag">retirada: ${esc(h.retired)}</span>` : ''}</td>
+    <td>${new Date(h.since).toLocaleDateString('es-ES')}</td><td class="num">${h.n}</td>
+    <td class="num">${h.n ? signo(h.avgRoi) : '—'}</td>
+    <td class="num" style="color:var(--sutil)">${h.ci95 ? `${signo(h.ci95[0])} a ${signo(h.ci95[1])} (${Math.round(h.confidence * 100)}%)` : '—'}</td>
+    <td class="num" style="color:var(--sutil)">${h.halves ? `${signo(h.halves[0])} / ${signo(h.halves[1])}` : '—'}</td>
+    <td>${tagV(h.verdict)}</td></tr>`).join('')
+    : '<tr><td style="color:var(--sutil)">Aún sin hipótesis evaluadas (se calculan en el próximo escaneo).</td></tr>';
   const ws = datos?.entryWallets ?? [];
   const t = el('compras-wallets');
   t.hidden = !ws.length;

@@ -476,6 +476,40 @@ con lo que había antes de cada compra (`entrada:historial+`, a partir de 5 resu
 Eso es elegir traders fuera de la muestra, no por el beneficio del mes. La tabla de
 wallets de la pestaña muestra ese historial.
 
+Como la muestra depende de pocos traders (en octubre, un solo wallet hacía el 40% de las
+compras y un partido llegó a acumular 45), C se mide de tres formas más:
+
+- **Una por evento** (`entrada:1porEvento`): solo la primera compra de cada partido.
+- **Cada wallet pesando lo mismo** (`byWallet`): media de las medias por wallet, contando
+  solo wallets con 5 o más compras (con 1 o 2, su ROI es casi pura suerte). En octubre:
+  −9 %, con un IC de −20 % a +2 %.
+- **Sin el wallet dominante** (`entrada:sinDominante`): aparece cuando un wallet supera el
+  25 % de las compras. En octubre: −5 %, con mitades +3 % / −13 %.
+
+Para ampliar el universo, los wallets salen del ranking mensual **y** del semanal
+(`LEADERBOARD_PERIODS`). Las coincidencias se siguen midiendo solo con el mensual, para
+no cambiar su definición a mitad de la medición.
+
+### 🧪 Hipótesis con fecha
+
+Cortar los datos de muchas formas siempre da algún grupo "rentable" por azar (con un IC
+al 95 %, aproximadamente 1 de cada 20). Por eso las ideas sacadas de mirar los datos se
+apuntan en `hypotheses.py` **con fecha** y se evalúan **solo con apuestas posteriores**,
+con el IC corregido por el número de hipótesis activas (Bonferroni: con 5, al 99 %). Una
+hipótesis es candidata solo si además gana en las dos mitades. No se editan ni se borran:
+si una idea cambia, es una hipótesis nueva, y las que fallan se marcan como retiradas.
+
+| | Hipótesis (registradas el 24-10-2026) | Origen, dentro de muestra (no cuenta) |
+|---|---|---|
+| H1 | Compras más de 24 h antes del partido | n=19, +51 % (1 de ~25 cortes probados) |
+| H2 | Compras en deportes | n=455, +7 %, IC −4 % a +19 % |
+| H3 | Compras en directo con más de 1 h de partido | n=185 (51 eventos), +12 % |
+| H4 | Compras grandes (≥ $10.000) | sin datos: el tamaño no se guardaba |
+| H5 | Compras a precio 0,40-0,60 | n=451, +4 % |
+
+Las compras liquidadas guardan ahora también tamaño, precio visto, ranking y acierto del
+trader, para poder formular hipótesis nuevas con más información.
+
 **B · Sesgos de precio.** Uno de cada `BIAS_SAMPLE` (5) mercados de corto plazo (que
 terminan en 7 días o menos) que aparecen en las carteras vigiladas, elegido por un hash de
 su id (siempre los mismos), se registra **una vez** con su precio y se mide por
@@ -581,7 +615,8 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
 |---|---:|---|
 | `SCAN_EVERY_MIN` | `10` | Cadencia nominal (informativa); la real la marca el cron de `scan.yml` |
 | `BIAS_SAMPLE` | `5` | Estrategia B: registra 1 de cada N mercados (determinista por mercado) |
-| `TOP_N` | `50` | Cuántos traders del leaderboard se vigilan |
+| `TOP_N` | `50` | Cuántos traders de cada leaderboard se vigilan |
+| `LEADERBOARD_PERIODS` | `MONTH,WEEK` | Rankings de los que salen los wallets; el primero es el núcleo de las coincidencias |
 | `MIN_USERS` | `5` | Traders mínimos para una señal de consenso amplio |
 | `MIN_USERS_SPECIALIST` | `3` | Traders mínimos para una señal de especialistas |
 | `SPECIALIST_MIN_WINRATE` | `0.6` | Acierto mínimo probado de los especialistas |
@@ -657,6 +692,9 @@ pytest
 
 # un escaneo real sin tocar nada (desde España necesitas VPN)
 DRY_RUN=1 python scanner.py
+
+# rehacer estadísticas e hipótesis con los datos guardados (sin red ni Telegram)
+python scanner.py --recalcular
 ```
 
 Para ver la web en local: `python -m http.server -d docs` y abre `http://localhost:8000`.
@@ -668,7 +706,8 @@ Para ver la web en local: `python -m http.server -d docs` y abre `http://localho
 ```
 polymarket-smart-money/
 ├── scanner.py            # escaneo: APIs, señales, seguimiento, alertas, whales, Telegram
-├── metrics.py            # ROI, IC95, veredicto y cartera simulada (vivo y backtest)
+├── metrics.py            # ROI, IC95, veredicto, media por wallet y cartera simulada
+├── hypotheses.py         # registro de hipótesis con fecha (solo datos posteriores)
 ├── strategies.py         # estrategias B (sesgo de precio) y A (cuotas de casas)
 ├── backtest.py           # replay del historial de git con el oráculo
 ├── probe.py              # verificación de endpoints (genera NOTES.md y fixtures)

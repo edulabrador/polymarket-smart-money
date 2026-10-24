@@ -13,10 +13,17 @@ import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
+import hypotheses
 import metrics
 import strategies
 
 TOP_N = int(os.getenv("TOP_N", "50"))
+# rankings de los que salen los wallets vigilados. El PRIMERO es el nucleo
+# (las coincidencias se miden solo con el, para no cambiar su definicion a
+# mitad de la medicion); los demas amplian el universo de las compras nuevas,
+# que con 38 wallets activos dependia demasiado de unos pocos traders.
+LEADERBOARD_PERIODS = [p.strip().upper() for p in os.getenv(
+    "LEADERBOARD_PERIODS", "MONTH,WEEK").split(",") if p.strip()]
 MIN_USERS = int(os.getenv("MIN_USERS", "5"))
 # segundo umbral, mas bajo, para coincidencias de ESPECIALISTAS: bastan
 # MIN_USERS_SPECIALIST traders si su acierto 30d probado es alto. Encuentra la
@@ -122,7 +129,7 @@ DRY_RUN_PATH = os.getenv("DRY_RUN_PATH", "/tmp/signals.dry.json")
 SIGNALS_PATH = pathlib.Path(__file__).parent / "docs" / "signals.json"
 
 LEADERBOARD_URL = ("https://data-api.polymarket.com/v1/leaderboard"
-                   "?timePeriod=MONTH&orderBy=PNL&limit={n}")
+                   "?timePeriod={period}&orderBy=PNL&limit={n}")
 # sizeThreshold va en tokens, pero toda posicion con currentValue >= X USD
 # tiene al menos X tokens (precio <= 1), asi que sirve de prefiltro seguro.
 POSITIONS_URL = ("https://data-api.polymarket.com/positions"
@@ -580,7 +587,7 @@ def detect_entries(prev_sizes, positions_by_trader, tracks, now, pending,
                  "eventSlug": p.get("eventSlug", ""), "endDate": p.get("endDate", ""),
                  "cat": cat, "at": now, "price": cur,
                  "entryPrice": round(min(cur + ENTRY_COST, 0.999), 4),
-                 "usd": round(usd, 2), "wallets": [w],
+                 "usd": round(usd, 2), "wallets": [w], "rank": info.get("rank"),
                  "traderEdge": trader_edge(tr, cat), "traderWinRate": win_rate(tr) if tr else None,
                  # historial propio MEDIDO de este wallet hasta ahora (sin mirar el futuro)
                  "walletPrior": (wallet_stats or {}).get(w)}
@@ -639,7 +646,10 @@ def resolve_pending(pending, resolutions, now, source, expire_before=None,
                 "resolvedAt": now, "source": source or e.get("source"), "v": SCHEMA,
                 # datos propios de cada estrategia (nivel de precio, cuota de
                 # referencia, wallets, historial previo del wallet...)
-                **{k: e[k] for k in ("tag", "wallets", "walletPrior", "fair", "book", "edge")
+                **{k: e[k] for k in ("tag", "wallets", "walletPrior", "fair", "book", "edge",
+                                     # para analizar despues: tamano, precio visto
+                                     # al detectar, ranking y acierto del trader
+                                     "usd", "price", "rank", "traderWinRate")
                    if k in e}})
             continue
         end = (e.get("endDate") or "")[:10]
@@ -653,6 +663,7 @@ def resolve_pending(pending, resolutions, now, source, expire_before=None,
     return kept, out, caducadas
 
 
+DOMINANT_SHARE = 0.25  # cuota de compras a partir de la que un wallet "domina" C
 WALLET_PRIOR_MIN = 5  # compras resueltas minimas para fiarse del historial de un wallet
 
 
@@ -694,9 +705,19 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=(), strategy_row
             groups.setdefault(f'{r["source"]}:{r["tag"]}', []).append(r)
     # compras nuevas de top traders (investigacion): todas, de traders con
     # ventaja probada, y en las que entraron 2 o mas top traders en 24 h
-    ent = [e for e in entries if e.get("payout") is not None]
+    ent = sorted((e for e in entries if e.get("payout") is not None),
+                 key=lambda e: e.get("alertedAt") or "")
     if ent:
         groups["entrada"] = ent
+        # la primera compra de cada evento: 45 compras en un mismo partido
+        # pesaban 45 veces en la media aunque fueran casi la misma apuesta
+        groups["entrada:1porEvento"] = metrics.first_per(ent, key="eventSlug")
+        # si un solo trader pesa mas de un 25%, lo que queda sin el: la media de
+        # "todas" podria ser solo la de esa persona
+        dom = metrics.by_wallet(ent)
+        if (dom.get("topShare") or 0) > DOMINANT_SHARE:
+            groups["entrada:sinDominante"] = [e for e in ent
+                                              if dom["topWallet"] not in (e.get("wallets") or [])]
         groups["entrada:ventaja+"] = [e for e in ent if (e.get("traderEdge") or 0) > 0]
         groups["entrada:2+"] = [e for e in ent if e.get("numTraders", 1) >= 2]
         # de wallets cuyo historial PROPIO medido (antes de esa compra) era positivo
@@ -715,6 +736,9 @@ def source_stats(history, min_sample=SOURCE_MIN_SAMPLE, entries=(), strategy_row
         s["suppressed"] = not investigacion and s["n"] >= min_sample and s["avgRoi"] < 0
         if investigacion and s["n"]:
             s["halves"] = metrics.halves(rows)
+        if key == "entrada" and s["n"]:
+            # cada trader pesa lo mismo + cuanto pesa el mas activo
+            s["byWallet"] = metrics.by_wallet(rows)
         out[key] = s
     return out
 
@@ -1228,7 +1252,16 @@ def _linea(stats, key, nombre, semana):
             f"{mit} → {st['verdict']}")
 
 
-def format_weekly(stats, semana, pendientes, odds_status, now):
+def _linea_hipotesis(hid, h):
+    if not h["n"]:
+        return f"{hid} {h['desc']}: sin datos desde el {h['since'][8:10]}/{h['since'][5:7]}"
+    ci = h.get("ci95")
+    ic = f" (IC{round(h['confidence'] * 100)} {_pct(ci[0])} a {_pct(ci[1])})" if ci else ""
+    return (f"{hid} {h['desc']}: {h['n']} resueltas, ROI {_pct(h['avgRoi'])}{ic}"
+            f" → {h['verdict']}")
+
+
+def format_weekly(stats, semana, pendientes, odds_status, now, hipotesis=None):
     """Resumen semanal: una linea por grupo con n, ROI medio, IC95, mitades y
     veredicto. Destaca solo lo que pasa el listón completo: IC95 entero por
     encima de 0 Y las dos mitades positivas (rentable en ambos periodos)."""
@@ -1240,11 +1273,11 @@ def format_weekly(stats, semana, pendientes, odds_status, now):
     secciones = [
         ("\n\U0001F9E0 Compras nuevas de top traders (C)", [
             ("entrada", "Todas"), ("entrada:historial+", "Wallets con historial +"),
+            ("entrada:1porEvento", "Una por evento"),
+            ("entrada:sinDominante", "Sin el wallet dominante"),
             ("entrada:2+", "2+ traders en 24 h"), ("entrada:previa", "Antes del partido"),
             ("entrada:directo", "En directo")]),
-        ("\n\U0001F4D0 Sesgos de precio (B)", [("sesgo", "Todos")] + [
-            (k, f"Tramo {k.split(':', 1)[1]}") for k in sorted(stats)
-            if k.startswith("sesgo:")]),
+        ("\n\U0001F4D0 Sesgos de precio (B, muestra 1 de cada 5)", [("sesgo", "Todos")]),
         ("\n\U0001F4CA Cuotas de casas (A)", [("cuotas", "Todas")]),
         ("\n\U0001F91D Coincidencias (alertas en silencio)", [
             ("coincidencia", "Alertadas (normales + en sombra)")]),
@@ -1253,13 +1286,27 @@ def format_weekly(stats, semana, pendientes, odds_status, now):
     for titulo, filas in secciones:
         L.append(titulo)
         L += ["• " + _linea(stats, k, n, semana) for k, n in filas]
+        bw = (stats.get("entrada") or {}).get("byWallet") if "(C)" in titulo else None
+        if bw and bw.get("avgRoi") is not None:
+            ci = bw.get("ci95")
+            L.append(f"• Cada wallet pesando igual ({bw['wallets']} wallets con "
+                     f"{bw.get('minBets', 5)}+ compras): ROI "
+                     f"{_pct(bw['avgRoi'])}" + (f" (IC95 {_pct(ci[0])} a {_pct(ci[1])})" if ci else ""))
+            if (bw.get("topShare") or 0) > DOMINANT_SHARE:
+                L.append(f"  ⚠️ un solo wallet hace el {round(bw['topShare'] * 100)}% de las "
+                         "compras: la media de arriba mide sobre todo a ese trader")
         if titulo.endswith("(A)") and odds_status:
             L.append(f"  Estado: {odds_status}")
-    candidatas = [k for k, st in stats.items()
-                  if st.get("verdict") == "rentable" and k != "investigacion"
-                  and (not st.get("halves") or min(st["halves"]) > 0)]
-    L.append("\n\u2B50 Candidatas (IC95 > 0 y las dos mitades positivas): "
-             + (", ".join(sorted(candidatas)) if candidatas else "ninguna todavia"))
+    if hipotesis:
+        L.append("\n\U0001F9EA Hipótesis (solo datos posteriores a su registro; IC corregido "
+                 "por el número de hipótesis)")
+        L += ["• " + _linea_hipotesis(k, h) for k, h in hipotesis.items() if not h.get("retired")]
+    # candidata = hipotesis registrada que pasa con datos NUEVOS; los grupos
+    # de arriba se miran a posteriori y no bastan por si solos
+    candidatas = [k for k, h in (hipotesis or {}).items()
+                  if h.get("verdict") == "rentable" and not h.get("retired")]
+    L.append("\n\u2B50 Candidatas (hipótesis rentables con datos nuevos y en las dos mitades): "
+             + (", ".join(candidatas) if candidatas else "ninguna todavia"))
     L.append("Pendientes de resolver: " + ", ".join(f"{v} {k}" for k, v in pendientes.items()))
     L.append(WEB_URL)
     return "\n".join(L)[:4000]  # limite de Telegram: 4096
@@ -1341,38 +1388,54 @@ def main():
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     now_ts = int(time.time())
     today = now[:10]
-    try:
-        leaderboard = get_json(LEADERBOARD_URL.format(n=TOP_N))
-    except FetchError as exc:
-        print(f"AVISO: {exc}; se conservan los datos anteriores")
-        return
+    # wallets del nucleo (primer ranking) y de los rankings extra, sin repetir
+    leaderboard = []  # [(entrada, rank, es_nucleo)]
+    vistos = set()
+    for i, period in enumerate(LEADERBOARD_PERIODS):
+        try:
+            lista = get_json(LEADERBOARD_URL.format(period=period, n=TOP_N))
+        except FetchError as exc:
+            if i == 0:
+                print(f"AVISO: {exc}; se conservan los datos anteriores")
+                return
+            print(f"AVISO: ranking {period} no disponible ({exc}); sigo sin el")
+            continue
+        for pos, entry in enumerate(lista, 1):
+            if entry.get("proxyWallet") and entry["proxyWallet"] not in vistos:
+                vistos.add(entry["proxyWallet"])
+                leaderboard.append((entry, f"{period}#{pos}", i == 0))
     positions_by_trader = {}
-    failed_wallets = []
-    for entry in leaderboard:
+    failed_core, failed_extra = [], []
+    for entry, rank, core in leaderboard:
         wallet = entry["proxyWallet"]
         url = POSITIONS_URL.format(wallet=wallet, threshold=int(MIN_POSITION_USD))
         try:
             posiciones = get_json(url)
         except FetchError:
-            failed_wallets.append(wallet)
+            (failed_core if core else failed_extra).append(wallet)
             continue
         positions_by_trader[wallet] = {
             "name": entry.get("userName", ""),
-            "positions": posiciones,
+            "positions": posiciones, "rank": rank, "core": core,
         }
-        time.sleep(0.3)  # ~50 requests por escaneo: sin prisa, evita rate limits
+        time.sleep(0.3)  # ~80 requests por escaneo: sin prisa, evita rate limits
 
-    # Un snapshot parcial cambiaria el conjunto de senales por un fallo de red.
-    # Conservamos el JSON anterior y reintentamos en la siguiente vuelta.
-    if failed_wallets:
-        print(f"AVISO: fallaron {len(failed_wallets)}/{len(leaderboard)} wallets; "
+    # Un snapshot parcial del NUCLEO cambiaria el conjunto de senales por un
+    # fallo de red: se conserva el JSON anterior y se reintenta en la
+    # siguiente vuelta. Un wallet extra que falla solo se salta este escaneo.
+    if failed_core:
+        print(f"AVISO: fallaron {len(failed_core)} wallets del ranking principal; "
               "se conservan los datos anteriores")
         return
+    if failed_extra:
+        print(f"AVISO: fallaron {len(failed_extra)} wallets de rankings extra; se saltan")
 
     # los bots/market makers (cientos de posiciones) no aportan senal
     scannable = {w: info for w, info in positions_by_trader.items()
                  if len(info["positions"]) <= MAX_POSITIONS_PER_TRADER}
-    signals = detect_signals(scannable, min_users=MIN_USERS_SPECIALIST)  # candidatos (>=3)
+    # coincidencias: solo el nucleo (misma definicion que desde el principio)
+    signals = detect_signals({w: i for w, i in scannable.items() if i.get("core", True)},
+                             min_users=MIN_USERS_SPECIALIST)  # candidatos (>=3)
 
     doc = {}
     if SIGNALS_PATH.exists():
@@ -1520,6 +1583,8 @@ def main():
     last_whale_ts = max([last_whale_ts] + [t["timestamp"] for t in trades])
     history += resolved + resolved_wh
     stats = source_stats(history, entries=ent_resolved, strategy_rows=strat_resolved)
+    # hipotesis registradas con fecha: solo datos posteriores, IC corregido
+    hipotesis = hypotheses.evaluate(hypothesis_rows(history, ent_resolved, strat_resolved))
     # cartera simulada = lo que te llega por Telegram (alertas enviadas, no
     # las de sombra): "si hubiera apostado en cada aviso que recibi"
     paper = metrics.paper_ledger(
@@ -1554,7 +1619,7 @@ def main():
         pendientes = {"compras": len(ent_pending), "apuestas de sesgo/cuotas": len(strat_pending),
                       "coincidencias": len(tracked), "whales": len(whales_pending)}
         semanal = format_weekly(stats, semana, pendientes,
-                                strat.get("odds", {}).get("status", ""), now)
+                                strat.get("odds", {}).get("status", ""), now, hipotesis)
         last_weekly = now
     mensajes = []
     for r in destinatarios:
@@ -1578,7 +1643,8 @@ def main():
     out_path.write_text(json.dumps({
         "schema": SCHEMA,
         "updatedAt": now,
-        "params": {"topN": TOP_N, "minUsers": MIN_USERS,
+        "params": {"topN": TOP_N, "leaderboardPeriods": LEADERBOARD_PERIODS,
+                   "walletsWatched": len(positions_by_trader), "minUsers": MIN_USERS,
                    "minUsersSpecialist": MIN_USERS_SPECIALIST,
                    "specialistMinWinRate": SPECIALIST_MIN_WINRATE,
                    "specialistMinEdge": SPECIALIST_MIN_EDGE,
@@ -1598,6 +1664,7 @@ def main():
         "lastWhaleTs": last_whale_ts,
         "trackRecords": tracks,
         "sourceStats": stats,
+        "hypotheses": hipotesis,
         "paper": paper,
         "announcedSamples": sorted(announced),
         "outbox": outbox,
@@ -1613,7 +1680,10 @@ def main():
     strategies.save(strat_path, strat)
     strategies.save(entries_path, {
         "updatedAt": now,
-        "sizes": position_sizes(scannable),
+        # un wallet extra que fallo conserva su foto anterior: si no, el
+        # siguiente escaneo lo veria como "nuevo" y no detectaria sus compras
+        "sizes": {**{w: v for w, v in ent_doc.get("sizes", {}).items() if w in failed_extra},
+                  **position_sizes(scannable)},
         "pending": ent_pending,
         "resolved": ent_resolved,
     }, keys=None)
@@ -1635,6 +1705,8 @@ def main():
           f"estrategias: {len(nuevas_estrategia)} apuestas nuevas en sombra, "
           f"{len(strat_pending)} pendientes, {len(resolved_strat)} resueltas, "
           f"{cad_strat} caducadas | cuotas: {strat.get('odds', {}).get('status', '')}")
+    for k, h in hipotesis.items():
+        print(f"  hipotesis {k} ({h['desc']}): n={h['n']} desde {h['since']} -> {h['verdict']}")
     for k, st in sorted(stats.items()):
         if st["n"]:
             marca = " [SILENCIADA: pierde dinero]" if st["suppressed"] else ""
@@ -1646,5 +1718,37 @@ def main():
             print(f"  {tag}: {s['numTraders']} traders -> {s['title']} [{s['outcome']}] @ {s['curPrice']}")
 
 
+def hypothesis_rows(history, entries, strategy_rows):
+    """Apuestas resueltas de cada fuente, tal como las evaluan las hipotesis."""
+    return {
+        "entrada": entries,
+        "sesgo": [r for r in strategy_rows if r.get("source") == "sesgo"],
+        "cuotas": [r for r in strategy_rows if r.get("source") == "cuotas"],
+        "coincidencia": [h for h in history if h.get("source") == "coincidencia"
+                         and h.get("alerted") and not h.get("seeded")],
+        "whale": metrics.first_per([h for h in history if h.get("source") == "whale"]),
+    }
+
+
+def recompute(signals_path=None):
+    """Rehace estadisticas e hipotesis con los datos YA guardados, sin red ni
+    Telegram: para ver metricas nuevas con el escaner apagado
+    (`python scanner.py --recalcular`)."""
+    signals_path = signals_path or SIGNALS_PATH
+    doc = json.loads(signals_path.read_text(encoding="utf-8"))
+    ent = strategies.load(signals_path.parent / ENTRIES_PATH_NAME, keys=None).get("resolved", [])
+    strat = strategies.load(signals_path.parent / STRATEGIES_PATH_NAME).get("resolved", [])
+    history = doc.get("history", [])
+    doc["sourceStats"] = source_stats(history, entries=ent, strategy_rows=strat)
+    doc["hypotheses"] = hypotheses.evaluate(hypothesis_rows(history, ent, strat))
+    signals_path.write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    return doc
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    if "--recalcular" in sys.argv:
+        recompute()
+        print("estadisticas e hipotesis recalculadas con los datos guardados")
+    else:
+        main()
