@@ -731,21 +731,81 @@ def test_weekly_due_once_per_week_after_monday_slot():
     assert not weekly_due("2026-10-20T03:00:00+00:00", "2026-10-26T07:59:00+00:00")
 
 
-def test_format_weekly_flags_only_robust_candidates():
+def test_format_weekly_candidates_come_only_from_dated_hypotheses():
     from scanner import format_weekly
     base = {"n": 300, "events": 200, "avgRoi": 0.08, "ci95": [0.02, 0.14]}
-    stats = {"entrada": {**base, "verdict": "rentable", "halves": [0.1, 0.06]},
+    stats = {"entrada": {**base, "verdict": "rentable", "halves": [0.1, 0.06],
+                         "byWallet": {"wallets": 12, "avgRoi": -0.02, "ci95": [-0.1, 0.06],
+                                      "topWallet": "0xw", "topShare": 0.4}},
              "sesgo": {**base, "verdict": "rentable", "halves": [0.2, -0.04]},
-             "sesgo:0.30-0.70": {**base, "verdict": "no concluyente", "ci95": [-0.1, 0.2]},
              "whale": {"n": 0}}
+    hip = {"H1": {"desc": "Antes de 24 h", "since": "2026-10-24", "n": 40, "avgRoi": 0.2,
+                  "ci95": [0.05, 0.35], "confidence": 0.99, "verdict": "rentable"},
+           "H2": {"desc": "Deportes", "since": "2026-10-24", "n": 0, "verdict": "sin muestra"},
+           "H9": {"desc": "Retirada", "since": "2026-10-01", "n": 50, "avgRoi": 0.5,
+                  "ci95": [0.1, 0.9], "confidence": 0.99, "verdict": "rentable",
+                  "retired": "fallo"}}
     txt = format_weekly(stats, {"entrada": 12}, {"compras": 3}, "sin clave",
-                        "2026-10-19T08:10:00+00:00")
+                        "2026-10-19T08:10:00+00:00", hip)
     assert "12/10 a 19/10" in txt and "+12 esta semana" in txt
-    assert "Tramo 0.30-0.70" in txt and "Compras whale\n• Todas: sin resueltas" in txt
+    assert "Compras whale\n• Todas: sin resueltas" in txt
     assert "Estado: sin clave" in txt and "3 compras" in txt
-    # sesgo tiene IC > 0 pero una mitad negativa: no es candidata
-    assert "positivas): entrada\n" in txt
+    # media por wallet y aviso de concentracion
+    assert "Cada wallet pesando igual (12 wallets con 5+ compras): ROI -2%" in txt and "40% de las" in txt
+    assert "H1 Antes de 24 h: 40 resueltas, ROI +20% (IC99 +5% a +35%)" in txt
+    assert "H2 Deportes: sin datos desde el 24/10" in txt and "H9" not in txt
+    # un grupo a posteriori "rentable" (entrada) NO es candidata; la hipotesis si
+    assert "dos mitades): H1\n" in txt
+    assert len(txt) < 4000
 
+
+def test_hypotheses_use_only_data_after_registration_and_bonferroni():
+    import hypotheses
+    import metrics
+    rows = [{"alertedAt": f"2026-10-{d:02d}T10:00:00+00:00", "gameStart": f"2026-10-{d + 2:02d}T10:00:00+00:00",
+             "roi": 0.5 if i % 3 else -1.0, "won": bool(i % 3), "entryPrice": 0.6, "usd": 2000,
+             "eventSlug": f"ev{d}-{i}", "wallets": [f"0x{i % 4}"], "cat": "deportes"}
+            for d in (20, 26) for i in range(40)]
+    hip = [{"id": "HX", "since": "2026-10-24", "source": "entrada", "desc": "x",
+            "test": lambda r: hypotheses.hours_to_start(r) > 24},
+           {"id": "HY", "since": "2026-10-24", "source": "entrada", "desc": "y",
+            "test": lambda r: False, "retired": "no"}]
+    out = hypotheses.evaluate({"entrada": rows}, hip)
+    assert out["HX"]["n"] == 40                      # solo las del 26, no las del 20
+    assert out["HX"]["confidence"] == 0.95            # 1 activa (la retirada no cuenta)
+    assert out["HY"]["n"] == 0 and out["HY"]["retired"] == "no"
+    assert out["HX"]["byWallet"]["wallets"] == 4      # 10 compras por wallet
+    # con 5 hipotesis activas el IC es al 99% y por tanto mas ancho
+    ancho = lambda c: c[1] - c[0]
+    s95 = metrics.summarize([r for r in rows if r["alertedAt"] >= "2026-10-24"])
+    s99 = metrics.summarize([r for r in rows if r["alertedAt"] >= "2026-10-24"],
+                            z=metrics.bonferroni_z(5))
+    assert ancho(s99["ci95"]) > ancho(s95["ci95"]) * 1.3
+    assert hypotheses.hours_to_start({"alertedAt": "2026-10-24T10:00:00+00:00",
+                                      "gameStart": "2026-10-24T09:00:00+00:00"}) == -1.0
+    assert hypotheses.hours_to_start({"alertedAt": "x"}) is None
+    # las registradas de verdad: ids unicos, fecha y filtro que no revienta
+    ids = [h["id"] for h in hypotheses.HYPOTHESES]
+    assert len(ids) == len(set(ids))
+    for h in hypotheses.HYPOTHESES:
+        assert h["since"] and h["desc"] and all(h["test"](r) in (True, False) for r in rows[:3] + [{}])
+
+
+def test_by_wallet_weighs_each_trader_equally():
+    import metrics
+    # un wallet con 9 compras ganadoras y otros 3 con una perdedora cada uno:
+    # por compra gana; con cada trader pesando igual, pierde
+    rows = [{"roi": 1.0, "wallets": ["0xmucho"]}] * 9 + \
+           [{"roi": -1.0, "wallets": [f"0x{i}"]} for i in range(3)]
+    assert metrics.summarize(rows)["avgRoi"] == 0.5
+    bw = metrics.by_wallet(rows, min_bets=1)
+    assert bw["wallets"] == 4 and bw["avgRoi"] == -0.5
+    assert bw["topWallet"] == "0xmucho" and bw["topShare"] == 0.75
+    assert metrics.by_wallet([])["wallets"] == 0
+    # por defecto, los wallets con menos de 5 compras no entran en la media
+    # (su ROI es casi pura suerte), pero si en la cuota del mas activo
+    bw5 = metrics.by_wallet(rows)
+    assert bw5["wallets"] == 1 and bw5["avgRoi"] == 1.0 and bw5["topShare"] == 0.75
 
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):

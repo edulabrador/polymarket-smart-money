@@ -13,13 +13,15 @@ def roi(payout, entry):
     return round(payout / entry - 1, 4)
 
 
-def summarize(rows, roi_key="roi", entry_key="entryPrice", cluster_key="eventSlug"):
+def summarize(rows, roi_key="roi", entry_key="entryPrice", cluster_key="eventSlug", z=1.96):
     """Resumen de un grupo de apuestas resueltas.
 
     - hitRate frente a avgEntry: el precio de entrada es la probabilidad que
       el mercado daba; acertar MAS que eso es la unica ventaja real.
     - avgRoi con su intervalo de confianza al 95%. Si el IC incluye el 0, el
       resultado no es concluyente aunque la media sea positiva.
+    - `z` fija la confianza del IC (1.96 = 95%); las hipotesis lo endurecen
+      cuando se prueban varias a la vez (correccion de Bonferroni).
     - El IC es ROBUSTO POR EVENTO (cluster_key): ganador, handicap y mas/menos
       de un mismo partido no son apuestas independientes; tratarlas como tales
       estrecha el intervalo de forma enganosa. Con menos de 2 eventos no hay IC.
@@ -44,7 +46,7 @@ def summarize(rows, roi_key="roi", entry_key="entryPrice", cluster_key="eventSlu
     ci = None
     if g >= 2:
         var = sum((s - c * mean) ** 2 for s, c in clusters.values()) / n ** 2 * g / (g - 1)
-        half = 1.96 * math.sqrt(var)
+        half = z * math.sqrt(var)
         ci = [round(mean - half, 4), round(mean + half, 4)]
     srt = sorted(rois)
     med = srt[n // 2] if n % 2 else (srt[n // 2 - 1] + srt[n // 2]) / 2
@@ -65,6 +67,48 @@ def first_per(rows, key="id"):
         seen.add(k)
         out.append(r)
     return out
+
+
+def by_wallet(rows, roi_key="roi", wallets_key="wallets", z=1.96, min_bets=5):
+    """ROI con CADA WALLET PESANDO LO MISMO: media de las medias por wallet,
+    con IC sobre esas medias. Si un solo trader hace el 40% de las compras, la
+    media por compra mide sobre todo a ese trader; esta no. Una compra con
+    varios wallets cuenta para cada uno. Solo cuentan wallets con al menos
+    `min_bets` compras: con 1 o 2, su media es casi pura suerte (-100% o
+    +100%) y pesaria tanto como la de uno con 300 (con los datos de octubre,
+    sin este minimo salia -20% con IC entero negativo; con el, -9% e IC con el
+    0 dentro). La cuota del wallet mas activo (`topShare`, sobre todas las
+    compras) avisa de cuanto pesa una sola persona en la muestra."""
+    por = {}
+    rows = [r for r in rows if r.get(roi_key) is not None]
+    for r in rows:
+        for w in r.get(wallets_key) or []:
+            por.setdefault(w, []).append(r[roi_key])
+    out = {"wallets": 0, "minBets": min_bets, "avgRoi": None, "ci95": None,
+           "topWallet": None, "topShare": None}
+    if not por:
+        return out
+    top = max(por, key=lambda w: len(por[w]))
+    out["topWallet"], out["topShare"] = top, round(len(por[top]) / len(rows), 4)
+    medias = [sum(v) / len(v) for v in por.values() if len(v) >= min_bets]
+    out["wallets"] = len(medias)
+    if not medias:
+        return out
+    m = sum(medias) / len(medias)
+    out["avgRoi"] = round(m, 4)
+    if len(medias) >= 2:
+        sd = math.sqrt(sum((x - m) ** 2 for x in medias) / (len(medias) - 1))
+        half = z * sd / math.sqrt(len(medias))
+        out["ci95"] = [round(m - half, 4), round(m + half, 4)]
+    return out
+
+
+def bonferroni_z(k, alpha=0.05):
+    """z del IC bilateral cuando se prueban k hipotesis a la vez: cada una al
+    nivel alpha/k, para que la probabilidad de declarar 'rentable' alguna por
+    puro azar siga siendo ~alpha."""
+    from statistics import NormalDist
+    return NormalDist().inv_cdf(1 - alpha / (2 * max(k, 1)))
 
 
 def halves(rows, roi_key="roi", time_key="alertedAt"):

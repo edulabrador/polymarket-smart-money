@@ -208,6 +208,28 @@ def test_silent_alerts_and_weekly_summary():
         shutil.rmtree(tmp)
 
 
+
+def test_recompute_offline_from_saved_data():
+    """--recalcular: estadisticas e hipotesis desde los JSON guardados, sin red."""
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    for f in ("signals.json", "entries.json", "entries_resolved.json",
+              "strategies.json", "strategies_resolved.json"):
+        if (ROOT / "docs" / f).exists():
+            shutil.copy(ROOT / "docs" / f, tmp / f)
+    original = scanner.get_json
+    def sin_red(url):
+        raise AssertionError(f"recalcular no debe tocar la red: {url}")
+    scanner.get_json = sin_red
+    try:
+        d = scanner.recompute(tmp / "signals.json")
+        assert set(d["hypotheses"]) >= {"H1", "H2", "H3", "H4", "H5"}
+        assert d["sourceStats"]["entrada"]["n"] > 0 and "byWallet" in d["sourceStats"]["entrada"]
+        assert json.loads((tmp / "signals.json").read_text())["hypotheses"] == d["hypotheses"]
+    finally:
+        scanner.get_json = original
+        shutil.rmtree(tmp)
+
+
 if __name__ == "__main__":
     test_full_lifecycle_on_real_state()
     print("OK test_full_lifecycle_on_real_state")

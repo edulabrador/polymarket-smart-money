@@ -232,6 +232,14 @@ def test_wallet_history_and_strategy_groups():
     assert stt["sesgo"]["n"] == 6 and stt["sesgo:0.90-0.99"]["n"] == 6
     assert stt["sesgo"]["suppressed"] is False and stt["sesgo"]["halves"] == [0.05, 0.05]
     assert metrics.halves([{"roi": 1.0, "alertedAt": "a"}] * 3) is None   # muy pocas
+    assert stt["entrada:1porEvento"]["n"] == 4
+    # 0xdom hace 4 de 8 compras (> 25%): se mide C sin el
+    dom = [dict(e, wallets=["0xdom"]) for e in ent] + \
+          [dict(e, id=f"o{i}", wallets=[f"0xo{i}"], eventSlug=f"o{i}") for i, e in enumerate(ent)]
+    stt2 = source_stats([], entries=dom)
+    assert stt2["entrada"]["byWallet"]["topShare"] == 0.5
+    assert stt2["entrada:sinDominante"]["n"] == 4
+    assert "entrada:sinDominante" not in stt                 # sin wallets: nadie domina
 
 
 if __name__ == "__main__":

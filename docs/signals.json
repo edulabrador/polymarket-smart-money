@@ -3798,6 +3798,55 @@
    "halves": [
     0.0493,
     -0.0392
+   ],
+   "byWallet": {
+    "wallets": 28,
+    "minBets": 5,
+    "avgRoi": -0.089,
+    "ci95": [
+     -0.196,
+     0.018
+    ],
+    "topWallet": "0x9b11866433281ade9f2811dbde8acdefc45f5375",
+    "topShare": 0.399
+   }
+  },
+  "entrada:1porEvento": {
+   "n": 333,
+   "events": 333,
+   "wins": 174,
+   "hitRate": 0.5225,
+   "avgEntry": 0.5278,
+   "avgRoi": -0.0172,
+   "medianRoi": 0.2121,
+   "ci95": [
+    -0.1266,
+    0.0923
+   ],
+   "verdict": "pierde",
+   "suppressed": false,
+   "halves": [
+    0.0536,
+    -0.0875
+   ]
+  },
+  "entrada:sinDominante": {
+   "n": 485,
+   "events": 323,
+   "wins": 247,
+   "hitRate": 0.5093,
+   "avgEntry": 0.5284,
+   "avgRoi": -0.0522,
+   "medianRoi": 0.1765,
+   "ci95": [
+    -0.1377,
+    0.0333
+   ],
+   "verdict": "pierde",
+   "suppressed": false,
+   "halves": [
+    0.0253,
+    -0.1294
    ]
   },
   "entrada:ventaja+": {
@@ -8996,5 +9045,137 @@
    "source": "whale",
    "v": 2
   }
- ]
+ ],
+ "hypotheses": {
+  "H1": {
+   "desc": "Compras nuevas hechas m\u00e1s de 24 h antes del partido",
+   "since": "2026-10-24",
+   "source": "entrada",
+   "origin": "n=19, ROI +51%, IC +7% a +96% (1 de ~25 cortes probados)",
+   "retired": null,
+   "confidence": 0.99,
+   "n": 0,
+   "events": 0,
+   "wins": 0,
+   "hitRate": null,
+   "avgEntry": null,
+   "avgRoi": null,
+   "medianRoi": null,
+   "ci95": null,
+   "verdict": "sin muestra",
+   "halves": null,
+   "byWallet": {
+    "wallets": 0,
+    "minBets": 5,
+    "avgRoi": null,
+    "ci95": null,
+    "topWallet": null,
+    "topShare": null
+   }
+  },
+  "H2": {
+   "desc": "Compras nuevas en deportes",
+   "since": "2026-10-24",
+   "source": "entrada",
+   "origin": "n=455, ROI +7%, IC -4% a +19%, mitades +13% / +1%",
+   "retired": null,
+   "confidence": 0.99,
+   "n": 0,
+   "events": 0,
+   "wins": 0,
+   "hitRate": null,
+   "avgEntry": null,
+   "avgRoi": null,
+   "medianRoi": null,
+   "ci95": null,
+   "verdict": "sin muestra",
+   "halves": null,
+   "byWallet": {
+    "wallets": 0,
+    "minBets": 5,
+    "avgRoi": null,
+    "ci95": null,
+    "topWallet": null,
+    "topShare": null
+   }
+  },
+  "H3": {
+   "desc": "Compras nuevas en directo con m\u00e1s de 1 h de partido",
+   "since": "2026-10-24",
+   "source": "entrada",
+   "origin": "n=185 (51 eventos), ROI +12%, IC -8% a +32%",
+   "retired": null,
+   "confidence": 0.99,
+   "n": 0,
+   "events": 0,
+   "wins": 0,
+   "hitRate": null,
+   "avgEntry": null,
+   "avgRoi": null,
+   "medianRoi": null,
+   "ci95": null,
+   "verdict": "sin muestra",
+   "halves": null,
+   "byWallet": {
+    "wallets": 0,
+    "minBets": 5,
+    "avgRoi": null,
+    "ci95": null,
+    "topWallet": null,
+    "topShare": null
+   }
+  },
+  "H4": {
+   "desc": "Compras nuevas grandes (\u2265 $10.000)",
+   "since": "2026-10-24",
+   "source": "entrada",
+   "origin": "sin datos previos: el tama\u00f1o no se guardaba al liquidar",
+   "retired": null,
+   "confidence": 0.99,
+   "n": 0,
+   "events": 0,
+   "wins": 0,
+   "hitRate": null,
+   "avgEntry": null,
+   "avgRoi": null,
+   "medianRoi": null,
+   "ci95": null,
+   "verdict": "sin muestra",
+   "halves": null,
+   "byWallet": {
+    "wallets": 0,
+    "minBets": 5,
+    "avgRoi": null,
+    "ci95": null,
+    "topWallet": null,
+    "topShare": null
+   }
+  },
+  "H5": {
+   "desc": "Compras nuevas a precio 0,40-0,60 (sin favoritos ni longshots)",
+   "since": "2026-10-24",
+   "source": "entrada",
+   "origin": "n=451, ROI +4%, IC -8% a +17%",
+   "retired": null,
+   "confidence": 0.99,
+   "n": 0,
+   "events": 0,
+   "wins": 0,
+   "hitRate": null,
+   "avgEntry": null,
+   "avgRoi": null,
+   "medianRoi": null,
+   "ci95": null,
+   "verdict": "sin muestra",
+   "halves": null,
+   "byWallet": {
+    "wallets": 0,
+    "minBets": 5,
+    "avgRoi": null,
+    "ci95": null,
+    "topWallet": null,
+    "topShare": null
+   }
+  }
+ }
 }
