@@ -1,9 +1,10 @@
 name: backtest
 on:
   workflow_dispatch:
-  schedule:
-    # semanal: el replay crece con cada escaneo y los mercados van liquidando
-    - cron: "41 5 * * 1"
+  # semanal (lunes): APAGADO a proposito hasta reactivar el escaner; para
+  # activarlo, descomenta las dos lineas de abajo
+  # schedule:
+  #   - cron: "41 5 * * 1"
 permissions:
   contents: write
 jobs:

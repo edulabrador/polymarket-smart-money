@@ -34,13 +34,50 @@ def test_price_bias_records_each_market_once_by_bucket():
          "0xlejos": pos("0xlejos", 0.5, end="2027-01-01"),       # largo plazo: no
          "0xcasi": pos("0xcasi", 0.995)}                         # fuera de tramos
     seen = {}
-    bets = st.price_bias_bets(u, seen, NOW, entry_cost=0.01)
+    bets = st.price_bias_bets(u, seen, NOW, entry_cost=0.01, sample=1)
     tags = {b["conditionId"]: b["tag"] for b in bets}
     assert tags == {"0xf": "0.90-0.99", "0xl": "0.01-0.10", "0xm": "0.30-0.70"}
     assert all(b["source"] == "sesgo" for b in bets)
     assert next(b for b in bets if b["conditionId"] == "0xf")["entryPrice"] == 0.96
     # ya vistos: no se repiten
-    assert st.price_bias_bets(u, seen, NOW, entry_cost=0.01) == []
+    assert st.price_bias_bets(u, seen, NOW, entry_cost=0.01, sample=1) == []
+    assert seen["0xf"] == "2026-10-14"                      # solo la fecha
+
+
+def test_price_bias_sampling_is_deterministic_and_proportional():
+    conds = [f"0x{i:064x}" for i in range(2000)]
+    elegidos = [c for c in conds if st.sampled(c, 5)]
+    assert 300 < len(elegidos) < 500                         # ~1 de cada 5
+    assert elegidos == [c for c in conds if st.sampled(c, 5)]   # siempre los mismos
+    u = {c: pos(c, 0.5) for c in conds[:200]}
+    bets = st.price_bias_bets(u, {}, NOW, entry_cost=0.01, sample=5)
+    assert {b["conditionId"] for b in bets} == {c for c in conds[:200] if st.sampled(c, 5)}
+
+
+def test_save_splits_resolved_and_only_rewrites_on_change():
+    import tempfile
+    tmp = pathlib.Path(tempfile.mkdtemp()) / "strategies.json"
+    fila = {"id": "0xa:0", "title": "M", "outcome": "Yes", "entryPrice": 0.5, "payout": 1.0,
+            "won": True, "roi": 1.0, "source": "sesgo", "tag": "0.30-0.70", "cat": None,
+            "numTraders": 1, "traderEdge": None, "v": 2, "resolvedAt": "2026-10-14"}
+    st.save(tmp, {"seen": {}, "pending": [], "resolved": [fila]})
+    ligero = json.loads(tmp.read_text())
+    assert "resolved" not in ligero and ligero["resolvedCount"] == 1
+    rp = st.resolved_path(tmp)
+    guardada = json.loads(rp.read_text())[0]
+    assert "numTraders" not in guardada and "cat" not in guardada and guardada["roi"] == 1.0
+    antes = rp.stat().st_mtime_ns
+    import time
+    time.sleep(0.01)
+    st.save(tmp, {"seen": {"x": "2026-10-14"}, "pending": [], "resolved": [fila]})
+    assert rp.stat().st_mtime_ns == antes                    # sin novedades: no se toca
+    assert st.load(tmp)["resolved"] == [guardada]
+    # formato viejo (resueltas dentro del mismo fichero): se sigue leyendo
+    rp.unlink()
+    tmp.write_text(json.dumps({"resolved": [fila]}))
+    assert st.load(tmp)["resolved"] == [guardada]
+    # compras: se conservan todos los campos con valor
+    assert st.load(tmp, keys=None)["resolved"][0]["numTraders"] == 1
 
 
 def test_same_team_avoids_false_matches():
@@ -161,7 +198,9 @@ def test_run_without_key_and_key_never_leaks():
     try:
         st.ODDS_API_KEY = ""
         state = {}
+        orig_sample, st.BIAS_SAMPLE = st.BIAS_SAMPLE, 1
         st.run({"0xf": pos("0xf", 0.95)}, state, NOW, 0.01, fetch=None)
+        st.BIAS_SAMPLE = orig_sample
         assert "sin clave" in state["odds"]["status"] and "0xf" in state["seen"]
         st.ODDS_API_KEY = "SECRETO"
         def falla(url):

@@ -158,7 +158,7 @@ flowchart LR
     end
 
     subgraph GH["GitHub (gratis)"]
-        A["⚙️ Actions · scan.yml<br/>bucle cada 10 min"]
+        A["⚙️ Actions · scan.yml<br/>un escaneo por job"]
         S["🐍 scanner.py"]
         J[("📄 docs/signals.json<br/>estado + seguimiento + histórico")]
         B["🔁 backtest.py<br/>replay semanal del git"]
@@ -185,10 +185,15 @@ Por qué así:
 - **Polymarket está bloqueado en España** (DGOJ): los ISP españoles no resuelven
   `*.polymarket.com`. Los runners de GitHub Actions están en EE. UU. y no tienen ese
   problema, así que el escáner corre allí.
-- **El cron de Actions no es fiable a pocos minutos** (GitHub retrasa o salta
-  ejecuciones). Por eso el cron solo relanza cada ~3 h un job que **escanea cada
-  `SCAN_EVERY_MIN` (10) minutos durante ~5 h 30**, con un bucle por tiempo. En repos
-  públicos los minutos de Actions son gratis.
+- **Un escaneo por job.** Cada ejecución de `scan` hace un solo escaneo (~1 min), guarda
+  y termina. Antes un job de 5 h 30 dormía 9 de cada 10 minutos y el cron (cada 3 h)
+  lo cancelaba a medias: el runner estaba ocupado 24 h al día para trabajar ~2 h. El
+  cron (`*/10`) viene **comentado** en `scan.yml`: hay que descomentarlo para que corra
+  solo. GitHub retrasa o salta algunas ejecuciones en horas punta, así que la cadencia
+  real es de 10-20 min. En repos públicos los minutos de Actions son gratis.
+- **Nunca se cancela un escaneo a medias** (`cancel-in-progress: false`): si uno tarda,
+  el siguiente espera. Cancelarlo podía enviar un aviso de Telegram sin llegar a
+  guardar el estado y repetirlo después.
 - **El estado vive en git**: cada escaneo hace commit de `signals.json`. Sirve de base
   de datos, de fuente de la web y, sobre todo, de **grabación punto a punto** de lo que
   el escáner vio: el backtest reproduce esas versiones sin mirar el futuro.
@@ -461,7 +466,7 @@ debería pasar a Telegram cuando sus datos demuestren que gana fuera de la muest
 | Pestaña | Estrategia | Idea | Estado |
 |---|---|---|---|
 | 🧠 Smart money | **C** (la del proyecto) | Seguir a los top traders: coincidencias y, sobre todo, **compras nuevas** en el momento en que entran | Coincidencias: sin ventaja en el backtest. Compras nuevas: midiendo desde el 14-10-2026 |
-| 📐 Sesgos de precio | **B** | Sesgo favorito-longshot: ¿se pagan de más los improbables y de menos los casi seguros? | Midiendo |
+| 📐 Sesgos de precio | **B** | Sesgo favorito-longshot: ¿se pagan de más los improbables y de menos los casi seguros? | ~2.600 resueltas a ROI ~0%: sin sesgo aprovechable. Sigue en muestra 1 de cada 5 |
 | 📊 Cuotas de casas | **A** | Comprar cuando Polymarket da bastante menos probabilidad que Pinnacle o Betfair | Necesita `ODDS_API_KEY` |
 
 **C · Smart money (prioridad).** Además de las coincidencias, registra cada compra nueva
@@ -471,8 +476,9 @@ con lo que había antes de cada compra (`entrada:historial+`, a partir de 5 resu
 Eso es elegir traders fuera de la muestra, no por el beneficio del mes. La tabla de
 wallets de la pestaña muestra ese historial.
 
-**B · Sesgos de precio.** Cada mercado de corto plazo (que termina en 7 días o menos) que
-aparece en las carteras vigiladas se registra **una vez** con su precio y se mide por
+**B · Sesgos de precio.** Uno de cada `BIAS_SAMPLE` (5) mercados de corto plazo (que
+terminan en 7 días o menos) que aparecen en las carteras vigiladas, elegido por un hash de
+su id (siempre los mismos), se registra **una vez** con su precio y se mide por
 tramos (0,01-0,10 … 0,90-0,99). Si el sesgo existe, los tramos altos darán ROI positivo
 y los bajos negativo. Universo: los mercados que tienen los wallets vigilados, no todo
 Polymarket.
@@ -573,7 +579,8 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
 
 | Variable | Defecto | Qué controla |
 |---|---:|---|
-| `SCAN_EVERY_MIN` | `10` | Minutos entre escaneos dentro del job (10 por prudencia con Actions; 5 es posible) |
+| `SCAN_EVERY_MIN` | `10` | Cadencia nominal (informativa); la real la marca el cron de `scan.yml` |
+| `BIAS_SAMPLE` | `5` | Estrategia B: registra 1 de cada N mercados (determinista por mercado) |
 | `TOP_N` | `50` | Cuántos traders del leaderboard se vigilan |
 | `MIN_USERS` | `5` | Traders mínimos para una señal de consenso amplio |
 | `MIN_USERS_SPECIALIST` | `3` | Traders mínimos para una señal de especialistas |
@@ -622,15 +629,17 @@ producción, añádelas al bloque `env:` de `.github/workflows/scan.yml`.
    `TELEGRAM_TOKEN` y `TELEGRAM_CHAT_ID`. Sin ellos el escáner funciona igual y solo
    omite los avisos.
 5. **Activa los workflows** en la pestaña *Actions* y lanza `scan` a mano
-   (*Run workflow*) para no esperar al cron.
-6. Lanza `backtest` para generar `docs/backtest.json` (luego corre solo cada lunes).
+   (*Run workflow*) para probarlo.
+6. **Activa el cron** descomentando `schedule` en `.github/workflows/scan.yml` (y en
+   `backtest.yml` para el replay semanal). Vienen apagados a propósito.
+7. Lanza `backtest` para generar `docs/backtest.json`.
 
 ### Workflows
 
 | Workflow | Disparo | Qué hace |
 |---|---|---|
-| `scan` | cron cada ~3 h + manual | Escanea cada 10 min durante ~5 h 30; commit de `signals.json` |
-| `backtest` | lunes + manual | Replay del historial de git con el oráculo; escribe `docs/backtest.json` |
+| `scan` | manual (cron `*/10` comentado) | Un escaneo (~1 min); commit de los JSON de `docs/` |
+| `backtest` | manual (cron de los lunes comentado) | Replay del historial de git con el oráculo; escribe `docs/backtest.json` |
 | `test` | cada PR + manual | Tests sin red, escaneo y backtest **en seco** contra la API real |
 | `probe` | manual | Verifica endpoints (incluidos libro y oráculo) y regenera `tests/fixtures/` |
 
@@ -666,9 +675,11 @@ polymarket-smart-money/
 ├── docs/                 # lo que sirve GitHub Pages
 │   ├── index.html        # la web (HTML + JS vanilla)
 │   ├── signals.json      # estado vivo, seguimiento e histórico (lo escribe el cron)
-│   ├── entries.json      # compras nuevas de top traders: foto de tamaños, pendientes y resueltas
+│   ├── entries.json      # compras nuevas de top traders: foto de tamaños y pendientes
+│   ├── entries_resolved.json     # compras nuevas ya liquidadas (solo crece)
 │   ├── history_legacy.json  # histórico anterior a la fase 6 (sesgado, no cuenta en métricas)
-│   ├── strategies.json   # banco de pruebas: apuestas en sombra de B y A, y estado de cuotas
+│   ├── strategies.json   # banco de pruebas: pendientes de B y A, y estado de cuotas
+│   ├── strategies_resolved.json  # apuestas de B y A ya liquidadas (solo crece)
 │   ├── backtest.json     # resultado del último replay
 │   └── img/              # capturas de este README
 ├── tests/
@@ -729,8 +740,9 @@ Todas públicas y sin autenticación (detalle en [NOTES.md](NOTES.md)):
   que definas `MIN_EDGE`, y solo deberías hacerlo si el histórico demuestra que sirve.
 - **API no oficial ni versionada.** Si Polymarket cambia un endpoint, `scan` falla
   (GitHub avisa por email); el workflow `test` lo detecta en cada PR con la prueba en seco.
-- **Uso de GitHub Actions.** Un bucle casi continuo puede chocar con los términos de
-  uso de Actions. Si el proyecto se vuelve importante, conviene moverlo a un servidor.
+- **Uso de GitHub Actions.** Cada escaneo es un job corto, pero 144 al día siguen siendo
+  un uso intensivo, y los términos de Actions piden que los runners sirvan al propio
+  proyecto. Si el proyecto se vuelve importante, conviene moverlo a un servidor.
 - **Legalidad.** Polymarket está bloqueado por la DGOJ en España. Este proyecto solo lee
   datos públicos desde servidores de GitHub y **no ejecuta órdenes**; apostar es
   responsabilidad de cada usuario y de la normativa de su país.

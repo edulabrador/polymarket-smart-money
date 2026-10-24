@@ -1,53 +1,46 @@
 name: scan
 on:
   workflow_dispatch:
-  schedule:
-    # el cron solo relanza el bucle (GitHub lo estrangula sin problema);
-    # la cadencia real de escaneo la marca SCAN_EVERY_MIN dentro del job
-    - cron: "17 */3 * * *"
+  # UN escaneo por job (~1-2 min). El cron esta APAGADO a proposito: para
+  # activarlo, descomenta las dos lineas de abajo (y reactiva el workflow en
+  # la pestana Actions si estaba desactivado). GitHub retrasa o salta algunas
+  # ejecuciones a horas punta: la cadencia real sera de 10-20 min.
+  # schedule:
+  #   - cron: "*/10 * * * *"
+# en cola, NUNCA cancelar: matar un escaneo a medias podia mandar un aviso de
+# Telegram sin llegar a guardar el estado (y repetirlo en el siguiente)
 concurrency:
   group: scan
-  cancel-in-progress: true
+  cancel-in-progress: false
 permissions:
   contents: write
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 10
     env:
       TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       # opcional (estrategia A, cuotas de casas): clave de The Odds API
       ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-      SCAN_EVERY_MIN: "10"  # 10 por seguridad con Actions; se puede bajar a 5 si se estabiliza
     steps:
       - uses: actions/checkout@v6
-      - name: bucle de escaneo cada SCAN_EVERY_MIN min (~5h30; el cron lo relanza)
+        with:
+          fetch-depth: 1  # solo la ultima version: el estado vive en los JSON
+      - name: escaneo
+        run: python scanner.py
+      - name: commit y push del estado
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          start=$(date +%s)
-          fails=0
-          # bucle por TIEMPO, no por vueltas: un escaneo lento no alarga el job
-          # mas alla del timeout ni desplaza la cadencia
-          while [ $(( $(date +%s) - start )) -lt 19800 ]; do
-            t0=$(date +%s)
-            if python scanner.py; then
-              fails=0
-            else
-              fails=$((fails+1))
-              echo "fallo $fails/3"
-              if [ $fails -ge 3 ]; then exit 1; fi
-            fi
-            git add docs/
-            git commit -m "scan: actualiza signals.json" || true
-            # un rebase que choca NO se puede dejar a medias: bloquearia todos
-            # los commits siguientes sin que nadie se entere
-            if ! git pull --rebase; then
-              git rebase --abort || true
-              echo "::warning::git pull --rebase fallo; se reintenta en la siguiente vuelta"
-            fi
-            git push || echo "::warning::git push fallo; se reintenta en la siguiente vuelta"
-            espera=$(( SCAN_EVERY_MIN * 60 - ($(date +%s) - t0) ))
-            if [ $espera -gt 0 ]; then sleep $espera; fi
+          git add docs/
+          git diff --cached --quiet && { echo "sin cambios"; exit 0; }
+          git commit -q -m "scan: actualiza signals.json"
+          # si otro job (backtest) empujo entre medias: rebase y reintento
+          for i in 1 2 3; do
+            if git pull -q --rebase && git push -q; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((i * 5))
           done
+          echo "::error::no se pudo hacer push del estado tras 3 intentos"
+          exit 1
