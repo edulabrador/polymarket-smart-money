@@ -107,7 +107,7 @@ def test_full_lifecycle_on_real_state():
         assert a["delivered"] is False and len(d["outbox"]) == 1
         # hora de inicio: alertada ANTES del partido
         assert a["gameStart"] == "2099-01-01T18:00:00+00:00" and a["phaseAtAlert"] == "previa"
-        ent = json.loads((tmp / "entries.json").read_text(encoding="utf-8"))
+        ent = scanner.strategies.load(tmp / "entries.json", keys=None)
         assert ent["pending"] == [] and "0xw0" in ent["sizes"]   # 1a foto: sin compras
 
         # escaneo 2 (Telegram vuelve): se reintenta la cola; misma senal -> NO
@@ -126,7 +126,7 @@ def test_full_lifecycle_on_real_state():
         assert d["tracked"]["0xA:0"]["entryPrice"] == 0.47
         # 3 top traders compraron 0xE desde el escaneo anterior: UNA compra
         # registrada con los 3 wallets, para medir su ROI con el oraculo
-        ent = json.loads((tmp / "entries.json").read_text(encoding="utf-8"))
+        ent = scanner.strategies.load(tmp / "entries.json", keys=None)
         assert [e["id"] for e in ent["pending"]] == ["0xE:0"]
         assert len(ent["pending"][0]["wallets"]) == 3
         e = d["tracked"]["0xE:0"]
@@ -164,7 +164,7 @@ def test_full_lifecycle_on_real_state():
         assert d["paper"]["bets"] == (base_paper.get("bets") or 0) + 1
         assert d["paper"]["pnl"] == round((base_paper.get("pnl") or 0) - 100.0, 2)
         assert len(sent) == 1 and "perdio" in sent[0] and "ROI -100%" in sent[0]
-        ent = json.loads((tmp / "entries.json").read_text(encoding="utf-8"))
+        ent = scanner.strategies.load(tmp / "entries.json", keys=None)
         assert ent["pending"] == [] and ent["resolved"][0]["won"]
         assert d["sourceStats"]["entrada"]["n"] == 1
     finally:

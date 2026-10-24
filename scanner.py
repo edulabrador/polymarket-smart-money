@@ -70,7 +70,8 @@ OUTBOX_TTL_MIN = 60  # un aviso de Telegram que falla se reintenta durante 1 h
 # ROI medio real negativo deja de notificar (sigue en la web, marcada). No es
 # una decision fija: si las señales nuevas resuelven en positivo, se reactiva.
 SOURCE_MIN_SAMPLE = int(os.getenv("SOURCE_MIN_SAMPLE", "20"))
-# cadencia real del bucle en .github/workflows/scan.yml (lee la misma variable)
+# cadencia nominal (cron de .github/workflows/scan.yml, un escaneo por job);
+# solo informativa: se publica en params para la web
 SCAN_EVERY_MIN = int(os.getenv("SCAN_EVERY_MIN", "10"))
 # coste de entrada cuando no se puede leer el libro de ordenes: spread +
 # deslizamiento tipico. El ROI medido descuenta esto; sin el, el ROI de seguir
@@ -1472,8 +1473,8 @@ def main():
     entries_src = SIGNALS_PATH.parent / ENTRIES_PATH_NAME
     entries_path = (pathlib.Path(DRY_RUN_PATH).with_name("entries.dry.json") if DRY_RUN
                     else entries_src)
-    ent_doc = (json.loads(entries_src.read_text(encoding="utf-8"))
-               if entries_src.exists() else {})
+    # compras: todos los campos cuentan (wallets, historial previo...)
+    ent_doc = strategies.load(entries_src, keys=None)
     ent_pending, ent_resolved = drop_hedges(ent_doc.get("pending", [])), ent_doc.get("resolved", [])
     nuevas_compras = detect_entries(ent_doc.get("sizes", {}), scannable, tracks, now, ent_pending,
                                     wallet_stats=wallet_entry_stats(ent_resolved))
@@ -1610,12 +1611,12 @@ def main():
     }, indent=1), encoding="utf-8")
     strat.update({"updatedAt": now, "pending": strat_pending, "resolved": strat_resolved})
     strategies.save(strat_path, strat)
-    entries_path.write_text(json.dumps({
+    strategies.save(entries_path, {
         "updatedAt": now,
         "sizes": position_sizes(scannable),
         "pending": ent_pending,
         "resolved": ent_resolved,
-    }, separators=(",", ":")), encoding="utf-8")
+    }, keys=None)
 
     stale_count = sum(1 for s in signals if s["stale"])
     bots = len(positions_by_trader) - len(scannable)

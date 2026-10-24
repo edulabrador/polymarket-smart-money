@@ -15,6 +15,7 @@ Estrategias de este modulo (las de "smart money" viven en scanner.py):
   bastante menos probabilidad que ellas (sin su margen), comprar ahi tiene
   ventaja esperada. Requiere una clave de The Odds API (ODDS_API_KEY).
 """
+import hashlib
 import json
 import os
 import re
@@ -50,8 +51,10 @@ def universe(positions_by_trader):
 
 
 def prune_seen(seen, now):
-    corte = (datetime.fromisoformat(now) - timedelta(days=SEEN_DAYS)).isoformat()
-    return {k: v for k, v in seen.items() if v >= corte}
+    """Olvida lo visto hace mas de SEEN_DAYS. Se guarda solo la fecha (el
+    dia basta y ocupa menos que la hora completa)."""
+    corte = (datetime.fromisoformat(now) - timedelta(days=SEEN_DAYS)).strftime("%Y-%m-%d")
+    return {k: v[:10] for k, v in seen.items() if v[:10] >= corte}
 
 
 def bet(p, now, entry_cost, source, tag, idx=None, price=None, **extra):
@@ -76,6 +79,17 @@ BIAS_BUCKETS = [(0.01, 0.10, "0.01-0.10"), (0.10, 0.30, "0.10-0.30"),
                 (0.30, 0.70, "0.30-0.70"), (0.70, 0.90, "0.70-0.90"),
                 (0.90, 0.99, "0.90-0.99")]
 BIAS_DAYS = int(os.getenv("BIAS_DAYS", "7"))
+# muestreo: se registra 1 de cada BIAS_SAMPLE mercados. Con todo el universo
+# eran ~265 apuestas al dia y strategies.json crecia sin freno; tras 2.600
+# resueltas el ROI ya estaba en ~0% con IC estrecho, asi que una muestra basta
+# para seguir vigilandolo. Determinista por mercado (hash del conditionId):
+# no hace falta recordar los descartados y los dos lados nunca se mezclan.
+BIAS_SAMPLE = max(1, int(os.getenv("BIAS_SAMPLE", "5")))
+
+
+def sampled(cond, n=None):
+    n = BIAS_SAMPLE if n is None else n
+    return n <= 1 or int(hashlib.sha1(cond.encode()).hexdigest()[:8], 16) % n == 0
 
 
 def bucket(price):
@@ -85,19 +99,20 @@ def bucket(price):
     return None
 
 
-def price_bias_bets(univ, seen, now, entry_cost, days=BIAS_DAYS):
+def price_bias_bets(univ, seen, now, entry_cost, days=BIAS_DAYS, sample=None):
     """Registra UNA vez cada mercado de corto plazo del universo, con el lado
     que se vio y su precio. Muta `seen`. Un solo lado por mercado: los dos
     lados de un mercado binario son la misma apuesta al reves."""
     today = now[:10]
     out = []
     for cond, p in univ.items():
-        if cond in seen or not short_term(p.get("endDate"), today, days):
+        if (cond in seen or not sampled(cond, sample)
+                or not short_term(p.get("endDate"), today, days)):
             continue
         b = bucket(p["curPrice"])
         if b is None:
             continue
-        seen[cond] = now
+        seen[cond] = today
         out.append(bet(p, now, entry_cost, "sesgo", b))
     return out
 
@@ -346,7 +361,7 @@ def odds_bets(partidos, events, seen, now, entry_cost, min_edge=ODDS_MIN_EDGE):
                         gameStart=partido["start"].isoformat(), league=partido["sport"])
                 discrepancias.append(d)
                 if mk["conditionId"] not in seen:
-                    seen[mk["conditionId"]] = now
+                    seen[mk["conditionId"]] = now[:10]
                     nuevas.append(d)
     discrepancias.sort(key=lambda d: -d["edge"])
     return nuevas, discrepancias[:30], diag
@@ -357,7 +372,8 @@ def run(univ, state, now, entry_cost, fetch):
     (seen, seenOdds, odds) y devuelve las apuestas nuevas en sombra. A y B
     llevan registros de vistos separados: que B ya registrara un mercado no
     debe impedir que A lo apueste."""
-    seen = prune_seen(state.get("seen", {}), now)
+    # los vistos que el muestreo ya no elegiria sobran: no se volverian a mirar
+    seen = {k: v for k, v in prune_seen(state.get("seen", {}), now).items() if sampled(k)}
     nuevas = price_bias_bets(univ, seen, now, entry_cost)
     seen_odds = prune_seen(state.get("seenOdds", {}), now)
     odds = state.get("odds", {})
@@ -381,11 +397,44 @@ def run(univ, state, now, entry_cost, fetch):
     return nuevas
 
 
-def load(path):
-    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+# campos de una apuesta resuelta que se usan (estadisticas, resumen, web);
+# el resto (copiado de las pendientes) solo engordaba el fichero
+RESOLVED_KEYS = ("id", "title", "outcome", "eventSlug", "alertedAt", "entryPrice", "payout",
+                 "won", "roi", "resolvedAt", "source", "tag", "fair", "book", "edge", "league",
+                 "gameStart")
 
 
-def save(path, state):
+def compact(row, keys=RESOLVED_KEYS):
+    """Sin campos vacios y, si se dan `keys`, solo esos campos."""
+    return {k: v for k, v in row.items() if v is not None and (keys is None or k in keys)}
+
+
+def resolved_path(path):
+    """Las resueltas van en un fichero aparte: solo crece y solo se reescribe
+    cuando hay novedades (antes viajaban 1,8 MB en cada commit y la web los
+    descargaba sin usarlos)."""
+    return path.with_name(path.stem + "_resolved.json")
+
+
+def load(path, keys=RESOLVED_KEYS):
+    state = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    rp = resolved_path(path)
+    if rp.exists():  # formato nuevo; el viejo traia "resolved" dentro
+        state["resolved"] = json.loads(rp.read_text(encoding="utf-8"))
+    state["resolved"] = [compact(r, keys) for r in state.get("resolved", [])]
+    return state
+
+
+def save(path, state, keys=RESOLVED_KEYS):
+    """Escribe el estado ligero en `path` y las resueltas en su fichero, este
+    solo si cambiaron (un commit sin cambios en el no lo toca)."""
+    state = dict(state)
+    filas = [compact(r, keys) for r in state.pop("resolved", [])]
+    resueltas = json.dumps(filas, separators=(",", ":"))
+    rp = resolved_path(path)
+    if not rp.exists() or rp.read_text(encoding="utf-8") != resueltas:
+        rp.write_text(resueltas, encoding="utf-8")
+    state["resolvedCount"] = len(filas)
     path.write_text(json.dumps(state, separators=(",", ":")), encoding="utf-8")
 
 

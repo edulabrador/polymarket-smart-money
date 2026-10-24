@@ -541,7 +541,8 @@ function renderSesgos() {
     tramos.map(t => filaStats(`Precio ${t.replace('-', ' a ')}`, st[`sesgo:${t}`])).join('');
   const pend = (estrategias?.pending ?? []).filter(e => e.source === 'sesgo').length;
   el('sesgos-estado').textContent = `${pend} mercados registrados pendientes de liquidar. ` +
-    'Universo: los mercados que tienen en cartera los wallets vigilados (no todo Polymarket).';
+    'Universo: los mercados que tienen en cartera los wallets vigilados (no todo Polymarket), ' +
+    'muestreados 1 de cada 5 desde el 24-10-2026.';
 }
 
 function renderCuotas() {
